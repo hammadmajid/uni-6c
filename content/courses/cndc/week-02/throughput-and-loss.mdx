@@ -162,3 +162,33 @@ A single TCP connection cannot send faster than roughly (window size ÷ round-tr
 <Callout type="exam" title="Stock questions from this lesson">
 "Define throughput; distinguish instantaneous from average." "A path has links of rates X, Y, Z; what is the end-to-end throughput?" "Why is the access link usually the bottleneck?" "Why are packets lost, and what does the sender see?" Each is a 2 to 3 mark question with the answer sitting in this page.
 </Callout>
+
+<Further links={[
+  {
+    "href": "https://speed.cloudflare.com/",
+    "title": "Cloudflare speed test",
+    "kind": "tool",
+    "time": "2 min",
+    "why": "Shows latency, jitter, and throughput separately, plus the measurement points. Compare with the avg vs instantaneous throughput distinction above."
+  },
+  {
+    "href": "https://hpbn.co/building-blocks-of-tcp/",
+    "title": "HPBN: Building blocks of TCP",
+    "kind": "book",
+    "time": "30 min",
+    "why": "Why throughput on a long link depends on RTT and not just the pipe size. A preview of the transport week, with graphs."
+  },
+  {
+    "href": "https://www.youtube.com/playlist?list=PLhfrWIlLOoKO8522T1OAhR5Bb2mD6Qy_l",
+    "title": "Wireshark with Chris Greer",
+    "kind": "video",
+    "time": "pick one",
+    "why": "Watching loss and retransmission in a real capture. Directly useful for the CNDC lab."
+  },
+  {
+    "href": "https://www.wireshark.org/docs/wsug_html_chunked/",
+    "title": "Wireshark User's Guide",
+    "kind": "docs",
+    "why": "The official manual. Chapter 6 on display filters is the one you will keep coming back to in lab."
+  }
+]} />

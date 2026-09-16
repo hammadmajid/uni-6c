@@ -4,6 +4,7 @@ import { Predict } from "@/components/learning/Predict";
 import { OrderCheck } from "@/components/learning/OrderCheck";
 import { Callout } from "@/components/learning/Callout";
 import { Deeper } from "@/components/learning/Deeper";
+import { Further } from "@/components/learning/Further";
 import { WorkedExample, Step } from "@/components/learning/WorkedExample";
 import { HintLadder } from "@/components/learning/HintLadder";
 import { Term } from "@/components/learning/Term";
@@ -22,6 +23,7 @@ export const mdxComponents: Record<string, ComponentType<any>> = {
   OrderCheck,
   Callout,
   Deeper,
+  Further,
   WorkedExample,
   Step,
   HintLadder,
