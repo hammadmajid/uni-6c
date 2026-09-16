@@ -41,16 +41,16 @@ export function Further({ links, title = "Go further" }: { links: FurtherLink[];
         <span className="text-label-14 text-gray-1000">{title}</span>
         <span className="text-label-12 text-gray-600">optional · not examinable · pick one if you have spare time</span>
       </div>
-      <ul className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         {links.map((l) => {
           const Icon = icons[l.kind];
           return (
-            <li key={l.href}>
+            <div key={l.href}>
               <a
                 href={l.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block h-full rounded-md border border-gray-400 bg-background-200 p-3 transition-colors hover:border-gray-600"
+                className="group block h-full rounded-md border border-gray-400 bg-background-200 p-3 !no-underline transition-colors hover:border-gray-600"
               >
                 <div className="flex items-center gap-2">
                   <Icon size={14} className="shrink-0 text-blue-600" />
@@ -58,13 +58,13 @@ export function Further({ links, title = "Go further" }: { links: FurtherLink[];
                   {l.time && <span className="text-label-12-mono text-gray-600">{l.time}</span>}
                   <ExternalLink size={12} className="ml-auto shrink-0 text-gray-500 transition-colors group-hover:text-gray-900" />
                 </div>
-                <p className="text-label-14 mt-1.5 text-gray-1000">{l.title}</p>
-                <p className="text-copy-13 mt-1 text-gray-700">{l.why}</p>
+                <span className="text-label-14 mt-1.5 block text-gray-1000">{l.title}</span>
+                <span className="text-copy-13 mt-1 block text-gray-700">{l.why}</span>
               </a>
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
     </aside>
   );
 }
