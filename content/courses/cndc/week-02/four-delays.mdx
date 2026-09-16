@@ -6,44 +6,37 @@ This is the most examined lesson in the course. Every paper has at least one del
   answer="Pushing the bits (transmission delay) takes 8 ms. The first bit's trip (propagation delay) takes about 5 µs. Transmission is about 1600 times longer here. Change the link to 100 Gbps over 5000 km and propagation dominates instead."
 >
 
-**Transmission delay** = L / R = 8000 bits ÷ 1,000,000 bits/s = **8 ms**.
+| | Formula | Numbers | Result |
+|---|---|---|---|
+| Transmission | L ÷ R | 8000 bits ÷ 1,000,000 bits/s | **8 ms** |
+| Propagation | d ÷ s | 1000 m ÷ 200,000,000 m/s | **5 µs** |
 
-**Propagation delay** = d / s = 1000 m ÷ 200,000,000 m/s = **5 µs**.
-
-Transmission wins by a factor of 1600. Most people guess the opposite because "sending a signal down a wire" sounds like the slow part.
-
-Now flip it. A 1000-byte packet on a 100 Gbps link across 5000 km: transmission is 80 ns, propagation is 25 ms. Propagation wins by 300,000×.
-
-The two delays depend on completely different things. Transmission on packet size and link rate; propagation on distance and the speed of light in the medium. Neither one cares about the other. Keep them separate in your head and the numericals become easy.
+Transmission wins by 1600×. Most people guess the opposite because "a signal down a wire" sounds like the slow part. Now flip it: the same packet on a 100 Gbps link across 5000 km is 80 ns of transmission against 25 ms of propagation. The two delays depend on different things and neither cares about the other.
 
 </Predict>
 
 ## Nodal delay
 
-As a packet travels from one node (host or router) to the next, it suffers four delays at each node. Their sum is the **total nodal delay**:
+Every node on the path (host or router) adds four delays. Their sum is the **total nodal delay**, and the exam wants the table verbatim:
 
-**d_nodal = d_proc + d_queue + d_trans + d_prop**
+| Delay | What it is | Depends on |
+|---|---|---|
+| Processing, d_proc | Read the header, check for bit errors, pick the output link | Router hardware, usually microseconds |
+| Queueing, d_queue | Wait in the output buffer behind earlier packets | Congestion: the only variable one |
+| Transmission, d_trans | Push all L bits onto the link at rate R | **L ÷ R** |
+| Propagation, d_prop | The first bit crosses the physical length of the link | **d ÷ s** |
 
-| Delay | What it is | Depends on | Typical size |
-|---|---|---|---|
-| Processing, d_proc | Examine the header, check bits for errors, decide the output link | Router hardware | Microseconds or less |
-| Queueing, d_queue | Wait in the output buffer while earlier packets are transmitted | Congestion: how many packets are ahead | Zero to milliseconds; the variable one |
-| Transmission, d_trans | Push all L bits of the packet onto the link at rate R | **L / R** | Microseconds to milliseconds |
-| Propagation, d_prop | The first bit travels the physical length of the link | **d / s** | Microseconds to hundreds of ms |
+<CaravanDiagram />
 
-**s** is the propagation speed in the medium: 2×10⁸ to 3×10⁸ m/s. Fiber and copper are both about 2×10⁸ (two thirds of c). If a question does not give s, state your assumption and use 2×10⁸ or 3×10⁸ consistently.
-
-The caravan analogy from the textbook, since it fixes the distinction permanently: a caravan of 10 cars (bits) drives between tollbooths (routers) 100 km apart (links). Each tollbooth services one car in 12 seconds: that is transmission delay, the time to push the whole packet through. Between tollbooths the cars drive at 100 km/h: that is propagation delay, and it does not care how many cars there are.
+<Callout type="key-idea" title="d_nodal = d_proc + d_queue + d_trans + d_prop">
+**s** is the propagation speed in the medium, 2×10⁸ to 3×10⁸ m/s. Fiber and copper are both about 2×10⁸, two thirds of c. If a question does not give s, state your assumption and use it consistently.
+</Callout>
 
 <DelayLab />
 
 ## End-to-end delay across N links
 
-Suppose N links between source and destination, each with rate R, and one packet of L bits. Ignore processing and queueing. Because each router must **store the whole packet before forwarding** it, the packet is transmitted N times, once per link:
-
-**d_end-to-end = N × (L / R + d / s)**
-
-Or with propagation ignored, simply **N × L / R**. If the links differ, sum each link's own L/R and d/s.
+Each router must **store the whole packet before forwarding** it, so a packet crossing N links is transmitted N times. With identical links: **d_end-to-end = N × (L ÷ R + d ÷ s)**. If the links differ, add up each link's own L ÷ R and d ÷ s.
 
 <WorkedExample title="Three links, cross-country">
   <Step label="Set up">
@@ -117,23 +110,19 @@ Or with propagation ignored, simply **N × L / R**. If the links differ, sum eac
 
 ## Queueing delay and traffic intensity
 
-The one delay with no closed formula. It depends on how many packets are already waiting when yours arrives, which depends on the arrival pattern. The textbook gives you a single dimensionless number to reason with:
+The one delay with no closed formula: it depends on how many packets are already waiting when yours arrives. The textbook gives you one dimensionless number to reason with, the ratio of the rate bits arrive to the rate bits can leave.
 
-**Traffic intensity = L × a / R**
+<IntensityCurve />
 
-where a is the average arrival rate in packets per second, L bits per packet, R the link rate. It is the ratio of the rate bits arrive to the rate bits can leave.
-
-- **La/R > 1**: bits arrive faster than they can be sent. The queue grows without bound. Delay heads to infinity, then the buffer fills and packets are dropped.
-- **La/R ≤ 1**: it depends on the burstiness. Periodic arrivals spaced L/R apart wait zero. A burst of N packets arriving together makes the k-th packet wait (k−1)L/R even when the average is low.
-- As **La/R approaches 1** from below, the average queueing delay grows sharply. This is the famous hockey-stick curve.
+<Callout type="key-idea" title="Traffic intensity = L × a ÷ R">
+a is the average arrival rate in packets per second, L bits per packet, R the link rate. Design rule: **keep it below 1**, and in practice below about 0.7, which is why ISPs upgrade links long before they are full. Even a low average does not save you from a burst: N packets arriving together make the k-th one wait (k−1) × L ÷ R.
+</Callout>
 
 <QueueingLab />
 
-<Callout type="key-idea">
-Design rule from the textbook: **keep traffic intensity below 1**. That is why ISPs upgrade links at 70% average utilisation rather than 100%: the delay curve has already started climbing.
+<Callout type="pitfall" title="Loss is the same curve, one step later">
+Buffers are finite. When a packet arrives to a full buffer the router drops it, and from the sender's view it simply vanished. TCP notices and retransmits (week 5); UDP does not care. Loss rate climbs with traffic intensity exactly as delay does.
 </Callout>
-
-**Packet loss** follows directly. Buffers are finite. When a packet arrives to a full buffer, the router has nowhere to put it, so it drops it. From the sender's point of view the packet vanished. TCP notices (week 5) and retransmits; UDP does not care. Loss rate rises with traffic intensity just like delay does.
 
 <QuickCheck
   id="intensity-over-one"

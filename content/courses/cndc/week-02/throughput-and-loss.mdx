@@ -6,32 +6,20 @@ Delay is how long one packet takes. Throughput is how many bits per second actua
   answer="10 Mbps. The core link gives each of the 10 flows 100 ÷ 10 = 10 Mbps, and that is less than either access link. Throughput is the minimum along the path."
 >
 
-**10 Mbps.** Your flow gets one tenth of the shared core link, and that is the smallest capacity anywhere on the path.
-
-The 1 Gbps access link and the 10 Gbps server link are irrelevant. Throughput is always the **bottleneck link's** rate, and the bottleneck is whichever link gives your flow the least, after dividing shared links among the flows that share them.
-
-Textbook framing: think of fluid flowing through pipes of different widths. The flow rate at the end is set by the narrowest pipe, wherever it is.
+**10 Mbps.** Your flow gets one tenth of the shared core link, and that is the smallest capacity anywhere on the path. The 1 Gbps and 10 Gbps access links are irrelevant. Picture fluid through pipes of different widths: the rate at the end is set by the narrowest pipe, wherever it is.
 
 </Predict>
 
-## Instantaneous vs average throughput
+<BottleneckPipes />
 
-For a file transfer of F bits that takes T seconds, **average throughput = F / T** bits per second. **Instantaneous throughput** is the rate at a particular moment; that is what your download manager's number shows, bouncing around.
-
-Which one you want depends on the application. For a file download, the average is all that matters. For a video call, instantaneous throughput must stay above the stream's rate at every moment, or the picture freezes. Week 13 comes back to this.
-
-## The bottleneck link
-
-Two links in series, server to router at Rs and router to client at Rc. The router forwards bits no faster than they arrive and no faster than the output link accepts them, so throughput is **min(Rs, Rc)**.
-
-Generalise: for N links in series with rates R1 through RN, throughput is **min(R1, R2, …, RN)**. The narrowest pipe.
-
-Sharing: if a link of rate R is shared fairly by k flows, each flow's share of that link is **R / k**. Divide before taking the minimum.
+<Callout type="key-idea" title="Throughput = min(R1, R2, …, RN)">
+A router forwards bits no faster than they arrive and no faster than the next link accepts them, so a path's throughput is the **minimum** over its links. If a link of rate R is shared fairly by k flows, your share is **R ÷ k**: divide first, then take the min. **Average throughput** over a transfer of F bits in T seconds is F ÷ T; **instantaneous throughput** is the bouncing number in your download manager, and a video call needs that one to stay above the stream rate at every moment.
+</Callout>
 
 <ThroughputLab />
 
-<Callout type="key-idea">
-In today's Internet the core is provisioned far above what any single flow needs, so **the bottleneck is almost always an access link**: your Wi-Fi, your ISP plan, or the server's uplink. The textbook says this explicitly and exams ask "where is the bottleneck typically located and why."
+<Callout type="exam" title="Where is the bottleneck, typically?">
+In today's Internet the core is provisioned far above what any single flow needs, so **the bottleneck is almost always an access link**: your Wi-Fi, your ISP plan, or the server's uplink. Exams ask this directly.
 </Callout>
 
 <QuickCheck
@@ -71,9 +59,9 @@ In today's Internet the core is provisioned far above what any single flow needs
 
 ## Packet loss
 
-A router's output buffer is finite. When a packet arrives and the buffer is full, the router **drops** it. That is nearly the only reason packets are lost in wired networks: bit errors on fiber are rare enough that the link layer's checksum catches and discards them at a rate you can usually ignore. On wireless, bit errors matter much more; week 12.
+A router's output buffer is finite. When a packet arrives and the buffer is full, the router **drops** it. In wired networks that is nearly the only cause of loss: fiber bit errors are rare enough to ignore, and the link-layer checksum discards the few that happen. Wireless is different, and week 12 covers why.
 
-From the endpoints' view, a lost packet is a packet that never arrives. Whether anything is done about it depends on the transport protocol: TCP detects the gap and retransmits; UDP ships the next one and moves on. Loss rate is measured as the fraction of packets dropped, and it climbs steeply with traffic intensity exactly like queueing delay does. They are the same phenomenon: a queue that is too long, and a queue that is full.
+From the endpoints' view a lost packet simply never arrives. TCP detects the gap and retransmits; UDP ships the next one and moves on. Loss and queueing delay are the same phenomenon at two stages: a queue that is too long, then a queue that is full.
 
 <QuickCheck
   id="loss-cause"
@@ -102,9 +90,7 @@ or, for a live view that averages many probes:
 mtr -n 1.1.1.1
 ```
 
-How it works: the tool sends packets with the network-layer hop limit (TTL) set to 1, then 2, then 3. Each router that decrements the TTL to zero discards the packet and sends back an error message. That error's arrival time gives the round-trip delay to that specific router. Three probes per hop, so three times.
-
-Here is a plausible trace from a home connection in Islamabad to a server in Frankfurt:
+The tool sends probes with the hop limit (TTL) set to 1, then 2, then 3. Each router that decrements it to zero discards the probe and sends back an error, and that error's arrival time is the round-trip delay to that router. Three probes per hop, so three times. A plausible trace from a home connection in Islamabad to a server in Frankfurt:
 
 ```
  1  192.168.1.1      1.2 ms   0.9 ms   1.1 ms     home router
@@ -117,7 +103,7 @@ Here is a plausible trace from a home connection in Islamabad to a server in Fra
  8  server         113.1 ms 112.6 ms 112.9 ms     destination
 ```
 
-Read it: hops 1 to 3 are all under 7 ms, that is local queueing plus tiny propagation. Hop 4 to Karachi adds a few ms of propagation. The jump from 13 ms to 99 ms between hops 4 and 6 is the submarine cable across the Arabian Sea and Red Sea to Europe: propagation delay, pure physics, roughly 8000 km of fiber. After that, Marseille to Frankfurt adds 13 ms. Hop 5 replied to nothing: some routers are configured not to answer, which does not mean traffic is being dropped there.
+<TracerouteMap />
 
 <QuickCheck
   id="traceroute-jump"

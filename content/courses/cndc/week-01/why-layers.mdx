@@ -1,4 +1,4 @@
-You already layer things: HTTP handlers on top of a framework on top of a socket library on top of the kernel. Networking formalised that instinct in 1984, and the exam wants you to reproduce both formalisations and explain the encapsulation that makes them work.
+You already layer things: HTTP handlers on a framework on a socket library on the kernel. Networking formalised that instinct in 1984. The exam wants both formalisations drawn from memory, plus the encapsulation that makes them work.
 
 <Predict
   id="combinatorial-blowup"
@@ -6,63 +6,35 @@ You already layer things: HTTP handlers on top of a framework on top of a socket
   answer="Without layering: A × L implementations. With layering: A + L, because every application talks to one common interface (the network/transport layer) and every link technology implements that one interface."
 >
 
-Without layers, every application would need its own code for every link type: **A × L** combinations. Add one new link technology and every application on earth must be updated.
+Without layers: **A × L** implementations, and every new link technology forces every application on earth to change.
 
-With layers, applications talk to one interface (IP and the transport protocols) and each link technology implements that same interface once: **A + L**. The Internet went from dial-up to fiber to 5G without HTTP changing at all. That is not luck, it is the architecture.
-
-The textbook's analogy is an airline: ticket purchase, baggage check, gate, runway takeoff, then in reverse at the other end. Each layer does one job and hands off to the next. The baggage layer does not care what plane it is.
+With layers: **A + L**. Applications talk to one interface (IP and transport), each link technology implements that interface once. The Internet went from dial-up to fiber to 5G without HTTP changing. That is the architecture, not luck.
 
 </Predict>
 
-## Layered architecture: what it means precisely
+## What a layer is
 
-A network protocol stack is organised in **layers**. Each layer:
+Each layer does some work of its own, **uses the service** of the layer below, and **provides a service** to the layer above. The set of services it offers upward is its **service model**; the layer above needs only that, never the implementation. TCP does not know whether the datagram went over Ethernet or Wi-Fi.
 
-- performs certain actions within the layer, and
-- uses the **services** of the layer directly below it, and
-- provides a **service** to the layer directly above it.
+<Callout type="exam" title="Advantages and drawbacks, as the marker wants them">
+**For**: modularity (discuss and update pieces independently); transparency (a layer's internals can change if its service does not); shared vocabulary ("the transport layer" means one thing everywhere). **Against**: duplicated functionality (error recovery at link and again at transport); layer violations (a strict stack forbids the application from seeing a link-layer timestamp it might want). Two advantages and one drawback earns full marks.
+</Callout>
 
-The set of services a layer offers upward is its **service model**. The layer above only needs the service model, never the implementation. TCP does not know or care whether the datagram went over Ethernet or Wi-Fi.
+## The two stacks, side by side
 
-Advantages the exam wants listed:
+<LayerStacks />
 
-1. **Modularity**: a well-defined structure lets you discuss and update pieces independently.
-2. **Transparency of implementation**: a layer can change internally as long as its service to the layer above is unchanged.
-3. **A shared vocabulary**: "the transport layer" means the same thing to every engineer in the world.
-
-Drawbacks, because a balanced answer earns more:
-
-1. **Duplicated functionality**: error recovery exists at the link layer and again at the transport layer.
-2. **Layer violations**: some jobs need information from another layer (the application might want to know a timestamp the link layer has), and a strict stack forbids it.
-
-## The Internet protocol stack: five layers
-
-| Layer | Job | Protocols | <Term term="PDU" def="Protocol Data Unit. The name of the chunk of data at a given layer: message, segment, datagram, frame.">PDU</Term> name |
-|---|---|---|---|
-| Application | The thing you wanted: a page, an email, a name lookup | HTTP, SMTP, FTP, DNS | message |
-| Transport | Process-to-process delivery between hosts | TCP, UDP | segment |
-| Network | Host-to-host delivery across networks; routing | IP, routing protocols | datagram |
-| Link | Node-to-node across a single link; medium access | Ethernet, Wi-Fi, PPP | frame |
-| Physical | Bits onto the medium | 1000BASE-T, 802.11 radio | bit |
-
-## OSI: seven layers
-
-The **Open Systems Interconnection** model, published by ISO in the early 1980s, has seven. It adds two layers between application and transport that the Internet stack leaves to the application developer:
-
-- **Presentation**: how data is represented so both ends interpret bytes identically: encoding, compression, encryption.
-- **Session**: opening, checkpointing and recovering dialogues between applications.
-
-The Internet stack does not have them because its designers judged that, if an application needs those services, it can build them itself. TLS is a presentation-layer job done inside the application layer. Video-call resumption is a session-layer job done inside the app.
+<Callout type="key-idea" title="Why the Internet stack has no presentation or session layer">
+Its designers judged that an application needing those services can build them itself. TLS is a presentation-layer job done inside the application layer; a video call resuming after a dropped connection is a session-layer job done inside the app.
+</Callout>
 
 <EncapsulationExplorer />
 
 ## Encapsulation
 
-The sending host's application layer produces a **message**. Transport prepends a header (ports, sequence numbers) and the result is a **segment**. Network prepends its header (IP addresses) making a **datagram**. Link prepends a header (MAC addresses) and appends a trailer (checksum) making a **frame**. Physical turns the frame into signals.
+The application produces a **message**. Transport prepends a header (ports, sequence numbers): a **segment**. Network prepends IP addresses: a **datagram**. Link prepends MAC addresses and appends a checksum trailer: a **frame**. Physical turns the frame into signals. Each PDU is a header plus the whole PDU from the layer above, nested like JSON inside JSON.
 
-Each layer's PDU has two parts: the **header** that layer added, and the **payload** which is the whole PDU from the layer above. Nesting, like Russian dolls or nested JSON.
-
-At each intermediate device, only some layers are peeled off. A **router** removes the frame, reads the datagram's IP header, chooses an output link, and builds a fresh frame for that link. It never opens the segment. A **switch** only reads the frame's MAC addresses. A **hub** regenerates signals and does not know what a frame is.
+<HopDiagram />
 
 <OrderCheck
   id="osi-order"
@@ -122,16 +94,18 @@ At each intermediate device, only some layers are peeled off. A **router** remov
 />
 
 <Callout type="pitfall" title="Four layers or five?">
-Some books describe TCP/IP as four layers by merging physical and link into a single "network access" or "host-to-network" layer. Kurose and Forouzan both use five. If a question says TCP/IP has four layers, that merge is what they mean. Answer using the numbering the question uses, and say so in one line.
+Some books merge physical and link into one "network access" layer and call TCP/IP four layers. Kurose and Forouzan both use five. Answer with the numbering the question uses, and say so in one line.
 </Callout>
 
 <Deeper kind="history" title="Why OSI lost and why we still teach it">
 
-ISO designed OSI top-down by committee with the aim of being complete. TCP/IP grew bottom-up inside ARPANET and shipped working code in BSD Unix. By the time OSI implementations arrived, every university already had TCP/IP for free. The protocols lost; the vocabulary won. Nobody runs the OSI session layer, but everyone says "layer 2 switch" and "layer 3 routing" using OSI's numbering. "Layer 7 load balancer" means it parses HTTP.
+ISO designed OSI top-down by committee. TCP/IP grew bottom-up inside ARPANET and shipped as working code in BSD Unix, so every university had it for free before OSI implementations arrived. The protocols lost; the vocabulary won. Nobody runs the OSI session layer, but everyone says "layer 2 switch", "layer 3 routing" and "layer 7 load balancer" using OSI's numbers.
 
 </Deeper>
 
 <Deeper kind="exam" title="Model answer: compare the OSI and TCP/IP models (5 marks)">
+
+The figure above, as a table:
 
 | Aspect | OSI | TCP/IP |
 |---|---|---|
@@ -146,7 +120,7 @@ Then one sentence: "OSI is the conceptual reference; TCP/IP is the deployed arch
 </Deeper>
 
 <Callout type="exam" title="What to be able to reproduce cold">
-Both layer lists top to bottom with one-line jobs, the four PDU names, which layers a host, router and switch implement, two advantages and one drawback of layering, and the comparison table above. That covers every layering question in the last several years of papers for this course.
+Both stacks top to bottom with one-line jobs, the four PDU names, which layers a host, router and switch implement, two advantages and one drawback of layering, and the comparison table. That is every layering question this course asks.
 </Callout>
 
 <Further links={[

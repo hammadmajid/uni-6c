@@ -1,4 +1,4 @@
-The network core is the mesh of routers and links that connects the edges. There are exactly two ways to move data through it. The telephone network picked one in 1880 and the Internet picked the other in 1969. This lesson makes you compute why.
+The network core is the mesh of routers and links between the edges. There are exactly two ways to move data through it. The telephone network picked one in 1880, the Internet picked the other in 1969. This lesson makes you watch why.
 
 <Predict
   id="stat-mux"
@@ -6,27 +6,28 @@ The network core is the mesh of routers and links that connects the edges. There
   answer="Circuit switching: 10 users (1 Mbps ÷ 100 kbps). Packet switching: 35 users, because the probability that more than 10 of 35 are active at once is about 0.0004."
 >
 
-**Circuit switching: 10 users.** Each gets a reserved 100 kbps slice whether or not they are using it. 1000 ÷ 100 = 10. The eleventh caller gets a busy signal.
+**Circuit switching: 10.** Each user holds a reserved 100 kbps slice, used or not. 1000 ÷ 100 = 10; the eleventh caller gets a busy signal.
 
-**Packet switching: 35 users.** With 35 users each active 10% of the time, the chance that 11 or more are active simultaneously is around 0.0004. The rest of the time, everyone gets their full 100 kbps with no delay. Three and a half times the users on the same wire, at the cost of a tiny probability of a short queue.
-
-That is **statistical multiplexing**, and it is the reason the Internet works economically. The lab below lets you push the numbers.
+**Packet switching: 35.** Press play below and watch how rarely more than 10 of 35 are talking at once.
 
 </Predict>
 
+<StatMuxStrip />
+
+<Callout type="key-idea" title="Statistical multiplexing">
+Capacity goes to whoever has data right now. Bursty users leave gaps; other users' packets fill them. That is why 35 fit where reservation fits 10, and why the Internet is economical.
+</Callout>
+
 ## Circuit switching
 
-The resources needed for a session, **buffer space and link transmission rate**, are **reserved** for the whole session along the path. Three phases: **setup** (a path is chosen and every switch on it reserves capacity), **data transfer** at a guaranteed constant rate, and **teardown**.
+The resources a session needs, **buffer space and link transmission rate**, are **reserved** along the whole path. Three phases: **setup** (a path is chosen and every switch reserves capacity), **data transfer** at a guaranteed constant rate, **teardown**. The textbook analogy is a restaurant that takes reservations: you wait before you arrive, but once seated the table is yours however slowly you eat. A phone call is exactly this: dialling is setup, and the call holds 64 kbps whether you talk or sit in silence.
 
-The textbook analogy: a restaurant that takes reservations. You wait before you arrive, but once seated the table is yours regardless of how slowly you eat. Traditional telephone networks work this way: dialling is the setup phase, and a call gets a guaranteed 64 kbps whether you talk or sit in silence.
+One link carries many circuits at once by <Term term="FDM" def="Frequency-Division Multiplexing. The link's frequency spectrum is divided into bands; each circuit owns one band for the duration of the connection.">FDM</Term> or <Term term="TDM" def="Time-Division Multiplexing. Time is divided into frames of fixed duration, each frame into a fixed number of slots; each circuit owns one slot per frame.">TDM</Term>:
 
-A link carries many circuits at once through one of two multiplexing schemes:
+<MultiplexingDiagram />
 
-- <Term term="FDM" def="Frequency-Division Multiplexing. The link's frequency spectrum is divided into bands; each circuit owns one band for the duration of the connection.">**Frequency-division multiplexing (FDM)**</Term>: the spectrum is split into bands and each circuit owns a band. FM radio stations sharing the 88 to 108 MHz band is FDM. A phone circuit got 4 kHz of bandwidth.
-- <Term term="TDM" def="Time-Division Multiplexing. Time is divided into frames of fixed duration, each frame into a fixed number of slots; each circuit owns one slot per frame.">**Time-division multiplexing (TDM)**</Term>: time is divided into frames, each frame into slots, and each circuit gets one slot in every frame. Its rate is the link rate divided by the number of slots.
-
-<Callout type="key-idea">
-Under TDM, a circuit's transmission rate is **frame rate × bits per slot**, which simplifies to **link rate ÷ number of slots**. With 24 slots on a 1.536 Mbps link, each circuit gets 64 kbps. That formula is a guaranteed exam numerical.
+<Callout type="exam" title="The TDM numerical">
+A circuit's rate under TDM is **frame rate × bits per slot**, which simplifies to **link rate ÷ number of slots**. 24 slots on 1.536 Mbps gives 64 kbps per circuit. Expect this on every paper.
 </Callout>
 
 <WorkedExample title="Sending 640 kbits over a TDM circuit (Kurose 1.3)">
@@ -55,11 +56,7 @@ Under TDM, a circuit's transmission rate is **frame rate × bits per slot**, whi
 
 ## Packet switching
 
-No reservation. The source chops the message into packets, and each packet travels through the links and switches on its own. At each switch, the packet is fully received and stored, then transmitted on the output link: **store-and-forward**. If the output link is busy, the packet waits in an **output buffer** (a queue). If the buffer is full, the packet is **dropped**: packet loss.
-
-The textbook analogy: a restaurant with no reservations. You may wait for a table, but the restaurant seats far more people over an evening because no table sits empty waiting for a booking.
-
-Resources are used **on demand**. When one user is silent, another user's packets flow. That is statistical multiplexing, and it is why the 35-user answer above beats 10.
+No reservation. The source chops the message into packets and each travels on its own. At every switch the packet is fully received and stored, then sent on: **store-and-forward**. If the output link is busy the packet waits in an **output buffer**; if the buffer is full it is **dropped**. The restaurant with no reservations: you may wait for a table, but far more people eat over an evening because no table sits empty waiting for a booking.
 
 <SwitchingLab />
 
@@ -125,19 +122,17 @@ Resources are used **on demand**. When one user is silent, another user's packet
 
 <Deeper kind="why" title="Why the Internet's designers chose packets">
 
-Three reasons, in order of importance:
-
 1. **Data is bursty.** A terminal session in 1969, or a web page today, sends nothing for seconds and then a burst. Reserving a circuit for that is absurd.
-2. **Simplicity.** A circuit switch must remember every active session. A packet switch needs only a forwarding table and a queue. Simpler switches are cheaper and fail more gracefully.
+2. **Simplicity.** A circuit switch must remember every active session. A packet switch needs only a forwarding table and a queue.
 3. **Resilience.** With no per-session state in the core, a failed router just means packets take another path. A failed circuit switch drops every call through it.
 
-The cost: no guarantees. Delay varies, packets are lost, and anything needing steady timing (voice, video) must cope in software. Week 13 is about how it copes.
+The cost: no guarantees. Delay varies, packets are lost, and anything needing steady timing must cope in software. Week 13 is about how it copes.
 
 </Deeper>
 
 <Deeper kind="beyond" title="Virtual circuits: the hybrid you will meet in real networks">
 
-Between the two extremes sits **virtual-circuit switching**: packets, but along a path set up in advance, with each switch keeping per-connection state. ATM did this in the 1990s; **MPLS** does it inside every large ISP today, labelling packets so core routers forward on a short label instead of a full IP lookup. Your traffic to a VPS almost certainly rides MPLS tunnels inside carrier networks without your ever seeing it.
+Between the two extremes sits **virtual-circuit switching**: packets, but along a path set up in advance, with each switch keeping per-connection state. ATM did this in the 1990s; **MPLS** does it inside every large ISP today, labelling packets so core routers forward on a short label instead of a full IP lookup. Your traffic to a VPS almost certainly rides MPLS tunnels without your ever seeing it.
 
 </Deeper>
 

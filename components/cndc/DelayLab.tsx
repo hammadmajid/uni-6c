@@ -99,6 +99,50 @@ export function DelayLab() {
         <Stat label={`End-to-end (N = ${v.N})`} value={fmtTime(total)} tone="green" note={`${v.N} × ${fmtTime(perHop)}`} />
       </div>
 
+      {/* Per-hop breakdown: which of the four terms is eating the time */}
+      <div className="mt-4">
+        <p className="text-label-12 mb-1.5 text-gray-700">One hop, split into its four terms</p>
+        <div className="flex h-6 w-full overflow-hidden rounded-md bg-gray-300">
+          {(
+            [
+              { key: "proc", v: dProc, color: "#6b6b6b" },
+              { key: "queue", v: dQueue, color: "#ffb224" },
+              { key: "trans", v: dTrans, color: "#0070f3" },
+              { key: "prop", v: dProp, color: "#3291ff" },
+            ] as const
+          ).map((seg) => {
+            const pct = perHop > 0 ? (seg.v / perHop) * 100 : 0;
+            return (
+              <div
+                key={seg.key}
+                title={`${seg.key}: ${fmtTime(seg.v)} (${pct.toFixed(1)}%)`}
+                className="flex h-full items-center justify-center overflow-hidden"
+                style={{ width: `${pct}%`, backgroundColor: seg.color, transition: "width 150ms ease-out" }}
+              >
+                {pct >= 8 && (
+                  <span className="text-label-12-mono whitespace-nowrap text-black">
+                    {seg.key} {pct.toFixed(0)}%
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+          {[
+            { key: "d_proc", color: "#6b6b6b" },
+            { key: "d_queue", color: "#ffb224" },
+            { key: "d_trans", color: "#0070f3" },
+            { key: "d_prop", color: "#3291ff" },
+          ].map((l) => (
+            <span key={l.key} className="text-label-12-mono flex items-center gap-1.5 text-gray-700">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: l.color }} />
+              {l.key}
+            </span>
+          ))}
+        </div>
+      </div>
+
       <p className="text-copy-13 mt-3 text-gray-700">
         Dominant term right now: <span className="text-gray-1000">{dominant}</span>.{" "}
         {dominant === "transmission"

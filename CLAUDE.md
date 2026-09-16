@@ -8,7 +8,7 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 - `content/courses/<slug>/course.json`: course metadata and the full 15-week roadmap. Weeks with an empty `lessons` array are not built yet.
 - `content/courses/<slug>/week-NN/<lesson>.mdx`: lesson content. Prose plus the components registered in `lib/mdx-components.tsx`.
 - `components/learning/`: generic learning components (QuickCheck, Predict, OrderCheck, WorkedExample, Deeper, Callout, Term, Timeline, HintLadder, lab controls).
-- `components/<course>/`: course-specific explorables (for CNDC: DelayLab, QueueingLab, SwitchingLab, EncapsulationExplorer, ThroughputLab, SharedMediumLab).
+- `components/<course>/`: course-specific explorables and figures. CNDC labs: DelayLab, QueueingLab, SwitchingLab, EncapsulationExplorer, ThroughputLab, SharedMediumLab, StatMuxStrip, AccessTechDiagram. CNDC static SVG figures: InternetMap, ProtocolExchange, MediaChart, LayerStacks, HopDiagram, MultiplexingDiagram, CaravanDiagram, IntensityCurve, BottleneckPipes, TracerouteMap. Every figure uses `Figure` and the `P` palette from `components/learning/Figure.tsx` (viewBox width 640, mono labels 9 to 12 px, blue = highlighted path, amber = shared or waiting, green = dedicated or ok, red = loss). Register new ones in `lib/mdx-components.tsx`. Screenshot every new figure in the browser before committing; label overlaps do not show up in the build.
 - `lib/semester.ts`: calendar. Week 1 started 2026-09-14. Midterm is week 8.
 - `lib/learning/progress-store.ts`: zustand store persisted in localStorage. Activities keyed `course/module/lesson/id`, lesson completion, spaced-review queue.
 
