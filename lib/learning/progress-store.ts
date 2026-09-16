@@ -22,14 +22,20 @@ const emptyActivity: Activity = {
   hintsUsed: 0,
 };
 
+export type SyncState = "checking" | "local-only" | "unauthorized" | "synced" | "saving" | "error";
+
 interface ProgressState {
   hydrated: boolean;
+  sync: SyncState;
   activities: Record<string, Activity>;
   lessons: Record<string, { completedAt: number }>;
   lastVisited: Record<string, { href: string; title: string; at: number }>;
   review: ReviewItem[];
 
   setHydrated: (v: boolean) => void;
+  setSync: (s: SyncState) => void;
+  /** Replace the persisted slice wholesale (used after merging with the server). */
+  replaceAll: (s: { activities: Record<string, Activity>; lessons: Record<string, { completedAt: number }>; lastVisited: Record<string, { href: string; title: string; at: number }>; review: ReviewItem[] }) => void;
   getActivity: (key: string) => Activity;
   recordAttempt: (key: string, correct: boolean) => void;
   recordHint: (key: string) => void;
@@ -47,12 +53,15 @@ export const useProgressStore = create<ProgressState>()(
   persist(
     (set, get) => ({
       hydrated: false,
+      sync: "checking",
       activities: {},
       lessons: {},
       lastVisited: {},
       review: [],
 
       setHydrated: (v) => set({ hydrated: v }),
+      setSync: (s) => set({ sync: s }),
+      replaceAll: (s) => set({ activities: s.activities, lessons: s.lessons, lastVisited: s.lastVisited, review: s.review }),
 
       getActivity: (key) => get().activities[key] ?? emptyActivity,
 

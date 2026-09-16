@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { flattenLessons, listCourses } from "@/lib/content";
 import { currentWeek, formatWeekRange, TOTAL_WEEKS } from "@/lib/semester";
 import { CourseCardProgress, ReviewDueBadge } from "@/components/learning/HomeWidgets";
+import { SyncStatus } from "@/components/learning/SyncStatus";
 
 export default async function Home() {
   const courses = await listCourses();
@@ -21,6 +22,7 @@ export default async function Home() {
             {week === 0 ? "Semester starts 14 Sept" : week > TOTAL_WEEKS ? "Semester over" : `Week ${week} of ${TOTAL_WEEKS} · ${formatWeekRange(week)}`}
           </span>
           <ReviewDueBadge />
+          <SyncStatus />
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import type { CourseMeta, FlatLesson } from "@/lib/content";
 import { courseProgress, useProgressStore } from "@/lib/learning/progress-store";
 import { formatWeekRange } from "@/lib/semester";
 import { ReviewDueBadge } from "./HomeWidgets";
+import { SyncStatus } from "./SyncStatus";
 import { Pill } from "./ui";
 
 export function CourseOverview({
@@ -42,6 +43,7 @@ export function CourseOverview({
           </div>
         </div>
         <ReviewDueBadge courseSlug={course.slug} />
+        <SyncStatus />
         {resume && (
           <Link href={resume.href} className="text-label-14 flex items-center gap-1.5 rounded-md bg-gray-1000 px-3.5 py-2 text-black transition-colors hover:bg-white">
             {last ? "Resume" : "Start"} <ArrowRight size={14} />

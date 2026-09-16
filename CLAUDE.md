@@ -31,9 +31,22 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 - Tables need remark-gfm, already wired in the lesson page.
 - The lesson page passes `blockJS: false` to next-mdx-remote. Without it, v6 silently strips every `prop={...}` expression and components render with undefined props.
 
-## Learner
+## Learner and semester (canonical, no device-local memory)
 
-Backend/systems engineer, 7 years of code, hosts VPSes, ships with Docker. Skip "what is a server". Anchor new ideas to systems intuition (queues, latency, failure). Exam-first depth with optional deeper tracks.
+- BS Computer Science, 6th semester, SZABIST Islamabad, Fall 2026. Coding since 2019, frontend and backend. Systems-engineer mindset: designs backends with databases, caches, queues; hosts VPSes; deploys with Docker; not a networking person by training.
+- Skip "what is a server". Anchor new ideas to systems intuition (queues, latency, failure). Exam-first depth with optional deeper tracks. Budget 3 to 5 hours per week per course.
+- Week 1 started Monday 2026-09-14. Week N starts 14 Sept + 7(N−1) days. Midterm week 8 (from 2026-11-02). Week 15 starts 2026-12-21.
+- Confirmed course: CNDC (CSC 3205). Lab uses Cisco Packet Tracer and Wireshark. Other courses to be decided; the owner will add one raw-materials directory per course at the repo root and share the class schedule.
+- Agreed workflow: build two weeks ahead, adapt weekly from slides and past papers dropped into the course directory.
+- The machine this runs on is ephemeral. Everything that matters lives in this repo; progress lives in Postgres when `DATABASE_URL` is set.
+
+## Progress storage and deployment
+
+- Progress (lesson completion, quiz attempts, review queue) is held in a zustand store persisted to localStorage, and mirrored to Postgres when `DATABASE_URL` is set. See `lib/learning/sync.ts`, `app/api/progress/route.ts`, `components/learning/ProgressHydrator.tsx`.
+- On load the client pulls the server snapshot, merges per key with the local copy (latest evidence wins), pushes the result, then debounce-pushes every change. Two machines used at different times never lose each other's work.
+- Single table `progress(id, data jsonb, updated_at)`, one row. Created automatically on first request.
+- `PROGRESS_SECRET` (optional) gates the API. The owner enters it once via the sync status widget in the header; it is kept in localStorage and sent as `x-progress-secret`.
+- Copy `.env.example` to `.env` locally. On Vercel set the same variables in project settings. All pages are static; only `/api/progress` runs on the server.
 
 ## Commands
 

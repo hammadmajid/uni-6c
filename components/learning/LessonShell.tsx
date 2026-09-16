@@ -9,6 +9,7 @@ import { currentWeek } from "@/lib/semester";
 import { LessonProvider } from "./LessonContext";
 import { ProgressRail } from "./ProgressRail";
 import { Button, Pill } from "./ui";
+import { SyncStatus } from "./SyncStatus";
 
 interface Props {
   course: CourseMeta;
@@ -75,6 +76,7 @@ export function LessonShell({ course, current, prev, next, total, children }: Pr
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-3">
+            <SyncStatus />
             <span className="text-label-12-mono hidden text-gray-700 sm:inline" suppressHydrationWarning>
               {progress.done}/{progress.total} lessons
             </span>
