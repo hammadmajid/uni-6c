@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "geist-learning-lab": {
+      "source": "vercel-labs/skill-geist-learning-labs",
+      "sourceType": "github",
+      "skillPath": "skills/geist-learning-lab/SKILL.md",
+      "computedHash": "6ec56df50ba61733e64a31946191836556db13217a15ded69a6de859989617d5"
+    }
+  }
+}
