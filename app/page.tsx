@@ -52,7 +52,7 @@ export default async function Home() {
         <div className="rounded-lg border border-dashed border-gray-500 p-5">
           <h2 className="text-heading-20 text-gray-700">More courses</h2>
           <p className="text-copy-14 mt-1 text-gray-700">
-            Drop a course outline into a new directory at the repo root and the next session builds it here.
+            Drop a course outline into a new courses/&lt;slug&gt;/ directory and the next session builds it here.
           </p>
         </div>
       </div>

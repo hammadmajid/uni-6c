@@ -1,0 +1,7 @@
+In home task do the following on your personal laptop:
+
+Step 1: Apply Jetbrains Student Pack and install IntelliJhttps://www.jetbrains.com/academy/student-pack/
+Step 2: Install JDK 26 (https://www.oracle.com/apac/java/technologies/downloads/)
+Step 3: Install Tomcat 11 zip file (https://tomcat.apache.org/download-11.cgi)
+Step 4: Install PostgreSQL (https://www.postgresql.org/download/)
+Step 5: Install Dbeaver (https://dbeaver.io)

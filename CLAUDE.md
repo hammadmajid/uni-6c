@@ -4,7 +4,7 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 
 ## Layout
 
-- `<course>/` at the repo root (e.g. `cndc/`): raw materials the owner drops in. Course outline PDF, lecture slides, assignments, past papers. Read these before building a week.
+- `courses/<slug>/`: raw materials the owner drops in, one directory per course, same slug as `content/courses/<slug>/`. Subfolders: `lectures/`, `labs/`, `assignments/`, `quizzes/`, `announcements/`, `references/`, plus `course-outline.pdf` at the top. Filenames are kebab-case and keep the instructor's numbering (`lecture-06-07-network-classification.pdf`). Read these before building a week. See `courses/README.md`.
 - `content/courses/<slug>/course.json`: course metadata and the full 15-week roadmap. Weeks with an empty `lessons` array are not built yet.
 - `content/courses/<slug>/week-NN/<lesson>.mdx`: lesson content. Prose plus the components registered in `lib/mdx-components.tsx`.
 - `components/learning/`: generic learning components (QuickCheck, Predict, OrderCheck, WorkedExample, Deeper, Callout, Term, Timeline, HintLadder, lab controls).
@@ -14,9 +14,9 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 
 ## Weekly workflow
 
-1. Check the course directory for new slides, assignments, or past papers since last time.
+1. Check `courses/<slug>/` for new slides, assignments, quizzes, or announcements since last time (`git log --stat -- courses/`).
 2. Build lessons for current week + 2 (`currentWeek()` in `lib/semester.ts`). Add the week's lessons to `course.json` and write the MDX.
-3. If slides show the instructor's emphasis differs from the outline, follow the slides. Note the discrepancy in the lesson's exam callout.
+3. If slides show the instructor's emphasis differs from the outline, follow the slides for exam scope. Note the discrepancy in the lesson's exam callout.
 4. Run `pnpm build`. It compiles every MDX file, so it catches content errors.
 
 ## Lesson rules
@@ -36,8 +36,32 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 - BS Computer Science, 6th semester, SZABIST Islamabad, Fall 2026. Coding since 2019, frontend and backend. Systems-engineer mindset: designs backends with databases, caches, queues; hosts VPSes; deploys with Docker; not a networking person by training.
 - Skip "what is a server". Anchor new ideas to systems intuition (queues, latency, failure). Exam-first depth with optional deeper tracks. Budget 3 to 5 hours per week per course.
 - Week 1 started Monday 2026-09-14. Week N starts 14 Sept + 7(N−1) days. Midterm week 8 (from 2026-11-02). Week 15 starts 2026-12-21.
-- Confirmed course: CNDC (CSC 3205). Lab uses Cisco Packet Tracer and Wireshark. Other courses to be decided; the owner will add one raw-materials directory per course at the repo root and share the class schedule.
-- Agreed workflow: build two weeks ahead, adapt weekly from slides and past papers dropped into the course directory.
+- Agreed workflow: build two weeks ahead, adapt weekly from slides, assignments and quizzes dropped into `courses/<slug>/`.
+- Past papers may never arrive. Do not wait for them; infer exam style from the instructor's slides and the outline's assessment scheme.
+
+## Courses this semester
+
+| Slug | Course | Status |
+|------|--------|--------|
+| `cndc` | CSC 3205 Data Communication and Computer Networks (instructor slides call it DCCN) | Outline in hand. Weeks 1 to 2 built. Lectures 01 to 10 uploaded (lecture 05 missing). |
+| `cndc-lab` | CNDC Lab, a separate course with its own grade. Wireshark and Cisco Packet Tracer. Lab manuals follow the Kurose Wireshark labs, in SZABIST's "Stage J (journey) / Stage a1 (apply)" format with worked solutions at the end. | No outline yet. Lab 01 uploaded. Do not build until the owner says so. |
+| `web-tech` | Web Technologies I (instructor: Zubair Ahmed). Java stack: JDK 26, Servlets on Tomcat 11, PostgreSQL, JDBC, IntelliJ, DBeaver. Slides so far: TCP/IP and ports, HTTP request/response, URLs, Tomcat directory layout, WAR and webapp structure, servlet GET/POST. A separate 160-page Java basics deck (classes, abstract classes, interfaces, singletons, JDBC) is a reference, not lecture order. | No outline yet. Do not build until the owner says so. |
+
+The owner will share the class schedule and remaining outlines. Build only courses that have an outline or an explicit go-ahead.
+
+## Instructor material: read with a grain of salt
+
+SZABIST slides do not always teach the correct or standard thing. Example: the Web Tech URL slide labels the first path segment of a URL "App name", which is only Tomcat's context-path convention, not a property of URLs. Treat lecture slides as evidence of **what will be examined and how the instructor phrases it**, not as ground truth. When a slide conflicts with the textbook or an RFC:
+
+- Teach the correct version in the lesson body, anchored to Kurose and Ross or the relevant standard.
+- Add an exam `Callout` that gives the instructor's phrasing verbatim, so the learner can reproduce it on a quiz, and says in one line why it is imprecise.
+- Never silently adopt the slide's wording as fact in a QuickCheck answer key. If the "expected" exam answer is the imprecise one, the question must say "according to the lecture slides".
+
+## Assessments
+
+- Each course: 4 quizzes and 4 assignments, 2 of each before the midterm (week 8) and 2 after. No fixed dates; the instructor announces them. Owner expects CNDC quiz 1 around week 3 and quiz 2 around weeks 5 to 6.
+- The owner drops quiz and assignment briefs into `courses/<slug>/quizzes/` and `courses/<slug>/assignments/` and says when a date is announced. When a quiz is announced, add a short revision lesson (`kind: "checkpoint"`) covering exactly the lectures the quiz spans, before the quiz date.
+- Assignments get their own lesson only if the assignment teaches something the outline does not; otherwise just link the brief from the week's checkpoint.
 - The machine this runs on is ephemeral. Everything that matters lives in this repo; progress lives in Postgres when `DATABASE_URL` is set.
 
 ## Progress storage and deployment
