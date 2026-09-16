@@ -1,0 +1,36 @@
+import type { ComponentType } from "react";
+import { QuickCheck } from "@/components/learning/QuickCheck";
+import { Predict } from "@/components/learning/Predict";
+import { OrderCheck } from "@/components/learning/OrderCheck";
+import { Callout } from "@/components/learning/Callout";
+import { Deeper } from "@/components/learning/Deeper";
+import { WorkedExample, Step } from "@/components/learning/WorkedExample";
+import { HintLadder } from "@/components/learning/HintLadder";
+import { Term } from "@/components/learning/Term";
+import { Timeline } from "@/components/learning/Timeline";
+import { DelayLab } from "@/components/cndc/DelayLab";
+import { QueueingLab } from "@/components/cndc/QueueingLab";
+import { SwitchingLab } from "@/components/cndc/SwitchingLab";
+import { EncapsulationExplorer } from "@/components/cndc/EncapsulationExplorer";
+import { ThroughputLab } from "@/components/cndc/ThroughputLab";
+import { SharedMediumLab } from "@/components/cndc/SharedMediumLab";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const mdxComponents: Record<string, ComponentType<any>> = {
+  QuickCheck,
+  Predict,
+  OrderCheck,
+  Callout,
+  Deeper,
+  WorkedExample,
+  Step,
+  HintLadder,
+  Term,
+  Timeline,
+  DelayLab,
+  QueueingLab,
+  SwitchingLab,
+  EncapsulationExplorer,
+  ThroughputLab,
+  SharedMediumLab,
+};

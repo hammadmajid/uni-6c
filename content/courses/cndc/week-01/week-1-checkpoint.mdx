@@ -1,0 +1,145 @@
+No notes. Attempt every item before looking anything up; the point of a checkpoint is to find out what did not stick, not to feel good. Anything you get wrong is scheduled back to you automatically.
+
+## Short answers
+
+<QuickCheck
+  id="cp-packet-switch-name"
+  type="short-answer"
+  question="The packet switches that make up the network core are called what? (one word)"
+  answer={["router", "routers"]}
+  explanation="Routers forward datagrams between networks. Link-layer switches also forward packets but sit in access networks and LANs."
+/>
+
+<QuickCheck
+  id="cp-rate-unit"
+  question="The transmission rate of a communication link is measured in:"
+  options={["Bytes per second", "Bits per second", "Packets per second", "Hertz"]}
+  answer="Bits per second"
+  explanation="Always bits. A '100 Mbps' link moves 12.5 megabytes per second. Every delay calculation next week depends on converting correctly."
+  feedback={{
+    "Bytes per second": "Your download manager shows bytes per second, and that is where the confusion comes from. Links are specified in bits.",
+    "Packets per second": "Routers are sometimes rated in packets per second, but a link's rate is bits per second.",
+    "Hertz": "Bandwidth in hertz is a physical-layer property of a channel. It is related to, but not the same as, the bit rate."
+  }}
+/>
+
+<QuickCheck
+  id="cp-protocol-parts"
+  question="The three things a protocol defines are:"
+  options={[
+    "Format of messages, order of messages, actions on transmission or receipt",
+    "Sender address, receiver address, payload",
+    "Syntax, hardware, software",
+    "Bandwidth, latency, reliability"
+  ]}
+  answer="Format of messages, order of messages, actions on transmission or receipt"
+  explanation="Format, order, actions. Write all three every time."
+/>
+
+<QuickCheck
+  id="cp-central-authority"
+  type="true-false"
+  question="The Internet is operated by a single central authority that all ISPs must obey."
+  answer="False"
+  explanation="It is a network of independently operated networks that agree on protocols. The IETF publishes standards; ICANN coordinates names and numbers; nobody runs it."
+/>
+
+<QuickCheck
+  id="cp-dslam"
+  question="The DSLAM in a DSL network is located at:"
+  options={["The customer's home", "The telephone company's central office", "A neighbourhood cabinet on every street", "The ISP's data center"]}
+  answer="The telephone company's central office"
+  explanation="The DSL Access Multiplexer terminates thousands of customer copper pairs at the central office and separates data from voice."
+  feedback={{
+    "The customer's home": "The home has the DSL modem. The DSLAM is its counterpart at the far end of the copper.",
+    "A neighbourhood cabinet on every street": "Fiber-to-the-cabinet deployments do push a small DSLAM into a street cabinet, but the standard answer is the central office.",
+    "The ISP's data center": "The DSLAM is access equipment, not data-center equipment."
+  }}
+/>
+
+<QuickCheck
+  id="cp-shared-cable"
+  question="In which access network do all homes on a segment receive every downstream frame, discarding those not addressed to them?"
+  options={["DSL", "Cable (HFC)", "Switched Ethernet", "Point-to-point fiber"]}
+  answer="Cable (HFC)"
+  explanation="The coax is a shared broadcast medium. Modems filter by address. This is why cable needs a medium access protocol upstream."
+/>
+
+<OrderCheck
+  id="cp-encapsulation"
+  prompt="Order the PDUs as data moves down the sending host's stack."
+  items={["Message", "Segment", "Datagram", "Frame", "Bits"]}
+  explanation="Application makes a message; transport wraps it into a segment; network into a datagram; link into a frame; physical sends bits."
+  topLabel="First (application layer)"
+  bottomLabel="Last (onto the wire)"
+/>
+
+<QuickCheck
+  id="cp-process-delivery"
+  question="Which layer is responsible for delivering data from a process on one host to a specific process on another host?"
+  options={["Network", "Transport", "Link", "Session"]}
+  answer="Transport"
+  explanation="Network gets the datagram to the right host. Transport uses port numbers to get it to the right process on that host."
+  feedback={{
+    "Network": "Network delivers host to host. It does not know which process should get the data.",
+    "Link": "Link delivers across one physical hop, between adjacent nodes.",
+    "Session": "Session manages dialogues; it is above transport and not part of the Internet stack anyway."
+  }}
+/>
+
+<QuickCheck
+  id="cp-presentation"
+  type="short-answer"
+  question="Name the OSI layer that sits directly between the application layer and the session layer."
+  answer={["presentation", "presentation layer"]}
+  explanation="Presentation handles data representation: encoding, compression, encryption."
+/>
+
+<QuickCheck
+  id="cp-hub-layer"
+  question="A hub (repeater) operates at which layer?"
+  options={["Physical", "Link", "Network", "Transport"]}
+  answer="Physical"
+  explanation="A hub regenerates and repeats the electrical signal on all ports. It has no concept of frames or addresses."
+/>
+
+## Long answers
+
+Write these out, on paper or in a text editor, then reveal and compare. The model answers are what a full-marks response contains, not the only wording.
+
+<Predict
+  id="cp-need-for-layers"
+  prompt="Explain the need for a layered architecture in communication networks. (5 marks)"
+  answer="Complexity management via modularity; each layer offers a service model to the one above; implementations can change independently; interoperability of vendors; application count plus link count instead of their product. Mention one drawback for balance."
+  placeholder="Write the answer you would give in the exam."
+>
+
+A full-marks answer contains:
+
+1. **The problem**: networks are complex systems with many hardware and software pieces from many vendors; without structure, every piece would depend on every other.
+2. **The mechanism**: divide the functionality into layers, each providing a service to the layer above using the services of the layer below (the service model).
+3. **Benefit 1, modularity**: each layer can be designed, discussed and tested on its own.
+4. **Benefit 2, independence**: the implementation of a layer can change without affecting the others, as long as the service is unchanged. New link technologies appear without applications changing.
+5. **Benefit 3, interoperability and scale**: with A applications and L link types, layering needs A + L implementations instead of A × L.
+6. **Balance**: one sentence on drawbacks, such as duplicated functionality across layers or the occasional need for a layer to use information from another.
+
+</Predict>
+
+<Predict
+  id="cp-end-vs-switch"
+  prompt="Differentiate between end systems and packet switches. (3 marks)"
+  answer="End systems (hosts) run applications and are the sources and sinks of data; they sit at the edge and implement all layers. Packet switches (routers, link-layer switches) sit in the core or access network, forward packets between links, and implement only the lower layers."
+>
+
+| | End systems (hosts) | Packet switches |
+|---|---|---|
+| Role | Run applications; originate and consume data | Forward packets from an input link to an output link |
+| Location | Network edge | Network core (routers) and access networks (switches) |
+| Layers | All five | Up to network (routers) or link (switches) |
+| Examples | Laptops, servers, phones, IoT devices | Routers, Ethernet switches |
+
+</Predict>
+
+<Callout type="done" title="Week 1 done">
+If more than two of the quick checks went wrong, reopen the relevant lesson before Monday. Otherwise week 2 is waiting: it is the first week with real numericals, and the delay formulas are the single most examined thing in this course.
+</Callout>

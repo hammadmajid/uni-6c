@@ -1,0 +1,125 @@
+The edge is the part of the network you can physically touch: hosts, and the access networks that connect them to the first router. This lesson is short on theory and heavy on classification, because "explain three access technologies with diagrams" is a stock 5-mark question.
+
+<Predict
+  id="neighbour-stream"
+  prompt="Your home has a 500 Mbps connection. The neighbour's kid starts a 4K stream. Does your download slow down? What does the answer depend on?"
+  answer="It depends on the access technology. Cable (HFC) and PON fiber share the last mile between neighbours, so yes. DSL gives each home a dedicated line to the DSLAM, so the last mile is not shared. Above the first aggregation point everyone shares regardless."
+>
+
+It depends on whether the **last mile is shared**.
+
+- **Cable (HFC)**: coax from the neighbourhood node is a shared broadcast medium. Every active home on that segment divides the downstream channel. Yes, the kid affects you.
+- **Fiber PON**: one fiber from the central office is split passively to around 32 homes. Downstream is broadcast to all; each home's terminal keeps only its own frames. Capacity is shared, but it is 2.5 to 10 Gbps, so you rarely notice.
+- **DSL**: your copper phone line runs only to your house. The kid cannot touch your last mile. But DSL is slow, and past the DSLAM everyone is sharing again.
+
+The general rule: contention can appear at the first point where your traffic meets other people's. The technology decides where that point is.
+
+</Predict>
+
+## End systems, clients, servers
+
+Hosts sit at the edge. They are split loosely into **clients** (laptops, phones, IoT devices that initiate requests) and **servers** (machines that wait for requests and serve content). Most servers today live in **data centers**: tens of thousands of hosts, each with its own fast access, connected by a tree of switches that week 9 examines. Your VPS is one such host. "Client" and "server" are roles, not hardware: your laptop runs a local dev server and is both.
+
+## Access networks
+
+An **access network** is the network that physically connects an end system to the first router on the path to any other distant end system. That first router is called the **edge router**. Three families:
+
+### Home access
+
+| Technology | Medium | Shared last mile? | Typical downstream | The box at the ISP end |
+|---|---|---|---|---|
+| <Term term="DSL" def="Digital Subscriber Line. Data over the existing twisted-pair telephone line, using frequency bands above the voice band. Dedicated line to the DSLAM at the telco central office.">DSL</Term> | Existing telephone twisted pair | No, dedicated to your home | Up to about 50 Mbps, falls with distance | DSLAM at the central office |
+| <Term term="Cable (HFC)" def="Hybrid Fiber Coax. Fiber from the head end to neighbourhood nodes, coax from the node to homes. The coax segment is a shared broadcast medium.">Cable (HFC)</Term> | Fiber to the node, then coax | Yes, all homes on the segment | Hundreds of Mbps to 1 Gbps+ | CMTS at the head end |
+| <Term term="FTTH (PON)" def="Fiber to the Home using a Passive Optical Network. One fiber from the OLT at the central office is split by a passive optical splitter to many homes, each with an ONT.">Fiber to the home (PON)</Term> | Fiber, split passively | Yes, but at 2.5 to 10 Gbps | 100 Mbps to 10 Gbps | OLT at the central office |
+| 5G fixed wireless | Radio to a nearby base station | Yes, the cell | Tens to hundreds of Mbps | Base station |
+| Satellite | Radio to GEO or LEO satellites | Yes, the beam | Tens to hundreds of Mbps, GEO adds around 250 ms one way | Ground station |
+
+Three details the exam likes:
+
+- **DSL uses FDM on the phone line**: voice below 4 kHz, upstream in one band, downstream in a wider band. That is why it is asymmetric and why the phone still works while you download.
+- **Cable is asymmetric too**, and because the coax is shared, the CMTS needs a medium access protocol to decide who transmits upstream when. That is a week 10 idea appearing early.
+- **PON's splitter is passive**: no power, no electronics. The OLT does all the scheduling. Downstream is broadcast; upstream is time-shared.
+
+<SharedMediumLab />
+
+<QuickCheck
+  id="dsl-medium"
+  question="DSL delivers Internet access over which existing infrastructure?"
+  options={["The cable TV coaxial network", "The twisted-pair telephone line", "The electrical power line", "A dedicated fiber to each home"]}
+  answer="The twisted-pair telephone line"
+  explanation="DSL was designed to reuse the copper pair that already ran from every home to the telephone company's central office. The DSLAM at that office separates data from voice."
+  feedback={{
+    "The cable TV coaxial network": "That is cable Internet (HFC), run by the cable TV company, terminated by a CMTS.",
+    "The electrical power line": "Powerline networking exists inside homes, but it is not an ISP access technology.",
+    "A dedicated fiber to each home": "Fiber to the home is a separate technology. DSL's whole point was avoiding new cabling."
+  }}
+/>
+
+<QuickCheck
+  id="shared-last-mile"
+  question="Which home access technology uses a shared broadcast medium in the last mile, so that neighbours' traffic directly competes with yours on the same cable?"
+  options={["DSL", "Cable (HFC)", "Switched Ethernet", "Dial-up"]}
+  answer="Cable (HFC)"
+  explanation="In HFC the coax from the neighbourhood node runs past every home on the segment. Every frame the CMTS sends downstream is received by every modem, which discards frames not addressed to it."
+  feedback={{
+    "DSL": "Each DSL customer has a dedicated copper pair to the DSLAM. Sharing starts behind the DSLAM, not on your line.",
+    "Switched Ethernet": "A switch gives each port its own dedicated link. That is precisely why switches replaced hubs.",
+    "Dial-up": "A dedicated (and painfully slow) phone-line circuit. Not shared with neighbours."
+  }}
+/>
+
+### Enterprise and campus access
+
+Offices and universities run **Ethernet**: twisted pair from each desk to a switch, at 100 Mbps to 10 Gbps, with switches uplinked to an institutional router that connects to the ISP. Alongside it, **Wi-Fi** (IEEE 802.11) gives wireless access within a few tens of metres of an access point, and the access point plugs into the same wired Ethernet. Wi-Fi is a shared medium: everyone on the same channel near the same access point competes. Week 12 covers how.
+
+### Wide-area wireless access
+
+**4G LTE and 5G**: the phone talks by radio to a base station operated by a cellular provider, which can be tens of kilometres away. Rates from tens of Mbps up to a gigabit in ideal 5G conditions. The cell is shared.
+
+<QuickCheck
+  id="pon-splitter"
+  type="true-false"
+  question="In a passive optical network, the splitter between the central office and the homes is an active electronic device that schedules which home transmits."
+  answer="False"
+  explanation="The splitter is passive: a piece of glass that divides the light. No power, no logic. Scheduling is done by the OLT at the central office. That is what 'passive' in PON means, and it is what makes PON cheap to deploy at scale."
+  misconception="It is natural to assume something in the middle must be arbitrating. In PON that job is pulled all the way back to the OLT, and the field equipment is dumb glass."
+/>
+
+## Physical media, briefly
+
+Bits travel as electromagnetic waves or optical pulses across a **physical medium**. Two groups:
+
+- **Guided media**: waves travel inside a solid. Twisted-pair copper (UTP, the Cat 5e and Cat 6 in every office), coaxial cable, fiber optic cable.
+- **Unguided media**: waves propagate through the atmosphere or space. Terrestrial radio (Wi-Fi, cellular, microwave links) and satellite.
+
+Fiber wins on every physical metric: immune to electromagnetic interference, very low attenuation so it spans 100 km without repeaters, and rates in the tens of Tbps per fiber. Its only downsides are cost of the optical equipment and that you cannot bend it around a tight corner. Week 3 goes deeper into media; for now you need the guided versus unguided split and fiber's properties.
+
+<QuickCheck
+  id="fiber-emi"
+  type="true-false"
+  question="Fiber optic cable is immune to electromagnetic interference."
+  answer="True"
+  explanation="Fiber carries light, not current, so external electromagnetic fields do not induce noise in it. That is why it runs next to high-voltage lines and inside electrically noisy factories without trouble."
+/>
+
+<Deeper kind="why" title="Why DSL gets slower with distance and cable does not">
+
+Copper attenuates high frequencies far more than low ones, and DSL puts data in the high-frequency bands. Over a few kilometres of thin telephone wire, the usable band shrinks and the modem negotiates a lower rate. That is a physical fact about copper and there is no protocol trick around it, only shortening the copper by pushing fiber closer to the home (which is what "fiber to the cabinet" means).
+
+Cable coax is thicker, better shielded, and the fiber already reaches the neighbourhood node, so the coax run is short. Cable rates are limited by sharing, not distance.
+
+</Deeper>
+
+<Deeper kind="beyond" title="The numbers behind DOCSIS and PON">
+
+- **DOCSIS 3.1** (the cable standard) allocates downstream channels using orthogonal frequency-division multiplexing across up to 1.2 GHz of coax spectrum, giving around 10 Gbps of shared downstream on a segment. Upstream gets a much narrower band, hence asymmetry.
+- **GPON** gives 2.488 Gbps downstream and 1.244 Gbps upstream on one fiber, split up to 1:64. Divide by the split ratio for the guaranteed floor per home; in practice most homes are idle so the effective rate is far higher.
+- **XGS-PON** is the symmetric 10 Gbps successor being deployed now.
+
+You do not need these for the exam. You do need them to have an opinion when your ISP quotes you a number.
+
+</Deeper>
+
+<Callout type="exam" title="How this appears on papers">
+"Describe any three access technologies used at the network edge, with diagrams." For each, name the medium, the box at the ISP end (DSLAM, CMTS, OLT), whether it is shared, and whether it is symmetric. A diagram is a labelled line from a house to that box. That is the full marks answer.
+</Callout>

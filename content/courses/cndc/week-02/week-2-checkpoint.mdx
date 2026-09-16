@@ -1,0 +1,182 @@
+Calculator allowed, notes not. Every numerical here is the kind that appears on the midterm. Write the unit conversion as your first line even when it feels unnecessary.
+
+## Numericals
+
+<QuickCheck
+  id="cp2-dtrans"
+  type="numeric"
+  unit="µs"
+  question="A 1000-byte packet is transmitted on a 100 Mbps link. Transmission delay in microseconds?"
+  answer={80}
+  explanation="8000 bits ÷ 100,000,000 bits/s = 0.00008 s = 80 µs."
+/>
+
+<QuickCheck
+  id="cp2-dprop"
+  type="numeric"
+  unit="ms"
+  question="A 6000 km link, propagation speed 3×10⁸ m/s. Propagation delay in milliseconds?"
+  answer={20}
+  explanation="6,000,000 m ÷ 300,000,000 m/s = 0.02 s = 20 ms."
+/>
+
+<QuickCheck
+  id="cp2-e2e"
+  type="numeric"
+  unit="ms"
+  question="A 1500-byte packet crosses 3 store-and-forward links. Each link: 1 Mbps, 500 km, propagation speed 2.5×10⁸ m/s. End-to-end delay in milliseconds, ignoring processing and queueing?"
+  answer={42}
+  explanation="Per link: L/R = 12,000 ÷ 1,000,000 = 12 ms; d/s = 500,000 ÷ 250,000,000 = 2 ms. Per link 14 ms, times 3 = 42 ms."
+/>
+
+<QuickCheck
+  id="cp2-tdm"
+  type="numeric"
+  unit="kbps"
+  question="TDM with 8 slots per frame on a 2.048 Mbps link. Rate of one circuit in kbps?"
+  answer={256}
+  explanation="2048 ÷ 8 = 256 kbps."
+/>
+
+<QuickCheck
+  id="cp2-intensity"
+  type="numeric"
+  question="Packets of 1000 bytes arrive at 1250 packets per second to a 10 Mbps link. Traffic intensity?"
+  answer={1}
+  explanation="L = 8000 bits. La = 8000 × 1250 = 10,000,000 bits/s. Divided by R = 10,000,000: exactly 1. The queue is on the edge of growing without bound."
+/>
+
+<QuickCheck
+  id="cp2-throughput"
+  type="numeric"
+  unit="Mbps"
+  question="A flow crosses links of 10 Mbps, 8 Mbps and 4 Mbps in series. The 8 Mbps link is shared equally with 3 other flows. Throughput in Mbps?"
+  answer={2}
+  explanation="Shared link gives 8 ÷ 4 = 2 Mbps per flow. min(10, 2, 4) = 2 Mbps. Divide the shared link before taking the minimum."
+/>
+
+<QuickCheck
+  id="cp2-file-time"
+  type="numeric"
+  unit="s"
+  question="How long to transfer a 50 MB file (50 × 8 × 10⁶ bits) at an end-to-end throughput of 20 Mbps, in seconds?"
+  answer={20}
+  explanation="400,000,000 bits ÷ 20,000,000 bits/s = 20 s."
+/>
+
+## Concepts
+
+<QuickCheck
+  id="cp2-setup"
+  question="Which switching technique requires a setup phase before data can flow?"
+  options={["Packet switching", "Circuit switching", "Both", "Neither"]}
+  answer="Circuit switching"
+  explanation="Circuits must be established (resources reserved along the path) before the first byte. Packet switching sends immediately."
+/>
+
+<QuickCheck
+  id="cp2-osi-encrypt"
+  question="Encryption and data compression are functions of which OSI layer?"
+  options={["Session", "Presentation", "Transport", "Application"]}
+  answer="Presentation"
+  explanation="Presentation handles how data is represented: encoding, compression, encryption. In the Internet stack this work is done inside the application layer (TLS, gzip)."
+  feedback={{
+    "Session": "Session manages dialogues: establishing, checkpointing, terminating.",
+    "Transport": "Transport delivers segments between processes. TLS runs above it, not in it.",
+    "Application": "In the five-layer Internet model, yes. But the question asks about OSI, where these have their own layer."
+  }}
+/>
+
+<OrderCheck
+  id="cp2-tcpip-order"
+  prompt="Order the five layers of the Internet protocol stack from top to bottom."
+  items={["Application", "Transport", "Network", "Link", "Physical"]}
+  explanation="Application, transport, network, link, physical. Message, segment, datagram, frame, bit."
+  topLabel="Top"
+  bottomLabel="Bottom"
+/>
+
+<QuickCheck
+  id="cp2-store-forward"
+  question="Store-and-forward transmission means that a packet switch:"
+  options={[
+    "Keeps a copy of every packet for later retransmission",
+    "Must receive the entire packet before it begins transmitting it on the output link",
+    "Forwards each bit as soon as it arrives",
+    "Stores packets only when the output link is busy"
+  ]}
+  answer="Must receive the entire packet before it begins transmitting it on the output link"
+  explanation="This is why a packet crossing N links incurs N transmission delays. The switch cannot begin sending until the last bit has arrived, because it needs the whole packet to check it and to know where it goes."
+  feedback={{
+    "Keeps a copy of every packet for later retransmission": "Retransmission is the transport layer's job at the end hosts, not the switch's.",
+    "Forwards each bit as soon as it arrives": "That is cut-through switching, used in some data-center switches, and specifically not what store-and-forward means.",
+    "Stores packets only when the output link is busy": "That describes queueing, which is separate. Store-and-forward happens for every packet, busy link or not."
+  }}
+/>
+
+<QuickCheck
+  id="cp2-bottleneck-location"
+  question="In today's Internet, the throughput bottleneck for a typical download is usually:"
+  options={["A tier-1 core link", "An access link at the client or server", "The DNS server", "The router with the most hops"]}
+  answer="An access link at the client or server"
+  explanation="The core is provisioned far beyond any single flow's needs. Your ISP plan, your Wi-Fi, or the server's uplink is what limits you."
+/>
+
+## Long answers
+
+<Predict
+  id="cp2-four-delays"
+  prompt="Explain the four components of nodal delay in a packet-switched network, stating what each depends on. (5 marks)"
+  answer="Processing (header checks and output link lookup; depends on router speed), queueing (waiting for earlier packets; depends on congestion, characterised by traffic intensity La/R), transmission (L/R; depends on packet length and link rate), propagation (d/s; depends on link length and propagation speed). Total is their sum."
+>
+
+1. **Processing delay**: time to examine the packet header, check for bit errors and determine the output link. Depends on router hardware; typically microseconds.
+2. **Queueing delay**: time waiting in the output buffer while packets ahead of it are transmitted. Depends on the level of congestion, characterised by traffic intensity La/R; ranges from zero to milliseconds, and grows sharply as La/R approaches 1.
+3. **Transmission delay**: time to push all L bits of the packet onto the link at rate R; d_trans = L/R. Depends on packet length and link rate, not on distance.
+4. **Propagation delay**: time for a bit to travel the physical length d of the link at speed s; d_prop = d/s. Depends on distance and medium, not on packet length or link rate.
+
+Total nodal delay = d_proc + d_queue + d_trans + d_prop. Give one numerical example: a 1000-byte packet on a 1 Mbps, 1 km link has d_trans = 8 ms and d_prop = 5 µs.
+
+</Predict>
+
+<Predict
+  id="cp2-switching-compare"
+  prompt="Compare circuit switching and packet switching. (5 marks)"
+  answer="Resources reserved vs on demand; setup phase vs none; guaranteed constant rate vs variable with queueing and possible loss; wasted idle capacity vs statistical multiplexing; suited to continuous vs bursty traffic. Example: 1 Mbps link, 100 kbps users active 10% of the time: 10 users vs 35."
+>
+
+Five contrasts, then the example:
+
+| | Circuit switching | Packet switching |
+|---|---|---|
+| Resources | Reserved end to end for the session | On demand, no reservation |
+| Setup | Required | None |
+| Rate and delay | Guaranteed constant rate, fixed delay | Variable rate, queueing delay, possible loss |
+| Efficiency | Idle reserved capacity is wasted | Statistical multiplexing reuses idle capacity |
+| Best for | Continuous traffic (voice) | Bursty traffic (data) |
+
+Example: on a 1 Mbps link with users needing 100 kbps 10% of the time, circuit switching supports 10 users; packet switching supports 35 with only a 0.04% chance of momentary overload.
+
+</Predict>
+
+<Predict
+  id="cp2-osi-tcpip"
+  prompt="Compare the OSI reference model with the TCP/IP model. (5 marks)"
+  answer="OSI: seven layers, ISO reference model designed before protocols, separate presentation and session layers, protocol independent, used as vocabulary. TCP/IP: five (or four) layers, grew from ARPANET protocols, presentation and session folded into application, built around IP/TCP/UDP, the deployed Internet."
+>
+
+| Aspect | OSI | TCP/IP |
+|---|---|---|
+| Layers | 7: physical, data link, network, transport, session, presentation, application | 5 (or 4): physical, link, network, transport, application |
+| Origin | ISO; model first, protocols later | ARPANET; protocols first, model described them |
+| Presentation and session | Separate layers | Inside the application layer |
+| Protocol dependence | Generic, protocol independent | Built around IP, TCP, UDP |
+| Role today | Reference and vocabulary (layer numbers) | The deployed Internet |
+
+Closing sentence: OSI is the conceptual reference; TCP/IP is the working architecture, with its layers mapping onto OSI's except that presentation and session are handled by applications.
+
+</Predict>
+
+<Callout type="done" title="Two weeks in">
+Everything from here to the midterm builds on these two weeks: the layers give the map, the delay and throughput formulas give the arithmetic. Week 3 moves to network types (LAN, MAN, WAN, low-power WAN) and transmission media. It will be built once your slides for it arrive, or from the outline if they do not.
+</Callout>

@@ -1,0 +1,156 @@
+You have deployed services behind load balancers, so half of this lesson is already in your head. The other half is vocabulary the exam expects verbatim, plus one definition that most students get subtly wrong.
+
+<Predict
+  id="curl-trip"
+  prompt="You run curl https://example.com from your laptop on home Wi-Fi. Before the first byte of HTML arrives, how many distinct request/response exchanges happen, and what kinds of boxes does the traffic pass through?"
+  answer="At least four exchanges (DNS, TCP handshake, TLS handshake, HTTP). Boxes: your Wi-Fi adapter, home router, modem, ISP edge router, several core routers, the data-center switches and load balancer, the server."
+>
+
+Most people say "one request." It is at least four conversations, each governed by a different protocol:
+
+1. **DNS**: your laptop asks a resolver for the IP address of example.com (UDP, port 53).
+2. **TCP handshake**: SYN, SYN-ACK, ACK to that IP on port 443.
+3. **TLS handshake**: certificates and keys, inside the TCP connection.
+4. **HTTP**: finally `GET /`. Then the bytes.
+
+Every one of those crosses the same physical path: your Wi-Fi adapter, the home router (which is also an access point, a switch and a NAT box), the modem, an ISP edge router, a handful of core routers owned by different companies, a data-center switch, a load balancer, the server. Typically 10 to 20 hops. Each hop looks at the packet, decides, forwards. That sentence is the whole course.
+
+</Predict>
+
+## Two views of the same thing
+
+The textbook opens with two descriptions of the Internet. Exams ask for both, usually as "describe the Internet from a nuts-and-bolts view and from a services view."
+
+### The nuts-and-bolts view
+
+The Internet is a network of networks made of hardware and software components:
+
+| Component | What it is | Examples you have touched |
+|---|---|---|
+| <Term term="Host (end system)" def="A device at the edge of the network that runs applications. Also called an end system. Hosts are clients or servers.">Hosts, also called end systems</Term> | Devices that run applications | Your laptop, a VPS, a phone, a smart bulb |
+| <Term term="Communication link" def="A physical medium connecting two nodes: copper, fiber, or radio. Characterised by its transmission rate in bits per second.">Communication links</Term> | Copper, fiber, radio | Cat 6 to your switch, fiber to the ISP, Wi-Fi |
+| <Term term="Packet switch" def="A device that takes a packet arriving on one link and forwards it out another. Routers (network core) and link-layer switches (access networks).">Packet switches</Term> | Forward packets link to link | Routers in the core, switches in LANs |
+| <Term term="ISP" def="Internet Service Provider. A network of packet switches and links that provides access to end systems. ISPs are themselves interconnected in tiers.">ISPs</Term> | Networks that connect you to everyone else | Nayatel, PTCL, and the tier-1 carriers above them |
+| Protocols | Rules for the exchange | TCP, IP, HTTP, 802.11 |
+| Standards | Who writes the rules down | IETF publishes RFCs; IEEE does 802.x |
+
+A link's headline number is its **transmission rate** in bits per second. Not bytes. Write that on your hand, because week 2 punishes anyone who forgets.
+
+When a host has data to send, it chops it into **packets**, adds header bytes to each, and pushes them onto the link. Packet switches forward them. The receiver reassembles. Nothing in the network reserves capacity for you unless a very particular design decision was made, which is next week's topic.
+
+<QuickCheck
+  id="not-an-end-system"
+  question="Which of these is NOT an end system?"
+  options={["A web server in a data center", "A Wi-Fi router in your living room", "A smart thermostat", "A laptop running curl"]}
+  answer="A Wi-Fi router in your living room"
+  explanation="Routers and switches forward packets between links. They do not run the applications that produce or consume the data, so they are packet switches, not end systems. The other three all run application code."
+  feedback={{
+    "A web server in a data center": "A server is the classic end system. It runs an application (the web server process) and terminates the connection.",
+    "A smart thermostat": "Tiny, but it runs application code and is the source or destination of data. That makes it a host.",
+    "A laptop running curl": "The laptop originates the request. It is the archetypal end system."
+  }}
+/>
+
+### The services view
+
+From the perspective of a program, the Internet is **an infrastructure that provides services to applications**. The applications are distributed: they run on multiple end systems and exchange data. Email, the web, your Postgres replication stream, Kubernetes control-plane chatter, all of them.
+
+The interface is the **socket interface**: the set of rules a program follows to ask the Internet to deliver data to another program on another host. You have called `listen()`, `accept()` and `connect()`. That is the socket interface. The textbook's analogy is the postal service: you follow its rules (envelope, stamp, address format) and it delivers. You never see the sorting facility.
+
+<Callout type="key-idea">
+Nuts-and-bolts is what the Internet is **made of**. Services is what it **offers**. A 3-mark question asking you to "describe the Internet" wants both, one short paragraph each.
+</Callout>
+
+<QuickCheck
+  id="rfc-publisher"
+  question="Internet protocol standards such as TCP, IP and HTTP are published as RFCs by which body?"
+  options={["IEEE", "IETF", "ISO", "W3C"]}
+  answer="IETF"
+  explanation="The Internet Engineering Task Force publishes Requests for Comments. RFC 793 is TCP, RFC 791 is IP, RFC 9110 is HTTP semantics."
+  feedback={{
+    "IEEE": "IEEE writes the 802 family (Ethernet is 802.3, Wi-Fi is 802.11). Link and physical layer, not Internet protocols.",
+    "ISO": "ISO gave us the OSI reference model, the seven-layer diagram. It does not publish RFCs.",
+    "W3C": "W3C standardises HTML, CSS and browser APIs. HTTP itself is an IETF document."
+  }}
+/>
+
+## What a protocol is
+
+This is the one definition that gets marked down constantly, because students write "a set of rules" and stop. The textbook definition has three parts, and graders look for all three.
+
+First, the human analogy the book uses. Two people meeting: "Hi." "Hi." "Got the time?" "2:00." Each message has a format (English), an order (greeting before question), and triggers an action (answer, or walk away if the greeting is ignored). Now the network version:
+
+<Timeline
+  title="A web fetch as a protocol exchange"
+  events={[
+    { label: "TCP connection request", description: "Your host sends a SYN segment to the server. Format: TCP header with the SYN flag. Action on the server: allocate state, reply.", detail: "If no reply arrives, the action is to retransmit after a timeout. Actions on events, not just on messages." },
+    { label: "TCP connection reply", description: "Server sends SYN-ACK. Your host now knows the server exists and is willing.", detail: "Order matters: an HTTP GET before this step is simply ignored. No connection, no conversation." },
+    { label: "GET /index.html", description: "An HTTP request message, formatted as a request line plus headers. Action on the server: find the file, build a response." },
+    { label: "The file", description: "HTTP response: status line, headers, body. Action on your host: render it, or in curl's case, print it." }
+  ]}
+/>
+
+<Callout type="key-idea" title="Definition to memorise">
+A protocol defines the **format** and the **order** of messages exchanged between two or more communicating entities, as well as the **actions** taken on the transmission and/or receipt of a message or other event.
+</Callout>
+
+<QuickCheck
+  id="protocol-definition"
+  question="Which option is the complete textbook definition of a protocol?"
+  options={[
+    "A set of rules that computers follow to communicate",
+    "The format and order of messages exchanged, and the actions taken on transmitting or receiving a message or other event",
+    "The software that converts data into packets and sends them over a link",
+    "An agreement between two ISPs about how to exchange traffic"
+  ]}
+  answer="The format and order of messages exchanged, and the actions taken on transmitting or receiving a message or other event"
+  explanation="Three parts: format, order, actions. 'Other event' covers timeouts. That phrase is why TCP can retransmit when nothing arrives: the protocol specifies an action for the event of silence."
+  feedback={{
+    "A set of rules that computers follow to communicate": "True but incomplete, and this is exactly the answer that loses marks. Which rules? The definition has to say: format, order, and actions.",
+    "The software that converts data into packets and sends them over a link": "That describes an implementation of a protocol stack, not what a protocol is. A protocol is the specification, not the code.",
+    "An agreement between two ISPs about how to exchange traffic": "That is a peering agreement, a business contract. BGP, the protocol they run, is a protocol."
+  }}
+/>
+
+<Deeper kind="why" title="Why the outline says 'protocols and algorithms'">
+
+A protocol says who sends what, in what format, in what order. It does not say how each side decides. That is the algorithm. Examples you will meet:
+
+- **Routing**: OSPF is the protocol (message formats, flooding rules). Dijkstra's shortest path is the algorithm each router runs on the data it collected.
+- **Congestion control**: TCP is the protocol. Additive-increase, multiplicative-decrease is the algorithm deciding how fast to send.
+- **Medium access**: CSMA/CA in Wi-Fi is the protocol. Binary exponential backoff is the algorithm that picks how long to wait after a collision.
+
+Exams sometimes ask "why are protocols and algorithms both necessary?" The answer: the protocol makes independently written implementations interoperate; the algorithm makes each participant's decisions good. You can run a perfectly compliant protocol with a terrible algorithm, and the network still works, just badly.
+
+</Deeper>
+
+<Deeper kind="history" title="Who runs the Internet">
+
+Nobody. That is the honest answer and also the exam answer. There is no central operator. ISPs interconnect by private agreement (peering or paid transit). The IETF publishes standards but cannot force anyone to follow them; people follow them because otherwise their equipment does not talk to anyone else's. ICANN coordinates names and numbers (domains, IP address blocks). That is coordination, not control.
+
+The design consequence: the Internet is a federation of roughly 75,000 autonomous systems, each running its own network however it wants, agreeing only on the protocols at the seams. Week 6 is about how routing works across that federation.
+
+</Deeper>
+
+## Where you are in the picture
+
+Your home network connects through an **access ISP**. Access ISPs connect to **regional ISPs**, which connect to **tier-1 ISPs** that span continents and peer with each other for free. Content providers like Google have built their own global networks and connect directly to access ISPs at **Internet exchange points**, skipping the tiers. When you SSH into your VPS in Frankfurt, the packets cross this hierarchy twice.
+
+<QuickCheck
+  id="access-isp"
+  question="The ISP that your home router connects to is best described as a:"
+  options={["Tier-1 ISP", "Access ISP", "Regional ISP", "Content provider network"]}
+  answer="Access ISP"
+  explanation="Access ISPs are the ones with customers: residential, corporate, university. They buy transit from regional or tier-1 providers above them."
+  feedback={{
+    "Tier-1 ISP": "Tier-1 ISPs have no upstream provider and reach every destination through peering. They sell transit to other ISPs, not to households.",
+    "Regional ISP": "Regional ISPs aggregate access ISPs across a city or country. Possible, but the network your router plugs into by definition provides access.",
+    "Content provider network": "Google and Meta run private networks to their data centers. They connect to access ISPs, they are not one."
+  }}
+/>
+
+<Callout type="exam" title="Definitions this week's material generates">
+Internet (both views), host or end system, packet switch, communication link, transmission rate, ISP, protocol, socket interface, RFC. Each of these can appear as a 2-mark "define" question. Say them out loud once now, and the review queue will bring them back.
+</Callout>
+
+Before you mark this complete: in one sentence, what did you believe about "one HTTP request" that turned out to be incomplete? That gap is your first real piece of networking knowledge.

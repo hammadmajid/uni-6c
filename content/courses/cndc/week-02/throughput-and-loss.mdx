@@ -1,0 +1,164 @@
+Delay is how long one packet takes. Throughput is how many bits per second actually arrive over a whole transfer. They are different questions with different answers, and a path can have terrible delay and great throughput at once (a satellite link) or the reverse (a congested Wi-Fi hop).
+
+<Predict
+  id="bottleneck-guess"
+  prompt="Your laptop has a 1 Gbps fiber connection. The server sits on a 10 Gbps link. Between them, one core link runs at 100 Mbps and is shared fairly by 10 flows including yours. What throughput do you get?"
+  answer="10 Mbps. The core link gives each of the 10 flows 100 ÷ 10 = 10 Mbps, and that is less than either access link. Throughput is the minimum along the path."
+>
+
+**10 Mbps.** Your flow gets one tenth of the shared core link, and that is the smallest capacity anywhere on the path.
+
+The 1 Gbps access link and the 10 Gbps server link are irrelevant. Throughput is always the **bottleneck link's** rate, and the bottleneck is whichever link gives your flow the least, after dividing shared links among the flows that share them.
+
+Textbook framing: think of fluid flowing through pipes of different widths. The flow rate at the end is set by the narrowest pipe, wherever it is.
+
+</Predict>
+
+## Instantaneous vs average throughput
+
+For a file transfer of F bits that takes T seconds, **average throughput = F / T** bits per second. **Instantaneous throughput** is the rate at a particular moment; that is what your download manager's number shows, bouncing around.
+
+Which one you want depends on the application. For a file download, the average is all that matters. For a video call, instantaneous throughput must stay above the stream's rate at every moment, or the picture freezes. Week 13 comes back to this.
+
+## The bottleneck link
+
+Two links in series, server to router at Rs and router to client at Rc. The router forwards bits no faster than they arrive and no faster than the output link accepts them, so throughput is **min(Rs, Rc)**.
+
+Generalise: for N links in series with rates R1 through RN, throughput is **min(R1, R2, …, RN)**. The narrowest pipe.
+
+Sharing: if a link of rate R is shared fairly by k flows, each flow's share of that link is **R / k**. Divide before taking the minimum.
+
+<ThroughputLab />
+
+<Callout type="key-idea">
+In today's Internet the core is provisioned far above what any single flow needs, so **the bottleneck is almost always an access link**: your Wi-Fi, your ISP plan, or the server's uplink. The textbook says this explicitly and exams ask "where is the bottleneck typically located and why."
+</Callout>
+
+<QuickCheck
+  id="avg-throughput"
+  type="numeric"
+  unit="Mbps"
+  question="A 32 MB file (32 × 8 × 10⁶ bits) is downloaded in 64 seconds. Average throughput in Mbps?"
+  answer={4}
+  explanation="256,000,000 bits ÷ 64 s = 4,000,000 bits/s = 4 Mbps."
+/>
+
+<QuickCheck
+  id="min-path"
+  question="A path has three links in series with rates 500 kbps, 2 Mbps and 1 Mbps. End-to-end throughput for a single flow is:"
+  options={["500 kbps", "1 Mbps", "2 Mbps", "3.5 Mbps"]}
+  answer="500 kbps"
+  explanation="The minimum of the three. The 2 Mbps link spends most of its time idle waiting for bits to trickle through the 500 kbps one."
+  feedback={{
+    "1 Mbps": "That is the last link's rate, not the smallest.",
+    "2 Mbps": "The fastest link never sets the throughput.",
+    "3.5 Mbps": "Rates in series do not add. Only parallel paths would, and this is a single path."
+  }}
+/>
+
+<QuickCheck
+  id="shared-core"
+  question="Ten downloads run simultaneously. Each server has a 10 Mbps access link, each client has a 1 Mbps access link, and all ten share a 5 Mbps core link equally. Per-download throughput is:"
+  options={["500 kbps", "1 Mbps", "5 Mbps", "10 Mbps"]}
+  answer="500 kbps"
+  explanation="Core share = 5 ÷ 10 = 500 kbps per flow, which is below the 1 Mbps client link. min(10 Mbps, 500 kbps, 1 Mbps) = 500 kbps."
+  feedback={{
+    "1 Mbps": "The client access link would be the bottleneck if the core were not shared. Divide 5 Mbps by 10 first.",
+    "5 Mbps": "That is the whole core link. Your flow gets one tenth of it.",
+    "10 Mbps": "Server link rate. It is the widest pipe, not the narrowest."
+  }}
+/>
+
+## Packet loss
+
+A router's output buffer is finite. When a packet arrives and the buffer is full, the router **drops** it. That is nearly the only reason packets are lost in wired networks: bit errors on fiber are rare enough that the link layer's checksum catches and discards them at a rate you can usually ignore. On wireless, bit errors matter much more; week 12.
+
+From the endpoints' view, a lost packet is a packet that never arrives. Whether anything is done about it depends on the transport protocol: TCP detects the gap and retransmits; UDP ships the next one and moves on. Loss rate is measured as the fraction of packets dropped, and it climbs steeply with traffic intensity exactly like queueing delay does. They are the same phenomenon: a queue that is too long, and a queue that is full.
+
+<QuickCheck
+  id="loss-cause"
+  question="In a wired network, the dominant cause of packet loss is:"
+  options={["Bit errors corrupting packets on fiber links", "Router output buffers overflowing under congestion", "Routers randomly discarding packets to save power", "Packets exceeding their propagation delay budget"]}
+  answer="Router output buffers overflowing under congestion"
+  explanation="Loss is congestion made visible. When more bits arrive than the output link can send and the buffer fills, arriving packets have nowhere to go."
+  feedback={{
+    "Bit errors corrupting packets on fiber links": "Fiber bit error rates are around one in a trillion. Real but negligible next to congestion loss.",
+    "Routers randomly discarding packets to save power": "Some routers do drop early on purpose (active queue management) to signal congestion, but that is still congestion, and never about power.",
+    "Packets exceeding their propagation delay budget": "There is no such budget. Packets have a hop limit (TTL) but not a time limit."
+  }}
+/>
+
+## Reading a traceroute
+
+You have SSH'd into servers, so run this from your laptop and from a VPS and compare:
+
+```
+traceroute -n 1.1.1.1
+```
+
+or, for a live view that averages many probes:
+
+```
+mtr -n 1.1.1.1
+```
+
+How it works: the tool sends packets with the network-layer hop limit (TTL) set to 1, then 2, then 3. Each router that decrements the TTL to zero discards the packet and sends back an error message. That error's arrival time gives the round-trip delay to that specific router. Three probes per hop, so three times.
+
+Here is a plausible trace from a home connection in Islamabad to a server in Frankfurt:
+
+```
+ 1  192.168.1.1      1.2 ms   0.9 ms   1.1 ms     home router
+ 2  10.20.0.1        4.8 ms   5.1 ms   4.6 ms     ISP edge router
+ 3  103.x.x.x        6.2 ms   7.0 ms   6.1 ms     ISP core, Islamabad
+ 4  103.x.x.x       12.4 ms  11.9 ms  13.0 ms     Karachi landing station
+ 5  *                *        *        *          no reply
+ 6  195.x.x.x       98.7 ms  99.2 ms  98.9 ms     Marseille
+ 7  80.x.x.x       112.3 ms 111.8 ms 113.0 ms     Frankfurt IX
+ 8  server         113.1 ms 112.6 ms 112.9 ms     destination
+```
+
+Read it: hops 1 to 3 are all under 7 ms, that is local queueing plus tiny propagation. Hop 4 to Karachi adds a few ms of propagation. The jump from 13 ms to 99 ms between hops 4 and 6 is the submarine cable across the Arabian Sea and Red Sea to Europe: propagation delay, pure physics, roughly 8000 km of fiber. After that, Marseille to Frankfurt adds 13 ms. Hop 5 replied to nothing: some routers are configured not to answer, which does not mean traffic is being dropped there.
+
+<QuickCheck
+  id="traceroute-jump"
+  question="In the trace above, the round-trip time jumps from about 13 ms at hop 4 to about 99 ms at hop 6. The most likely cause is:"
+  options={["A heavily congested router at hop 5", "Propagation delay across a long submarine fiber link", "The packet size increasing at hop 5", "Transmission delay on a slow link at hop 6"]}
+  answer="Propagation delay across a long submarine fiber link"
+  explanation="An 86 ms increase matches roughly 8000 km of fiber at 2×10⁸ m/s (round trip). Congestion would show as variable, jittery times, and this jump is steady across all three probes."
+  feedback={{
+    "A heavily congested router at hop 5": "Congestion produces variable RTTs and often loss; here the three probes agree to within a millisecond. Also hop 5 simply did not reply, which is normal.",
+    "The packet size increasing at hop 5": "Probe packets are tiny and fixed in size.",
+    "Transmission delay on a slow link at hop 6": "For a small probe, even a 1 Mbps link adds under a millisecond. 86 ms of transmission delay would need a link slower than dial-up."
+  }}
+/>
+
+<QuickCheck
+  id="rtt-monotonic"
+  type="true-false"
+  question="In a traceroute, the round-trip time must increase with every hop."
+  answer="False"
+  explanation="Routers answer with low priority, return paths can differ from forward paths, and measurements are noisy. A later hop showing a smaller RTT than an earlier one is common and does not indicate a problem."
+  misconception="It feels like each hop should add delay. The forward path does add delay, but what you measure is each router's own reply, which follows its own return route and its own scheduling."
+/>
+
+<Deeper kind="beyond" title="Throughput vs bandwidth vs goodput">
+
+Three words engineers use loosely:
+
+- **Bandwidth**: the link's capacity, R. What the ISP sells you.
+- **Throughput**: bits per second actually delivered across the path, min over the bottleneck. Always at or below bandwidth.
+- **Goodput**: throughput minus headers and retransmissions, the application-level useful rate. On a lossy Wi-Fi link goodput can be half the throughput.
+
+An exam that says "throughput" means the second one. When you argue with your ISP, you are talking about the gap between the first and the second.
+
+</Deeper>
+
+<Deeper kind="why" title="Why TCP throughput also depends on delay (preview of week 5)">
+
+A single TCP connection cannot send faster than roughly (window size ÷ round-trip time). With a 64 KB window and a 100 ms RTT, that is 5 Mbps regardless of how fat the pipe is. This is why one download from a far-away server on a fast connection can feel slow, and why CDNs put servers close to you: they are attacking RTT, which then raises throughput. Week 5 makes this precise.
+
+</Deeper>
+
+<Callout type="exam" title="Stock questions from this lesson">
+"Define throughput; distinguish instantaneous from average." "A path has links of rates X, Y, Z; what is the end-to-end throughput?" "Why is the access link usually the bottleneck?" "Why are packets lost, and what does the sender see?" Each is a 2 to 3 mark question with the answer sitting in this page.
+</Callout>

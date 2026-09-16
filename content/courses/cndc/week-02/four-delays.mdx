@@ -1,0 +1,180 @@
+This is the most examined lesson in the course. Every paper has at least one delay numerical, and the errors are always the same: bits versus bytes, kilometres versus metres, and confusing the two delays that happen to be measured in the same unit.
+
+<Predict
+  id="which-is-longer"
+  prompt="A 1000-byte packet is sent over a 1 Mbps link that is 1 km long. Which takes longer: pushing all the bits onto the link, or the first bit travelling to the far end? By roughly what factor?"
+  answer="Pushing the bits (transmission delay) takes 8 ms. The first bit's trip (propagation delay) takes about 5 µs. Transmission is about 1600 times longer here. Change the link to 100 Gbps over 5000 km and propagation dominates instead."
+>
+
+**Transmission delay** = L / R = 8000 bits ÷ 1,000,000 bits/s = **8 ms**.
+
+**Propagation delay** = d / s = 1000 m ÷ 200,000,000 m/s = **5 µs**.
+
+Transmission wins by a factor of 1600. Most people guess the opposite because "sending a signal down a wire" sounds like the slow part.
+
+Now flip it. A 1000-byte packet on a 100 Gbps link across 5000 km: transmission is 80 ns, propagation is 25 ms. Propagation wins by 300,000×.
+
+The two delays depend on completely different things. Transmission on packet size and link rate; propagation on distance and the speed of light in the medium. Neither one cares about the other. Keep them separate in your head and the numericals become easy.
+
+</Predict>
+
+## Nodal delay
+
+As a packet travels from one node (host or router) to the next, it suffers four delays at each node. Their sum is the **total nodal delay**:
+
+**d_nodal = d_proc + d_queue + d_trans + d_prop**
+
+| Delay | What it is | Depends on | Typical size |
+|---|---|---|---|
+| Processing, d_proc | Examine the header, check bits for errors, decide the output link | Router hardware | Microseconds or less |
+| Queueing, d_queue | Wait in the output buffer while earlier packets are transmitted | Congestion: how many packets are ahead | Zero to milliseconds; the variable one |
+| Transmission, d_trans | Push all L bits of the packet onto the link at rate R | **L / R** | Microseconds to milliseconds |
+| Propagation, d_prop | The first bit travels the physical length of the link | **d / s** | Microseconds to hundreds of ms |
+
+**s** is the propagation speed in the medium: 2×10⁸ to 3×10⁸ m/s. Fiber and copper are both about 2×10⁸ (two thirds of c). If a question does not give s, state your assumption and use 2×10⁸ or 3×10⁸ consistently.
+
+The caravan analogy from the textbook, since it fixes the distinction permanently: a caravan of 10 cars (bits) drives between tollbooths (routers) 100 km apart (links). Each tollbooth services one car in 12 seconds: that is transmission delay, the time to push the whole packet through. Between tollbooths the cars drive at 100 km/h: that is propagation delay, and it does not care how many cars there are.
+
+<DelayLab />
+
+## End-to-end delay across N links
+
+Suppose N links between source and destination, each with rate R, and one packet of L bits. Ignore processing and queueing. Because each router must **store the whole packet before forwarding** it, the packet is transmitted N times, once per link:
+
+**d_end-to-end = N × (L / R + d / s)**
+
+Or with propagation ignored, simply **N × L / R**. If the links differ, sum each link's own L/R and d/s.
+
+<WorkedExample title="Three links, cross-country">
+  <Step label="Set up">
+    L = 1500 bytes, R = 10 Mbps on every link, N = 3 links, each link d = 1000 km, s = 2×10⁸ m/s.
+  </Step>
+  <Step label="Convert units first" tryFirst="Convert L to bits and d to metres before anything else.">
+    L = 1500 × 8 = **12,000 bits**. d = 1000 km = **1,000,000 m**. R = **10,000,000 bits/s**.
+  </Step>
+  <Step label="Per-link transmission delay" tryFirst="L / R">
+    12,000 ÷ 10,000,000 = 0.0012 s = **1.2 ms**.
+  </Step>
+  <Step label="Per-link propagation delay" tryFirst="d / s">
+    1,000,000 ÷ 200,000,000 = 0.005 s = **5 ms**.
+  </Step>
+  <Step label="Sum over three links">
+    3 × (1.2 + 5) = 3 × 6.2 = **18.6 ms**. Propagation dominates: three cross-country hops of fiber cost more than three retransmissions of the packet.
+  </Step>
+</WorkedExample>
+
+<Callout type="pitfall" title="The three unit traps">
+**Bytes to bits**: multiply by 8. **km to m**: multiply by 1000. **M means 10⁶** in networking, never 2²⁰: 10 Mbps = 10,000,000 bits/s. Do the conversions in a separate first line of your answer; graders give method marks for it and it stops the errors at the source.
+</Callout>
+
+<QuickCheck
+  id="dtrans-basic"
+  type="numeric"
+  unit="ms"
+  question="A packet of 8000 bits is sent over a 2 Mbps link. Transmission delay, in milliseconds?"
+  answer={4}
+  explanation="8000 ÷ 2,000,000 = 0.004 s = 4 ms. The link's length is irrelevant to this delay."
+/>
+
+<QuickCheck
+  id="dprop-basic"
+  type="numeric"
+  unit="ms"
+  question="A link is 3000 km long and the propagation speed is 2×10⁸ m/s. Propagation delay, in milliseconds?"
+  answer={15}
+  explanation="3,000,000 m ÷ 200,000,000 m/s = 0.015 s = 15 ms. The packet size and link rate are irrelevant to this delay."
+/>
+
+<QuickCheck
+  id="e2e-store-forward"
+  type="numeric"
+  unit="ms"
+  question="A 1500-byte packet crosses 3 links of 10 Mbps each. Ignoring propagation, processing and queueing, what is the end-to-end delay in milliseconds?"
+  answer={3.6}
+  explanation="L = 12,000 bits. L/R = 1.2 ms per link. Store-and-forward means three full transmissions: 3 × 1.2 = 3.6 ms."
+/>
+
+<QuickCheck
+  id="double-rate"
+  question="You double the link's transmission rate R. Which delay halves?"
+  options={["Transmission delay only", "Propagation delay only", "Both transmission and propagation delay", "Neither; only queueing changes"]}
+  answer="Transmission delay only"
+  explanation="d_trans = L/R halves. d_prop = d/s does not contain R at all. Faster links do not make light travel faster."
+  feedback={{
+    "Propagation delay only": "Propagation depends on distance and the medium. R does not appear in d/s.",
+    "Both transmission and propagation delay": "This is the single most common misconception in the course. Bandwidth changes how fast you can push bits in, not how fast they travel once in.",
+    "Neither; only queueing changes": "Queueing does improve (packets drain faster), but transmission delay is directly halved."
+  }}
+/>
+
+<QuickCheck
+  id="prop-independent"
+  type="true-false"
+  question="Propagation delay depends on the length of the packet."
+  answer="False"
+  explanation="Propagation delay is d/s: the time for one bit to cross the link. A one-bit packet and a one-megabyte packet have identical propagation delay. Packet length affects transmission delay."
+/>
+
+## Queueing delay and traffic intensity
+
+The one delay with no closed formula. It depends on how many packets are already waiting when yours arrives, which depends on the arrival pattern. The textbook gives you a single dimensionless number to reason with:
+
+**Traffic intensity = L × a / R**
+
+where a is the average arrival rate in packets per second, L bits per packet, R the link rate. It is the ratio of the rate bits arrive to the rate bits can leave.
+
+- **La/R > 1**: bits arrive faster than they can be sent. The queue grows without bound. Delay heads to infinity, then the buffer fills and packets are dropped.
+- **La/R ≤ 1**: it depends on the burstiness. Periodic arrivals spaced L/R apart wait zero. A burst of N packets arriving together makes the k-th packet wait (k−1)L/R even when the average is low.
+- As **La/R approaches 1** from below, the average queueing delay grows sharply. This is the famous hockey-stick curve.
+
+<QueueingLab />
+
+<Callout type="key-idea">
+Design rule from the textbook: **keep traffic intensity below 1**. That is why ISPs upgrade links at 70% average utilisation rather than 100%: the delay curve has already started climbing.
+</Callout>
+
+**Packet loss** follows directly. Buffers are finite. When a packet arrives to a full buffer, the router has nowhere to put it, so it drops it. From the sender's point of view the packet vanished. TCP notices (week 5) and retransmits; UDP does not care. Loss rate rises with traffic intensity just like delay does.
+
+<QuickCheck
+  id="intensity-over-one"
+  question="If the traffic intensity La/R on a link is greater than 1, then:"
+  options={[
+    "Queueing delay is small and bounded",
+    "The queue grows without bound and packets will eventually be dropped",
+    "Transmission delay increases",
+    "Propagation delay increases"
+  ]}
+  answer="The queue grows without bound and packets will eventually be dropped"
+  explanation="Bits arrive faster than the link can send them. The backlog only grows. Finite buffers turn infinite queueing delay into loss."
+  feedback={{
+    "Queueing delay is small and bounded": "That is the case for intensity near zero.",
+    "Transmission delay increases": "L/R is unchanged. The packet takes just as long to transmit; it just waits longer to start.",
+    "Propagation delay increases": "d/s never changes with load."
+  }}
+/>
+
+<QuickCheck
+  id="intensity-compute"
+  type="numeric"
+  question="Packets of 1500 bytes arrive at a router's 10 Mbps output link at an average rate of 500 packets per second. What is the traffic intensity?"
+  answer={0.6}
+  explanation="L = 12,000 bits. La = 12,000 × 500 = 6,000,000 bits/s. Divide by R = 10,000,000: 0.6. Below 1, but at 0.6 the queue is starting to matter."
+/>
+
+<Deeper kind="why" title="Why two thirds of c, and why it matters for your VPS">
+
+Light in glass travels slower than in vacuum because the refractive index of silica fiber is about 1.47: c ÷ 1.47 ≈ 2.04×10⁸ m/s. Electrical signals in copper are similar. Nothing in engineering gets around this.
+
+Islamabad to Frankfurt is about 5000 km as the crow flies and maybe 8000 km as the fiber runs (cables go around, not through). At 2×10⁸ m/s that is 40 ms one way, 80 ms round trip, before any router touches the packet. When your SSH session feels laggy at 100 ms, roughly 80% of it is physics. The other 20 ms is queueing and processing across 15 to 20 hops. The only fix for the physics is to move the server.
+
+</Deeper>
+
+<Deeper kind="beyond" title="Bufferbloat">
+
+Cheap home routers and modems shipped with enormous buffers on the theory that dropping packets is bad. The result: under load, traffic intensity sits near 1 and every packet waits hundreds of milliseconds in a huge queue instead of being dropped early so TCP could slow down. That is bufferbloat, and it is why a single upload can make your video call stutter. Modern queue management (CoDel, fq_codel, CAKE) deliberately keeps queues short. If you run OpenWrt on a router, you have almost certainly enabled it.
+
+</Deeper>
+
+<Callout type="exam" title="Your formula sheet for this topic">
+d_nodal = d_proc + d_queue + d_trans + d_prop. d_trans = L/R. d_prop = d/s. End-to-end over N identical links: N(L/R + d/s). Traffic intensity = La/R; keep below 1. Convert bytes to bits and km to m on line one of every answer.
+</Callout>

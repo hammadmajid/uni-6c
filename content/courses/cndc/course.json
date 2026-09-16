@@ -1,0 +1,167 @@
+{
+  "slug": "cndc",
+  "code": "CSC 3205",
+  "short": "CNDC",
+  "title": "Data Communication and Computer Networks",
+  "description": "The Internet from the application down to the wire: what each layer does, how packets get from your laptop to a server, how to compute delay and throughput, and how the link, wireless, multimedia, security and management pieces fit. Built week by week against the SZABIST outline.",
+  "textbook": "Kurose & Ross, Computer Networking: A Top-Down Approach (6th ed). Forouzan and Stallings for numericals and physical-layer detail.",
+  "modules": [
+    {
+      "slug": "week-01",
+      "week": 1,
+      "title": "Networks, protocols, and why we layer",
+      "outline": "Introduction to communication and networks, the Internet, the network edge. Why protocols and algorithms matter. The necessity of layered architecture.",
+      "lessons": [
+        {
+          "slug": "what-the-internet-is",
+          "title": "What the Internet actually is",
+          "minutes": 40,
+          "objective": "describe the Internet in nuts-and-bolts terms and in service terms, and define a protocol precisely enough for an exam."
+        },
+        {
+          "slug": "network-edge",
+          "title": "The network edge and how you get on it",
+          "minutes": 40,
+          "objective": "classify access networks by medium, sharing and rate, and explain when a neighbour can slow you down."
+        },
+        {
+          "slug": "why-layers",
+          "title": "Why layers, and the two models you must know",
+          "minutes": 50,
+          "objective": "justify layered architecture, name the OSI and TCP/IP layers with their PDUs, and say which devices implement which layers."
+        },
+        {
+          "slug": "week-1-checkpoint",
+          "title": "Week 1 checkpoint",
+          "minutes": 25,
+          "kind": "checkpoint",
+          "objective": "answer exam-style questions on week 1 without notes."
+        }
+      ]
+    },
+    {
+      "slug": "week-02",
+      "week": 2,
+      "title": "The network core: switching and performance",
+      "outline": "OSI and TCP/IP layers, the network core, circuit switching versus packet switching, and performance metrics: delay, loss, throughput.",
+      "lessons": [
+        {
+          "slug": "circuit-vs-packet",
+          "title": "Circuit switching vs packet switching",
+          "minutes": 45,
+          "objective": "compare the two switching approaches, compute what FDM and TDM circuits give you, and explain statistical multiplexing with numbers."
+        },
+        {
+          "slug": "four-delays",
+          "title": "The four delays",
+          "minutes": 55,
+          "objective": "compute processing, queueing, transmission and propagation delay, and end-to-end delay across N store-and-forward links."
+        },
+        {
+          "slug": "throughput-and-loss",
+          "title": "Throughput, loss, and reading a traceroute",
+          "minutes": 40,
+          "objective": "find the bottleneck link, explain why packets get dropped, and read a traceroute like a network engineer."
+        },
+        {
+          "slug": "week-2-checkpoint",
+          "title": "Week 2 checkpoint",
+          "minutes": 30,
+          "kind": "checkpoint",
+          "objective": "solve the numericals and comparison questions the midterm will draw from weeks 1 and 2."
+        }
+      ]
+    },
+    {
+      "slug": "week-03",
+      "week": 3,
+      "title": "Network types and transmission media",
+      "outline": "LAN, MAN, WAN and low-power WAN. IoT and the future of networks. Wired and wireless communication media.",
+      "lessons": []
+    },
+    {
+      "slug": "week-04",
+      "week": 4,
+      "title": "The application layer",
+      "outline": "Principles and protocols: HTTP, FTP, SMTP, DNS, peer-to-peer applications. Socket programming concepts.",
+      "lessons": []
+    },
+    {
+      "slug": "week-05",
+      "week": 5,
+      "title": "The transport layer",
+      "outline": "Multiplexing and demultiplexing. TCP and UDP: connection-oriented versus connectionless protocols.",
+      "lessons": []
+    },
+    {
+      "slug": "week-06",
+      "week": 6,
+      "title": "The network layer: IP and routing",
+      "outline": "Network layer devices, the Internet Protocol, routing in the Internet.",
+      "lessons": []
+    },
+    {
+      "slug": "week-07",
+      "week": 7,
+      "title": "Addressing, subnetting, and wireless layer 3",
+      "outline": "Layer 3 wireless protocols for ad hoc and sensor networks. IP addressing and subnetting.",
+      "lessons": []
+    },
+    {
+      "slug": "week-08",
+      "week": 8,
+      "title": "Midterm",
+      "outline": "Midterm paper covering weeks 1 to 7.",
+      "lessons": []
+    },
+    {
+      "slug": "week-09",
+      "week": 9,
+      "title": "The link layer: MAC, LLC, and virtualization",
+      "outline": "Introduction to the link layer, MAC and LLC sublayers, medium access techniques, link virtualization, data center networking.",
+      "lessons": []
+    },
+    {
+      "slug": "week-10",
+      "week": 10,
+      "title": "Medium access: ALOHA to CSMA",
+      "outline": "ALOHA, slotted ALOHA, CSMA/CD, CSMA/CA.",
+      "lessons": []
+    },
+    {
+      "slug": "week-11",
+      "week": 11,
+      "title": "LLC protocols: ARP and RARP",
+      "outline": "Medium access control protocols and LLC protocols: ARP, RARP.",
+      "lessons": []
+    },
+    {
+      "slug": "week-12",
+      "week": 12,
+      "title": "Wireless and mobile networks",
+      "outline": "IEEE 802.11, cellular networks, mobile IP, IEEE 802.15.4 and IEEE 802.15.6.",
+      "lessons": []
+    },
+    {
+      "slug": "week-13",
+      "week": 13,
+      "title": "Multimedia networking",
+      "outline": "Streaming and stored video, voice over IP.",
+      "lessons": []
+    },
+    {
+      "slug": "week-14",
+      "week": 14,
+      "title": "Network security fundamentals",
+      "outline": "Security fundamentals and cryptography.",
+      "lessons": []
+    },
+    {
+      "slug": "week-15",
+      "week": 15,
+      "title": "Network management and the future",
+      "outline": "Infrastructure and the Internet standard management framework. Ubiquitous networks: AI and networks combined.",
+      "lessons": []
+    }
+  ]
+}

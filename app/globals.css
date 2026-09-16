@@ -1,0 +1,240 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Geist dark surfaces */
+  --color-background-100: #0a0a0a;
+  --color-background-200: #121212;
+
+  /* Geist dark gray scale */
+  --color-gray-100: #1a1a1a;
+  --color-gray-200: #1f1f1f;
+  --color-gray-300: #292929;
+  --color-gray-400: #2e2e2e;
+  --color-gray-500: #454545;
+  --color-gray-600: #6b6b6b;
+  --color-gray-700: #8f8f8f;
+  --color-gray-800: #9c9c9c;
+  --color-gray-900: #a8a8a8;
+  --color-gray-1000: #ededed;
+
+  /* Learning semantics */
+  --color-blue-600: #3291ff;
+  --color-blue-700: #0070f3;
+  --color-blue-800: #0761d1;
+  --color-green-600: #62c073;
+  --color-green-700: #46a758;
+  --color-green-800: #3b8f4a;
+  --color-red-600: #ff6369;
+  --color-red-700: #e5484d;
+  --color-red-800: #c93b40;
+  --color-amber-600: #ffc85c;
+  --color-amber-700: #ffb224;
+  --color-amber-800: #d9961a;
+
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
+/* Typography scale (Geist) */
+@utility text-heading-32 {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+@utility text-heading-24 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+@utility text-heading-20 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+@utility text-heading-16 {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+@utility text-label-12 {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+@utility text-label-13 {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+@utility text-label-14 {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+@utility text-label-12-mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+}
+@utility text-label-14-mono {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 20px;
+}
+@utility text-copy-13 {
+  font-size: 13px;
+  line-height: 18px;
+}
+@utility text-copy-14 {
+  font-size: 14px;
+  line-height: 22px;
+}
+@utility text-copy-16 {
+  font-size: 16px;
+  line-height: 26px;
+}
+@utility text-copy-14-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-background-100);
+  color: var(--color-gray-1000);
+}
+
+* {
+  border-color: var(--color-gray-400);
+}
+
+input[type="range"] {
+  accent-color: var(--color-blue-700);
+}
+
+/* Lesson prose: markdown rendered from MDX */
+.lesson-prose {
+  font-size: 15px;
+  line-height: 26px;
+  color: var(--color-gray-1000);
+}
+.lesson-prose > * + * {
+  margin-top: 16px;
+}
+.lesson-prose h2 {
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-gray-400);
+}
+.lesson-prose h3 {
+  font-size: 17px;
+  line-height: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: 32px;
+}
+.lesson-prose p {
+  color: var(--color-gray-900);
+}
+.lesson-prose strong {
+  color: var(--color-gray-1000);
+  font-weight: 600;
+}
+.lesson-prose a {
+  color: var(--color-blue-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lesson-prose ul,
+.lesson-prose ol {
+  padding-left: 22px;
+  color: var(--color-gray-900);
+}
+.lesson-prose ul {
+  list-style: disc;
+}
+.lesson-prose ol {
+  list-style: decimal;
+}
+.lesson-prose li + li {
+  margin-top: 6px;
+}
+.lesson-prose li::marker {
+  color: var(--color-gray-600);
+}
+.lesson-prose code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--color-gray-100);
+  border: 1px solid var(--color-gray-400);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--color-gray-1000);
+}
+.lesson-prose pre {
+  background: var(--color-background-200);
+  border: 1px solid var(--color-gray-400);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 20px;
+}
+.lesson-prose pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--color-gray-1000);
+}
+.lesson-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 20px;
+}
+.lesson-prose th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-gray-700);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+.lesson-prose td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-gray-300);
+  color: var(--color-gray-900);
+  vertical-align: top;
+}
+.lesson-prose td:first-child {
+  color: var(--color-gray-1000);
+}
+.lesson-prose blockquote {
+  border-left: 2px solid var(--color-gray-500);
+  padding-left: 14px;
+  color: var(--color-gray-700);
+}
+.lesson-prose hr {
+  border: 0;
+  border-top: 1px solid var(--color-gray-400);
+  margin: 32px 0;
+}

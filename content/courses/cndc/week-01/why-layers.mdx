@@ -1,0 +1,150 @@
+You already layer things: HTTP handlers on top of a framework on top of a socket library on top of the kernel. Networking formalised that instinct in 1984, and the exam wants you to reproduce both formalisations and explain the encapsulation that makes them work.
+
+<Predict
+  id="combinatorial-blowup"
+  prompt="Imagine no layering. Every application (web, email, SSH, video, DNS...) must be written to work over every physical link (Ethernet, Wi-Fi, fiber, satellite, LTE...). With A applications and L link types, how many implementations does the world need? What does layering change that number to?"
+  answer="Without layering: A × L implementations. With layering: A + L, because every application talks to one common interface (the network/transport layer) and every link technology implements that one interface."
+>
+
+Without layers, every application would need its own code for every link type: **A × L** combinations. Add one new link technology and every application on earth must be updated.
+
+With layers, applications talk to one interface (IP and the transport protocols) and each link technology implements that same interface once: **A + L**. The Internet went from dial-up to fiber to 5G without HTTP changing at all. That is not luck, it is the architecture.
+
+The textbook's analogy is an airline: ticket purchase, baggage check, gate, runway takeoff, then in reverse at the other end. Each layer does one job and hands off to the next. The baggage layer does not care what plane it is.
+
+</Predict>
+
+## Layered architecture: what it means precisely
+
+A network protocol stack is organised in **layers**. Each layer:
+
+- performs certain actions within the layer, and
+- uses the **services** of the layer directly below it, and
+- provides a **service** to the layer directly above it.
+
+The set of services a layer offers upward is its **service model**. The layer above only needs the service model, never the implementation. TCP does not know or care whether the datagram went over Ethernet or Wi-Fi.
+
+Advantages the exam wants listed:
+
+1. **Modularity**: a well-defined structure lets you discuss and update pieces independently.
+2. **Transparency of implementation**: a layer can change internally as long as its service to the layer above is unchanged.
+3. **A shared vocabulary**: "the transport layer" means the same thing to every engineer in the world.
+
+Drawbacks, because a balanced answer earns more:
+
+1. **Duplicated functionality**: error recovery exists at the link layer and again at the transport layer.
+2. **Layer violations**: some jobs need information from another layer (the application might want to know a timestamp the link layer has), and a strict stack forbids it.
+
+## The Internet protocol stack: five layers
+
+| Layer | Job | Protocols | <Term term="PDU" def="Protocol Data Unit. The name of the chunk of data at a given layer: message, segment, datagram, frame.">PDU</Term> name |
+|---|---|---|---|
+| Application | The thing you wanted: a page, an email, a name lookup | HTTP, SMTP, FTP, DNS | message |
+| Transport | Process-to-process delivery between hosts | TCP, UDP | segment |
+| Network | Host-to-host delivery across networks; routing | IP, routing protocols | datagram |
+| Link | Node-to-node across a single link; medium access | Ethernet, Wi-Fi, PPP | frame |
+| Physical | Bits onto the medium | 1000BASE-T, 802.11 radio | bit |
+
+## OSI: seven layers
+
+The **Open Systems Interconnection** model, published by ISO in the early 1980s, has seven. It adds two layers between application and transport that the Internet stack leaves to the application developer:
+
+- **Presentation**: how data is represented so both ends interpret bytes identically: encoding, compression, encryption.
+- **Session**: opening, checkpointing and recovering dialogues between applications.
+
+The Internet stack does not have them because its designers judged that, if an application needs those services, it can build them itself. TLS is a presentation-layer job done inside the application layer. Video-call resumption is a session-layer job done inside the app.
+
+<EncapsulationExplorer />
+
+## Encapsulation
+
+The sending host's application layer produces a **message**. Transport prepends a header (ports, sequence numbers) and the result is a **segment**. Network prepends its header (IP addresses) making a **datagram**. Link prepends a header (MAC addresses) and appends a trailer (checksum) making a **frame**. Physical turns the frame into signals.
+
+Each layer's PDU has two parts: the **header** that layer added, and the **payload** which is the whole PDU from the layer above. Nesting, like Russian dolls or nested JSON.
+
+At each intermediate device, only some layers are peeled off. A **router** removes the frame, reads the datagram's IP header, chooses an output link, and builds a fresh frame for that link. It never opens the segment. A **switch** only reads the frame's MAC addresses. A **hub** regenerates signals and does not know what a frame is.
+
+<OrderCheck
+  id="osi-order"
+  prompt="Arrange the OSI layers from top (closest to the user) to bottom (closest to the wire)."
+  items={["Application", "Presentation", "Session", "Transport", "Network", "Data link", "Physical"]}
+  explanation="Top down: Application, Presentation, Session, Transport, Network, Data link, Physical. A common mnemonic reading bottom up is Please Do Not Throw Sausage Pizza Away."
+  topLabel="Top: closest to the user"
+  bottomLabel="Bottom: closest to the wire"
+/>
+
+<QuickCheck
+  id="router-layers"
+  question="A router forwarding a packet between two networks processes which layers?"
+  options={["Physical and link only", "Physical, link and network", "Physical, link, network and transport", "All five layers"]}
+  answer="Physical, link and network"
+  explanation="A router's job is to read the destination IP address and pick the next hop. That lives in the network layer. It must handle the frame (link) and the signals (physical) to get there. It never looks at ports or application data."
+  feedback={{
+    "Physical and link only": "That describes a link-layer switch. A router must read IP addresses, which are one layer up.",
+    "Physical, link, network and transport": "Ports and sequence numbers belong to the end hosts. A router forwarding a datagram never needs them. (Firewalls and NAT boxes do peek, but that makes them more than plain routers.)",
+    "All five layers": "The most common wrong answer. A router is not a host. It does not run the application, so it has no reason to reassemble segments or parse HTTP."
+  }}
+/>
+
+<QuickCheck
+  id="transport-pdu"
+  question="The PDU at the transport layer is called a:"
+  options={["Message", "Segment", "Datagram", "Frame"]}
+  answer="Segment"
+  explanation="Message (application), segment (transport), datagram (network), frame (link). Learn the four as a chant. Papers ask this directly and also hide it inside longer questions."
+  feedback={{
+    "Message": "That is the application layer's unit, before any transport header is added.",
+    "Datagram": "One layer too low. The datagram is what the network layer makes by adding an IP header to a segment.",
+    "Frame": "Two layers too low. Frames belong to the link layer and carry MAC addresses."
+  }}
+/>
+
+<QuickCheck
+  id="missing-layers"
+  question="Which OSI layers have no counterpart in the five-layer Internet stack?"
+  options={["Session and transport", "Presentation and session", "Presentation and network", "Session and data link"]}
+  answer="Presentation and session"
+  explanation="The Internet stack collapses presentation and session into the application layer. If an application needs encryption or session recovery, it implements them itself (TLS, application-level resume tokens)."
+  feedback={{
+    "Session and transport": "Transport exists in both models: TCP and UDP live there.",
+    "Presentation and network": "The network layer is in both. IP is the Internet's network layer.",
+    "Session and data link": "The data link layer is in both models, just called 'link' in the Internet stack."
+  }}
+/>
+
+<QuickCheck
+  id="switch-ip"
+  type="true-false"
+  question="A link-layer switch examines the destination IP address to decide which port to forward a frame out of."
+  answer="False"
+  explanation="Switches forward on MAC addresses, which are in the frame header. IP addresses are inside the payload of the frame, one layer up, and a switch never opens the payload. Routers forward on IP."
+  misconception="Because switches and routers both 'forward packets', it is tempting to assume they read the same field. The whole point of the layering is that they do not."
+/>
+
+<Callout type="pitfall" title="Four layers or five?">
+Some books describe TCP/IP as four layers by merging physical and link into a single "network access" or "host-to-network" layer. Kurose and Forouzan both use five. If a question says TCP/IP has four layers, that merge is what they mean. Answer using the numbering the question uses, and say so in one line.
+</Callout>
+
+<Deeper kind="history" title="Why OSI lost and why we still teach it">
+
+ISO designed OSI top-down by committee with the aim of being complete. TCP/IP grew bottom-up inside ARPANET and shipped working code in BSD Unix. By the time OSI implementations arrived, every university already had TCP/IP for free. The protocols lost; the vocabulary won. Nobody runs the OSI session layer, but everyone says "layer 2 switch" and "layer 3 routing" using OSI's numbering. "Layer 7 load balancer" means it parses HTTP.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: compare the OSI and TCP/IP models (5 marks)">
+
+| Aspect | OSI | TCP/IP |
+|---|---|---|
+| Layers | Seven: physical, data link, network, transport, session, presentation, application | Five (or four): physical, link, network, transport, application |
+| Origin | ISO, reference model designed before implementation | Developed with ARPANET, protocols came first, model described them after |
+| Presentation and session | Separate layers | Handled inside the application layer |
+| Protocol dependence | Generic model, protocol independent | Model built around specific protocols: IP, TCP, UDP |
+| Usage today | Reference and vocabulary (layer numbers) | The actual Internet |
+
+Then one sentence: "OSI is the conceptual reference; TCP/IP is the deployed architecture, and its layers map onto OSI's with presentation and session folded into application."
+
+</Deeper>
+
+<Callout type="exam" title="What to be able to reproduce cold">
+Both layer lists top to bottom with one-line jobs, the four PDU names, which layers a host, router and switch implement, two advantages and one drawback of layering, and the comparison table above. That covers every layering question in the last several years of papers for this course.
+</Callout>
