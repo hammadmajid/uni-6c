@@ -15,4 +15,6 @@ courses/<slug>/
 
 Filenames are lower-case kebab-case. Keep the instructor's numbering so quizzes and announcements that say "lectures 6 to 10" can be mapped back.
 
+Binary files (PDF, Office docs, images, zips, Packet Tracer `.pkt`, Wireshark captures) are stored with Git LFS; see `.gitattributes`. `git lfs install` once per machine before cloning, or run `git lfs pull` after.
+
 These files are inputs only. The app never serves them; it reads `content/courses/`.

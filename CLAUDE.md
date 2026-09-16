@@ -63,6 +63,7 @@ SZABIST slides do not always teach the correct or standard thing. Example: the W
 - The owner drops quiz and assignment briefs into `courses/<slug>/quizzes/` and `courses/<slug>/assignments/` and says when a date is announced. When a quiz is announced, add a short revision lesson (`kind: "checkpoint"`) covering exactly the lectures the quiz spans, before the quiz date.
 - Assignments get their own lesson only if the assignment teaches something the outline does not; otherwise just link the brief from the week's checkpoint.
 - The machine this runs on is ephemeral. Everything that matters lives in this repo; progress lives in Postgres when `DATABASE_URL` is set.
+- PDFs and other binaries under `courses/` are Git LFS objects (`.gitattributes`). A fresh clone needs `git lfs install` (once per machine) so the files are real PDFs, not pointers.
 
 ## Progress storage and deployment
 
