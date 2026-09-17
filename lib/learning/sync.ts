@@ -31,6 +31,8 @@ export function mergeSnapshots(a: Snapshot, b: Snapshot): Snapshot {
       correct: cur.correct || v.correct,
       status: cur.status === "completed" || v.status === "completed" ? "completed" : newer.status,
       confidence: newer.confidence ?? cur.confidence ?? v.confidence,
+      revealed: !!(cur.revealed || v.revealed),
+      lastAnswer: newer.lastAnswer ?? cur.lastAnswer ?? v.lastAnswer ?? null,
     };
   }
 

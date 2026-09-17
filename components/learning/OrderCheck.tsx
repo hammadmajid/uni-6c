@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useProgressStore } from "@/lib/learning/progress-store";
 import { useActivityKey } from "./LessonContext";
@@ -44,9 +44,35 @@ function scramble(items: string[], seed: string): string[] {
 export function OrderCheck({ id, prompt, items, explanation, topLabel, bottomLabel }: OrderCheckProps) {
   const key = useActivityKey(id);
   const recordAttempt = useProgressStore((s) => s.recordAttempt);
+  // Ready once localStorage is in and the server pull (if any) has been merged.
+  const ready = useProgressStore((s) => s.hydrated && s.sync !== "checking");
+  const saved = useProgressStore((s) => s.activities[key]);
   const [order, setOrder] = useState(() => scramble(items, id));
   const [result, setResult] = useState<boolean[] | null>(null);
   const [attempts, setAttempts] = useState(0);
+  const seeded = useRef(false);
+
+  // Restore a solved order (or the last attempted one) from the store.
+  useEffect(() => {
+    if (!ready || seeded.current) return;
+    seeded.current = true;
+    if (!saved || saved.attempts === 0) return;
+    setAttempts(saved.attempts);
+    let last: string[] | null = null;
+    try {
+      const parsed = saved.lastAnswer ? (JSON.parse(saved.lastAnswer) as unknown) : null;
+      if (Array.isArray(parsed) && parsed.length === items.length && parsed.every((x) => items.includes(x))) last = parsed as string[];
+    } catch {
+      last = null;
+    }
+    if (saved.correct) {
+      setOrder([...items]);
+      setResult(items.map(() => true));
+    } else if (last) {
+      setOrder(last);
+      setResult(last.map((v, i) => v === items[i]));
+    }
+  }, [ready, saved, items]);
 
   const solved = result?.every(Boolean) ?? false;
 
@@ -63,7 +89,7 @@ export function OrderCheck({ id, prompt, items, explanation, topLabel, bottomLab
     const r = order.map((v, i) => v === items[i]);
     setResult(r);
     setAttempts((a) => a + 1);
-    recordAttempt(key, r.every(Boolean));
+    recordAttempt(key, r.every(Boolean), JSON.stringify(order));
   }
 
   return (

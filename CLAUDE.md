@@ -27,6 +27,7 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 - Depth goes behind `Deeper` (why, edge, formal, exam, history, beyond). Exam model answers go in `Deeper kind="exam"` or an exam `Callout`.
 - Checkpoint lessons (`kind: "checkpoint"`) hold only questions and `Predict` long-answer prompts with model answers.
 - Give every interactive element a unique `id` within its lesson; ids become progress and review keys.
+- Every interactive component must restore its answered state from the store on load (see the `ready` + `seeded` pattern in `QuickCheck.tsx`): pass the submitted answer to `recordAttempt(key, correct, answer)` and seed local state from `activities[key]` once `hydrated && sync !== "checking"`. The hydrator merges the server snapshot before flipping `sync`, so components that wait for it see cross-device progress. Never keep answered state in component-local `useState` alone.
 - No `{`, `}` or `<` characters in MDX prose. Use words or unicode (≤, ×, ⁸).
 - Tables need remark-gfm, already wired in the lesson page.
 - The lesson page passes `blockJS: false` to next-mdx-remote. Without it, v6 silently strips every `prop={...}` expression and components render with undefined props.

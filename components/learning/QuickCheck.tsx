@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useProgressStore } from "@/lib/learning/progress-store";
 import { useActivityKey, useLesson } from "./LessonContext";
 import { ConfidenceRating } from "./ConfidenceRating";
@@ -60,13 +60,40 @@ export function QuickCheck({
   const key = useActivityKey(id);
   const lesson = useLesson();
   const recordAttempt = useProgressStore((s) => s.recordAttempt);
+  const recordReveal = useProgressStore((s) => s.recordReveal);
   const setConfidence = useProgressStore((s) => s.setConfidence);
   const addReview = useProgressStore((s) => s.addReview);
+  // Ready once localStorage is in and the server pull (if any) has been merged.
+  const ready = useProgressStore((s) => s.hydrated && s.sync !== "checking");
+  const saved = useProgressStore((s) => s.activities[key]);
 
   const [value, setValue] = useState("");
   const [attempts, setAttempts] = useState(0);
   const [result, setResult] = useState<"correct" | "incorrect" | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const [rated, setRated] = useState(false);
+  const seeded = useRef(false);
+
+  // Restore what the learner already did with this check, once the store (local or Neon) is in.
+  useEffect(() => {
+    if (!ready || seeded.current) return;
+    seeded.current = true;
+    if (!saved || saved.attempts === 0 && !saved.revealed) return;
+    setAttempts(saved.attempts);
+    if (saved.correct) {
+      setValue(saved.lastAnswer ?? String(Array.isArray(answer) ? answer[0] : answer));
+      setResult("correct");
+      setRated(saved.confidence !== null);
+    } else if (saved.revealed) {
+      setRevealed(true);
+      setValue(saved.lastAnswer ?? "");
+    } else if (saved.lastAnswer) {
+      setValue(saved.lastAnswer);
+      setResult("incorrect");
+    }
+    setRestored(true);
+  }, [ready, saved, answer]);
 
   const displayAnswer =
     type === "numeric"
@@ -95,10 +122,12 @@ export function QuickCheck({
     const ok = isCorrect(value);
     setAttempts((a) => a + 1);
     setResult(ok ? "correct" : "incorrect");
-    recordAttempt(key, ok);
+    setRestored(false);
+    recordAttempt(key, ok, value);
   }
 
   function rate(c: "low" | "medium" | "high") {
+    setRated(true);
     setConfidence(key, c);
     if (!noReview) {
       addReview({
@@ -192,6 +221,7 @@ export function QuickCheck({
               onClick={() => {
                 setRevealed(true);
                 setResult(null);
+                recordReveal(key);
                 rate("low");
               }}
             >
@@ -202,12 +232,12 @@ export function QuickCheck({
       )}
 
       {result === "correct" && (
-        <Feedback tone="correct" title={attempts === 1 ? "Correct, first try." : `Correct, after ${attempts} attempts.`}>
+        <Feedback tone="correct" title={restored ? "Answered earlier. Correct." : attempts === 1 ? "Correct, first try." : `Correct, after ${attempts} attempts.`}>
           <p>{explanation}</p>
         </Feedback>
       )}
       {result === "incorrect" && (
-        <Feedback tone="incorrect" title="Not quite.">
+        <Feedback tone="incorrect" title={restored ? "Your last answer was not right. Try again." : "Not quite."}>
           {wrongFeedback ? (
             <p>
               <span className="text-amber-600">Why that is tempting: </span>
@@ -225,7 +255,12 @@ export function QuickCheck({
         </Feedback>
       )}
 
-      {result === "correct" && <ConfidenceRating onRate={rate} />}
+      {result === "correct" && !rated && <ConfidenceRating onRate={rate} />}
+      {result === "correct" && rated && saved?.confidence && (
+        <p className="text-label-12 mt-2 text-gray-600">
+          Confidence: {saved.confidence === "high" ? "knew it" : saved.confidence === "medium" ? "mostly sure" : "guessed"} · in your review queue.
+        </p>
+      )}
 
       {attempts > 0 && !locked && (
         <p className="text-label-12 mt-2 text-gray-600">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useProgressStore } from "@/lib/learning/progress-store";
 import { useActivityKey, useLesson } from "./LessonContext";
 import { Button } from "./ui";
@@ -25,15 +25,29 @@ export function Predict({ id, prompt, answer, children, placeholder }: PredictPr
   const recordAttempt = useProgressStore((s) => s.recordAttempt);
   const setConfidence = useProgressStore((s) => s.setConfidence);
   const addReview = useProgressStore((s) => s.addReview);
+  // Ready once localStorage is in and the server pull (if any) has been merged.
+  const ready = useProgressStore((s) => s.hydrated && s.sync !== "checking");
+  const saved = useProgressStore((s) => s.activities[key]);
 
   const [text, setText] = useState("");
   const [revealed, setRevealed] = useState(false);
   const [grade, setGrade] = useState<"hit" | "partial" | "miss" | null>(null);
+  const seeded = useRef(false);
+
+  // A graded prediction is restored with its text and grade; the reveal stays open.
+  useEffect(() => {
+    if (!ready || seeded.current) return;
+    seeded.current = true;
+    if (!saved || saved.attempts === 0) return;
+    setText(saved.lastAnswer ?? "");
+    setRevealed(true);
+    setGrade(saved.confidence === "high" ? "hit" : saved.confidence === "medium" ? "partial" : saved.confidence === "low" ? "miss" : null);
+  }, [ready, saved]);
 
   function selfGrade(g: "hit" | "partial" | "miss") {
     setGrade(g);
     const conf = g === "hit" ? "high" : g === "partial" ? "medium" : "low";
-    recordAttempt(key, g !== "miss");
+    recordAttempt(key, g !== "miss", text);
     setConfidence(key, conf);
     addReview({
       key,

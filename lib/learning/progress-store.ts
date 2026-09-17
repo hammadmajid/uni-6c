@@ -11,6 +11,10 @@ export interface Activity {
   lastAttemptAt: number | null;
   confidence: Confidence | null;
   hintsUsed: number;
+  /** What the learner last submitted (option text, typed value, prediction, or serialised order). */
+  lastAnswer?: string | null;
+  /** The learner gave up and asked for the answer. */
+  revealed?: boolean;
 }
 
 const emptyActivity: Activity = {
@@ -20,6 +24,8 @@ const emptyActivity: Activity = {
   lastAttemptAt: null,
   confidence: null,
   hintsUsed: 0,
+  lastAnswer: null,
+  revealed: false,
 };
 
 export type SyncState = "checking" | "local-only" | "unauthorized" | "synced" | "saving" | "error";
@@ -37,7 +43,8 @@ interface ProgressState {
   /** Replace the persisted slice wholesale (used after merging with the server). */
   replaceAll: (s: { activities: Record<string, Activity>; lessons: Record<string, { completedAt: number }>; lastVisited: Record<string, { href: string; title: string; at: number }>; review: ReviewItem[] }) => void;
   getActivity: (key: string) => Activity;
-  recordAttempt: (key: string, correct: boolean) => void;
+  recordAttempt: (key: string, correct: boolean, answer?: string) => void;
+  recordReveal: (key: string) => void;
   recordHint: (key: string) => void;
   setConfidence: (key: string, c: Confidence) => void;
   completeLesson: (key: string) => void;
@@ -65,7 +72,7 @@ export const useProgressStore = create<ProgressState>()(
 
       getActivity: (key) => get().activities[key] ?? emptyActivity,
 
-      recordAttempt: (key, correct) =>
+      recordAttempt: (key, correct, answer) =>
         set((s) => {
           const prev = s.activities[key] ?? emptyActivity;
           return {
@@ -77,9 +84,16 @@ export const useProgressStore = create<ProgressState>()(
                 correct: prev.correct || correct,
                 status: correct ? "completed" : "in-progress",
                 lastAttemptAt: Date.now(),
+                lastAnswer: answer ?? prev.lastAnswer ?? null,
               },
             },
           };
+        }),
+
+      recordReveal: (key) =>
+        set((s) => {
+          const prev = s.activities[key] ?? emptyActivity;
+          return { activities: { ...s.activities, [key]: { ...prev, revealed: true, lastAttemptAt: Date.now() } } };
         }),
 
       recordHint: (key) =>

@@ -27,12 +27,17 @@ export function ProgressHydrator() {
 
       const { state, data } = await pullSnapshot();
       if (cancelled) return;
-      store.setSync(state);
-      if (state !== "synced") return;
+      if (state !== "synced") {
+        store.setSync(state);
+        return;
+      }
 
+      // Merge the server copy in BEFORE flipping sync out of "checking": lesson components wait for
+      // that flip to restore their answered state, so the merged data must already be in the store.
       const local = snapshotOf();
       const merged = data ? mergeSnapshots(data, local) : local;
       if (JSON.stringify(merged) !== JSON.stringify(local)) useProgressStore.getState().replaceAll(merged);
+      store.setSync(state);
       if (!data || JSON.stringify(merged) !== JSON.stringify(data)) {
         if (!isEmptySnapshot(merged)) useProgressStore.getState().setSync(await pushSnapshot(merged));
       }
