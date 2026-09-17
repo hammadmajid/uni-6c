@@ -27,6 +27,11 @@ import { CaravanDiagram } from "@/components/cndc/CaravanDiagram";
 import { IntensityCurve } from "@/components/cndc/IntensityCurve";
 import { BottleneckPipes } from "@/components/cndc/BottleneckPipes";
 import { TracerouteMap } from "@/components/cndc/TracerouteMap";
+import { WiresharkWindow } from "@/components/cndc-lab/WiresharkWindow";
+import { FilterLab } from "@/components/cndc-lab/FilterLab";
+import { LayerSortLab } from "@/components/cndc-lab/LayerSortLab";
+import { SnifferPlacement } from "@/components/cndc-lab/SnifferPlacement";
+import { TimeFormats } from "@/components/cndc-lab/TimeFormats";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mdxComponents: Record<string, ComponentType<any>> = {
@@ -59,4 +64,9 @@ export const mdxComponents: Record<string, ComponentType<any>> = {
   IntensityCurve,
   BottleneckPipes,
   TracerouteMap,
+  WiresharkWindow,
+  FilterLab,
+  LayerSortLab,
+  SnifferPlacement,
+  TimeFormats,
 };

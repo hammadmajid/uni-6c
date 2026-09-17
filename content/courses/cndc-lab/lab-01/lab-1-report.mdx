@@ -1,0 +1,119 @@
+The manual's four questions, then the home activity and Assignment 1. Answer each from the lab capture used in the previous two lessons; then repeat with your own capture for the report. The manual's own solution has a slip in question 2, so read that one carefully.
+
+## Question 1: three protocols
+
+<QuickCheck
+  id="q1-protocols"
+  question="List three different protocols that appear in the Protocol column of the unfiltered packet list. Which set is one you could actually have seen?"
+  options={[
+    "ARP, DNS, TCP",
+    "Ethernet, IP, HTTP",
+    "HTTP, FTP, SMTP",
+    "TLS, SSH, HTTP"
+  ]}
+  answer="ARP, DNS, TCP"
+  explanation="Any three names from the column count. The lab capture shows ARP, MDNS, SSDP, TLSv1.3, TCP, DNS, HTTP and NTP. Your own capture will have a different mix; write what you saw, not what the manual saw."
+  feedback={{
+    "Ethernet, IP, HTTP": "Ethernet and IP never appear in the Protocol column. Every frame has something above them, and the column shows the highest layer decoded.",
+    "HTTP, FTP, SMTP": "Loading a web page generates no FTP and no mail. You would see these only if you ran an FTP client or a mail client during the capture.",
+    "TLS, SSH, HTTP": "TLS is plausible from other tabs, but SSH appears only if you had an SSH session open. Do not list protocols you did not see."
+  }}
+/>
+
+<Callout type="exam" title="The manual's model answer, and one wrinkle">
+The manual answers "TCP, UDP, HTTP, DNS". Fine to reproduce. But notice that UDP shows in the Protocol column only when Wireshark cannot decode the payload; a DNS packet is labelled DNS, not UDP. If your list has no UDP row and the checker asks, say so: "DNS, MDNS and NTP are all UDP; Wireshark labels them by the higher protocol."
+</Callout>
+
+## Question 2: GET to OK
+
+<TimeFormats />
+
+<QuickCheck
+  id="q2-lab-capture"
+  type="numeric"
+  unit="s"
+  question="In the lab capture, the GET is frame 14 at 2.372105 s and the 200 OK is frame 16 at 2.594893 s. How long from GET sent to OK received, in seconds?"
+  answer={0.2228}
+  explanation="2.594893 − 2.372105 = 0.222788 s, about 223 ms: one round trip to Massachusetts plus Apache's think time. The unit trap is the other direction here: if a question asks for milliseconds, that is 222.8 ms, not 0.22."
+/>
+
+<QuickCheck
+  id="q2-manual-capture"
+  type="numeric"
+  unit="s"
+  question="The manual's solution prints the GET's arrival time as 11:43:13.422848 and the OK's as 11:43:13.439604. What is the correct difference, in seconds?"
+  answer={0.016756}
+  explanation="13.439604 − 13.422848 = 0.016756 s. Check it against the manual's own printout: frame 110's line reads 'Time delta from previous packet: 0.016756000 seconds', and frame 110 is the OK immediately after the GET. The two numbers must agree, and they do."
+/>
+
+<Callout type="careful" title="The manual's arithmetic is wrong; its data is right">
+The manual's solution writes ".43960400 − .426032000 = 0.013572". The second number is not the GET's time; .422848 has been mixed up with the delta 6.826032 printed a line above it. Subtract correctly and you get 0.016756 s, which is exactly the time-delta Wireshark already printed for frame 110. In your report, show the subtraction with your own timestamps. If you quote the manual's frames, quote them with the correct result.
+</Callout>
+
+<Callout type="exam" title="Three ways to read the answer, in marking order">
+Best: the Frame section's "Time since reference or first frame" for both packets, subtracted. Also accepted: View › Time Display Format › Time of Day, then subtract. Fastest: apply the `http` filter, set the time format to "Seconds Since Previous Displayed Packet", and read the OK row. Mention the filter, or the checker will ask why the previous packet was the GET and not the ACK.
+</Callout>
+
+## Question 3: the two addresses
+
+<QuickCheck
+  id="q3-which-is-mine"
+  question="The GET frame's IP header says Source 192.168.1.7, Destination 128.119.245.12. Which address is your computer's?"
+  options={["192.168.1.7, the source of the GET", "128.119.245.12, the source of the reply", "Both; the machine has two addresses", "Neither; the addresses belong to the routers"]}
+  answer="192.168.1.7, the source of the GET"
+  explanation="You sent the GET, so you are its source. The reply reverses the pair: source 128.119.245.12, destination 192.168.1.7. The manual's answer does the same with 128.238.244.28 (the lab machine) and 128.119.245.12 (gaia, also called www-net.cs.umass.edu)."
+  feedback={{
+    "128.119.245.12, the source of the reply": "That is gaia. It is the destination of the packet you sent, so it cannot be you.",
+    "Both; the machine has two addresses": "A packet has one source and one destination. If they were both you, you would be talking to yourself.",
+    "Neither; the addresses belong to the routers": "Routers forward on these addresses but never replace them (NAT aside; see the next question). The IP header carries the end hosts."
+  }}
+/>
+
+<QuickCheck
+  id="q3-private-address"
+  question="The manual's lab machine had the public address 128.238.244.28. Yours is 192.168.1.7, which the whole world seems to use. Why?"
+  options={[
+    "192.168.0.0/16 is a private range; your router rewrites it to its one public address with NAT, so gaia sees the router's address",
+    "The university in the manual owned a whole /16 block; homes get a /8 instead",
+    "192.168.1.7 is your address on the Internet; every ISP assigns from the same pool",
+    "Wireshark anonymises local addresses in the display"
+  ]}
+  answer="192.168.0.0/16 is a private range; your router rewrites it to its one public address with NAT, so gaia sees the router's address"
+  explanation="RFC 1918 reserves 10/8, 172.16/12 and 192.168/16 for private networks. Your router performs network address translation: outgoing packets get its public address and a rewritten port, replies are mapped back. Wireshark on your laptop sees the packet before translation, so it shows 192.168.1.7. Say this in the report; it is the answer the manual could not give in 2004."
+  feedback={{
+    "The university in the manual owned a whole /16 block; homes get a /8 instead": "Universities did get large blocks early, but a home does not get a /8 of public space. It gets one address, shared by NAT.",
+    "192.168.1.7 is your address on the Internet; every ISP assigns from the same pool": "If millions of hosts had the same public address, routing would be impossible. The address is only unique inside your LAN.",
+    "Wireshark anonymises local addresses in the display": "Wireshark shows the bytes as captured. There is an anonymiser tool (TraceWrangler), but it is not built in and not on by default."
+  }}
+/>
+
+## Question 4: print the two messages
+
+<Callout type="key-idea" title="Modern Wireshark has no 'Print as displayed' radio button">
+The manual's dialog is from an old version. Today: select the GET row, then **File › Export Packet Dissections › As Plain Text**, choose "Selected packets only" and "As displayed" under Packet Format, and save. Repeat for the 200 OK. Paste both text files into the report. What should be visible: for the GET, the request line and every header; for the OK, the status line, headers and the 81-byte HTML body.
+</Callout>
+
+## Home activity and Assignment 1
+
+The manual's Stage v: "start a new capture, and do some arbitrary web browsing, such as visiting some Wikipedia articles, reading some news. Note down all the protocols used at each layer." Assignment 1 is the same sentence. Build the table here with the protocols the lab capture contains, then extend it with whatever your own browsing added.
+
+<LayerSortLab id="assignment-1-layers" />
+
+<Predict
+  id="why-before-http"
+  prompt="Explain, in order, every exchange your laptop had to complete before it could send the HTTP GET, and which layer each one belongs to. (4 marks)"
+  answer="ARP request and reply to learn the router's MAC address (link layer). DNS query and response to translate gaia.cs.umass.edu to 128.119.245.12 (application layer, over UDP). TCP three-way handshake SYN, SYN-ACK, ACK with 128.119.245.12 port 80 (transport layer). Only then the GET (application layer, over TCP). Every step needs the result of the one before it."
+>
+
+1. **ARP** (link): the laptop must put the router's MAC address on the frame, because gaia is not on the local link. It broadcasts "who has 192.168.1.1" and the router replies. Frames 1 and 2.
+2. **DNS** (application, over UDP): the browser has a name, IP needs an address. A query for gaia.cs.umass.edu goes to the router's resolver and comes back with 128.119.245.12. Frames 7 to 10.
+3. **TCP handshake** (transport): SYN to port 80, SYN-ACK back, ACK. No data yet; this only agrees sequence numbers and options. Frames 11 to 13, and the SYN-ACK takes a full round trip.
+4. **HTTP GET** (application, over TCP): frame 14, the first packet with anything the user asked for.
+
+Each step is blocked on the previous one, which is why a first page load is slower than a reload: on the reload, the ARP cache, the DNS cache and often the TCP connection itself are all still warm.
+
+</Predict>
+
+<Callout type="done" title="What to hand in">
+One document: the four answers with your own timestamps and addresses, the two exported packet dissections, and the layer table (with your additions, and a note on which layer you put ARP in and why). Screenshot of the filtered list with the GET selected and HTTP expanded, in case the checker asks. If your browser refused plain HTTP, say you used curl; the capture is the same.
+</Callout>

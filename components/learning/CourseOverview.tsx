@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Circle, Lock } from "lucide-react";
 import type { CourseMeta, FlatLesson } from "@/lib/content";
 import { courseProgress, useProgressStore } from "@/lib/learning/progress-store";
-import { formatWeekRange } from "@/lib/semester";
+import { formatWeekRange, TOTAL_WEEKS } from "@/lib/semester";
 import { ReviewDueBadge } from "./HomeWidgets";
 import { SyncStatus } from "./SyncStatus";
 import { Pill } from "./ui";
@@ -56,7 +56,7 @@ export function CourseOverview({
         </p>
       )}
 
-      <h2 className="text-heading-20 mt-12 mb-4 text-gray-1000">15-week roadmap</h2>
+      <h2 className="text-heading-20 mt-12 mb-4 text-gray-1000">{course.modules.length >= TOTAL_WEEKS ? `${TOTAL_WEEKS}-week roadmap` : "Roadmap so far"}</h2>
       <ol className="space-y-3">
         {course.modules.map((mod) => {
           const built = mod.lessons.length > 0;

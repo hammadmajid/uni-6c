@@ -1,0 +1,150 @@
+You have watched request logs and `docker logs` for years. Wireshark is the same instinct one layer lower: instead of what your program said, you see what the network card sent. This lesson is the simulated version of the lab, so you know what to expect before you run it on your own machine in the next lesson.
+
+<Predict
+  id="how-many-packets"
+  prompt="Wireshark is capturing. You load one page over plain HTTP: an 81-byte HTML file. You press stop after about eight seconds. How many packets did Wireshark record, and how many different names appear in the Protocol column?"
+  answer="Around twenty packets, of which only two are HTTP: the GET and the 200 OK. Eight protocol names in a quiet home LAN: ARP, MDNS, SSDP, TLSv1.3, TCP, DNS, HTTP, NTP. The rest is DNS lookup, TCP handshake and teardown, and background chatter from the OS and other devices."
+  placeholder="A number of packets and a number of protocols. Guess, then run the capture below."
+>
+
+The capture below records **22 frames** and **8 protocol names**. Two are HTTP. Nine are TCP with no HTTP in them (the handshake, bare ACKs, the close). The other eleven are your laptop and the rest of the LAN talking among themselves: ARP for the router's MAC address, DNS to find gaia's IP, mDNS looking for Chromecasts, SSDP from a TV, NTP fixing the clock, and one encrypted record from another tab.
+
+The manual's line for this is worth keeping: "there is often much more going on than meets the eye".
+
+</Predict>
+
+Run it. Press the blue start button, or Capture › Start, and watch the list fill at the real speed the packets arrived. Stop when it goes quiet.
+
+<WiresharkWindow
+  replay
+  caption="Frames arrive at the times they really would: the DNS answer at 2.15 s, the SYN-ACK 220 ms later because gaia is in Massachusetts, the FIN five seconds after the reply because Apache's keep-alive timer expired."
+/>
+
+## Where Wireshark sits
+
+<SnifferPlacement />
+
+Two consequences of that picture, both examinable. Wireshark is **passive**: it receives copies, so nothing is slowed, altered or blocked, and neither the browser nor the server can tell it is running. And it captures **frames**, not messages: every row in the list is an Ethernet frame, and the HTTP you care about is buried three headers deep inside a few of them.
+
+<QuickCheck
+  id="passive"
+  type="true-false"
+  question="Running Wireshark slows your browser's connection, because every packet has to pass through Wireshark before it is delivered."
+  answer="False"
+  explanation="The capture library hands Wireshark a copy of each frame while the original continues up or down the stack untouched. Heavy captures cost CPU and disk on your machine, but no packet waits for Wireshark."
+  misconception="Proxies and firewalls sit in the path and can slow traffic. A sniffer is not in the path; it is a tap on the side of it."
+/>
+
+<QuickCheck
+  id="what-pcap-hands-over"
+  question="What does the packet capture library (libpcap or Npcap) hand to the packet analyzer?"
+  options={[
+    "Copies of every link-layer frame the interface sends or receives",
+    "The HTTP messages, with the lower-layer headers already stripped",
+    "Only the packets addressed to the program that started the capture",
+    "TCP segments, reassembled into streams"
+  ]}
+  answer="Copies of every link-layer frame the interface sends or receives"
+  explanation="The tap is at the link layer, below IP and TCP. That is why the bytes pane starts with a destination MAC address, and why stripping the layers back to HTTP is Wireshark's job, not the library's."
+  feedback={{
+    "The HTTP messages, with the lower-layer headers already stripped": "That is what the analyzer produces after dissection. The library sees raw frames; it does not know what HTTP is.",
+    "Only the packets addressed to the program that started the capture": "Wireshark has no packets addressed to it. It sees everything the interface sees, including other programs' traffic and, on a shared medium, other machines' traffic.",
+    "TCP segments, reassembled into streams": "Reassembly is an analyzer feature (Follow TCP Stream). The capture library is below TCP and never reassembles anything."
+  }}
+/>
+
+## The five parts of the window
+
+Tap each number, or the legend below the window. The lab manual names exactly these five and will ask for them.
+
+<WiresharkWindow annotate initialSelected={14} expand={["Hypertext"]} listRows={7} caption="Frame 14 is selected: the GET. The details pane shows it dissected outermost first; the bytes pane shows the 426 bytes that went on the wire." />
+
+<QuickCheck
+  id="no-column"
+  question="The number in the No. column of the packet list is:"
+  options={[
+    "A counter Wireshark assigns as it captures; no protocol carries it",
+    "The IP identification field of the datagram",
+    "The TCP sequence number",
+    "The frame's position in the Ethernet switch's queue"
+  ]}
+  answer="A counter Wireshark assigns as it captures; no protocol carries it"
+  explanation="The manual says it in one breath: the packet number is assigned by Wireshark and is not contained in any protocol's header. It is stable within one capture file and meaningless outside it."
+  feedback={{
+    "The IP identification field of the datagram": "That field exists (you can see it in the IPv4 details) but it is chosen by the sending host per datagram and repeats. It is not the row number.",
+    "The TCP sequence number": "Sequence numbers count bytes within one connection and are shown in the Info column as Seq=. The No. column counts frames of any protocol, including ARP, which has no TCP at all.",
+    "The frame's position in the Ethernet switch's queue": "Switches do not stamp frames with queue positions. Nothing on the wire carries this number."
+  }}
+/>
+
+<QuickCheck
+  id="protocol-column"
+  question="Frame 14 is an Ethernet frame containing an IP datagram containing a TCP segment containing an HTTP request. Its Protocol column says HTTP. Frame 13, the bare ACK, says TCP. What rule is Wireshark using?"
+  options={[
+    "The Protocol column shows the highest-layer protocol it could decode in that frame",
+    "The Protocol column shows the transport protocol, except for web traffic",
+    "The Protocol column shows whichever protocol contributed the most bytes",
+    "The Protocol column shows the protocol of the first header in the frame"
+  ]}
+  answer="The Protocol column shows the highest-layer protocol it could decode in that frame"
+  explanation="The manual's words: the protocol type field lists the highest-level protocol that sent or received this packet, the source or ultimate sink. A frame with a TCP header and no payload tops out at TCP; a frame whose TCP payload parses as HTTP is labelled HTTP. Ethernet and IP never appear in the column, because something always sits above them."
+  feedback={{
+    "The Protocol column shows the transport protocol, except for web traffic": "Then DNS rows would say UDP. They say DNS. The rule is the same for every protocol: highest layer decoded.",
+    "The Protocol column shows whichever protocol contributed the most bytes": "In the 200 OK, the HTML body is 81 bytes and the headers around it total 426. Byte counts are not the rule.",
+    "The Protocol column shows the protocol of the first header in the frame": "That would make every row say Ethernet. The column is about the top of the stack, not the bottom."
+  }}
+/>
+
+<QuickCheck
+  id="header-overhead"
+  type="numeric"
+  unit="bytes"
+  question="Select frame 14 in the window above. The Frame line says 426 bytes; the Hypertext Transfer Protocol line covers 360. How many bytes of Ethernet, IP and TCP headers wrap the HTTP request?"
+  answer={66}
+  explanation="426 − 360 = 66: an Ethernet header of 14, an IPv4 header of 20 and a TCP header of 32 (20 fixed plus 12 of options, the timestamps). Click each layer in the details pane and count the highlighted bytes. This 66-byte tax is paid on every packet, which is why tiny packets are so inefficient."
+/>
+
+<Callout type="exam" title="Say it the way the manual does">
+A packet sniffer has two parts: the **packet capture library**, which receives a copy of every link-layer frame sent or received by the computer, and the **packet analyzer**, which displays the contents of every field in every protocol message. Wireshark's window has **five major components**: command menus, display filter, packet listing, packet header details, packet contents in hexadecimal and ASCII. Lab vivas ask for both lists.
+</Callout>
+
+<Deeper kind="beyond" title="What you can and cannot see from one laptop">
+
+On a modern switched LAN you see only frames to or from your own interface, plus broadcast and multicast (that is why ARP and mDNS from other devices show up but the TV's Netflix stream does not). Old hubs and the manual's "promiscuous mode" advice come from a time when every frame reached every port.
+
+Wi-Fi is stranger: the driver hands Wireshark Ethernet-shaped frames, so wlp0s20f3 looks like a wired capture. To see real 802.11 headers and other stations' traffic you need monitor mode, which most laptop chipsets support badly.
+
+On a server you rarely run the GUI. Capture with `tcpdump -i eth0 -w cap.pcap port 80`, copy the file down, open it in Wireshark. In Docker, `nicolaka/netshoot` with `--net container:NAME` gives you tcpdump inside another container's network namespace. Same frames, same five panes.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=OU-A2EmVrKQ",
+    "title": "Chris Greer: Learn Wireshark! Tutorial for beginners",
+    "kind": "video",
+    "time": "45 min",
+    "why": "A packet analyst walks through the same five panes on a real capture, then filters, colouring rules and Follow TCP Stream. Best single video for this lab."
+  },
+  {
+    "href": "https://www.wireshark.org/docs/wsug_html_chunked/ChUseMainWindowSection.html",
+    "title": "Wireshark User's Guide: the main window",
+    "kind": "docs",
+    "time": "10 min",
+    "why": "The official names for every pane and toolbar, with screenshots of the current version rather than the manual's 2007 ones."
+  },
+  {
+    "href": "https://gaia.cs.umass.edu/kurose_ross/wireshark.php",
+    "title": "Kurose and Ross: the Wireshark labs",
+    "kind": "docs",
+    "time": "5 min",
+    "why": "The source your lab manuals are adapted from, with the current versions of every lab and the sample traces if your own capture goes wrong."
+  },
+  {
+    "href": "https://wiki.wireshark.org/SampleCaptures",
+    "title": "Wireshark wiki: sample captures",
+    "kind": "tool",
+    "time": "browse",
+    "why": "Hundreds of real .pcap files by protocol. Open one when you want to see a protocol the lab did not generate."
+  }
+]} />

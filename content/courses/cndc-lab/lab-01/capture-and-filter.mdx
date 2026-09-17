@@ -1,0 +1,188 @@
+This is the lab itself: install, capture, filter, dissect. Do each step in the simulator first, then on your own machine. The simulator uses the same filter language and the same byte layout as the real thing, so a filter that works here works there.
+
+<Predict
+  id="uppercase-filter"
+  prompt="You type HTTP, in capital letters, into the display filter bar and press Enter. What does Wireshark do?"
+  answer="The filter bar turns red and nothing is displayed. Wireshark reports that HTTP is neither a field nor a protocol name. Protocol names in display filters are lower case, exactly as the manual warns."
+  placeholder="Describe what the filter bar and the packet list do."
+>
+
+The bar goes **red** and the list shows nothing: `"HTTP" is neither a field nor a protocol name.` The manual says it in step 8: type `http` "without the quotes, and in lower case; all protocol names are in lower case in Wireshark". Green bar means the filter parses; red means it does not. A green bar that shows zero packets is a different problem: the filter is valid but nothing matches.
+
+</Predict>
+
+## Install
+
+On Fedora, the capture library and the GUI are one package, and non-root capture needs the `wireshark` group:
+
+```
+sudo dnf install wireshark
+sudo usermod -aG wireshark $USER
+# log out and back in, then:
+wireshark
+```
+
+If the interface list is empty, the group change has not taken effect yet. `tshark` (the terminal version) comes in `wireshark-cli`.
+
+<Deeper kind="edge" title="Windows and macOS">
+
+**Windows**: the installer from wireshark.org bundles Npcap; tick "Install Npcap" and leave "WinPcap API-compatible mode" on. The manual's mention of WinPCap is the old name.
+
+**macOS**: the .dmg includes a ChmodBPF helper that grants your user access to the capture devices. Install it when asked, otherwise no interfaces appear.
+
+Both are covered in the Wireshark FAQ the manual points to.
+
+</Deeper>
+
+## The procedure
+
+The manual's steps 1 to 9, compressed. One trap it does not mention comes first.
+
+<Callout type="careful" title="Your browser may refuse to send plain HTTP">
+Firefox with HTTPS-Only mode and Chrome with "Always use secure connections" silently upgrade `http://` to `https://`. Then your capture shows TLSv1.3 rows and **no HTTP at all**. Type the address with `http://` explicitly; if the browser still upgrades, allow the exception for gaia.cs.umass.edu, or generate the request from a terminal instead: `curl http://gaia.cs.umass.edu/wireshark-labs/INTRO-wireshark-file1.html`. The capture is identical either way.
+</Callout>
+
+1. Start the browser, then start Wireshark.
+2. Pick the interface that carries your traffic: the one showing your LAN address, with the activity graph moving. Double-click it. Capture begins.
+3. In the browser, load `http://gaia.cs.umass.edu/wireshark-labs/INTRO-wireshark-file1.html`. It is one line of congratulations, 81 bytes.
+4. Stop the capture: the red square, or Capture › Stop.
+5. Type `http` in the display filter and apply.
+6. Click the row whose Info column begins with `GET /wireshark-labs/`.
+7. In the details pane, collapse Frame, Ethernet, IP and TCP; expand Hypertext Transfer Protocol.
+
+<OrderCheck
+  id="procedure-order"
+  prompt="Put the lab's steps in the order they must happen."
+  items={[
+    "Start Wireshark and double-click the active interface",
+    "Load the gaia.cs.umass.edu URL in the browser",
+    "Stop the capture",
+    "Type http in the display filter and apply",
+    "Select the GET row",
+    "Collapse Frame, Ethernet, IP, TCP; expand HTTP"
+  ]}
+  explanation="Capture has to be running before the browser sends anything, or there is nothing to see. Stopping before filtering is not strictly required (filters work on a live capture) but it is what the manual does, and it keeps the list from moving under you."
+  topLabel="First"
+  bottomLabel="Last"
+/>
+
+## Display filters
+
+Five tasks on the lab capture. The filter is checked live: the moment the list shows exactly the right packets, the task is marked solved, whichever expression you used to get there.
+
+<FilterLab id="filter-lab" />
+
+<Callout type="pitfall" title="Display filter is not capture filter">
+There are two filter languages, and confusing them is the classic first-week mistake. A **display filter** (`tcp.port == 80`) hides rows from a capture that still holds everything; clear it and the packets come back. A **capture filter** (`port 80`, BPF syntax, set on the interface before you start) throws away non-matching frames at the library, permanently. The manual uses only display filters. Note the different syntax: `tcp.port == 80` on one side, `tcp port 80` on the other.
+</Callout>
+
+<QuickCheck
+  id="which-is-display"
+  question="Which of these is a valid display filter for packets to or from TCP port 80?"
+  options={["tcp.port == 80", "tcp port 80", "TCP.port = 80", "port == 80"]}
+  answer="tcp.port == 80"
+  explanation="Field name in lower case, dotted, then a comparison operator and a value. tcp.port matches either the source or the destination port, like ip.addr matches either address."
+  feedback={{
+    "tcp port 80": "That is a capture filter (BPF syntax). Wireshark rejects it in the display filter bar with a red background.",
+    "TCP.port = 80": "Two errors: protocol names are lower case, and a single = is not a comparison. Use == or eq.",
+    "port == 80": "There is no field called port. Fields are qualified by protocol: tcp.port or udp.port."
+  }}
+/>
+
+## Walk the GET's bytes
+
+Step 9 of the manual, but with the encapsulation made visible. Click **Ethernet II** in the details pane and watch bytes 0 to 13 light up. Click **Internet Protocol Version 4**: bytes 14 to 33. **Transmission Control Protocol**: 34 to 65. **Hypertext Transfer Protocol**: everything after, and you can read it. Then click a single field, such as Destination Address, or click a byte in the hex pane to find out which field owns it.
+
+<WiresharkWindow
+  initialSelected={14}
+  expand={["Hypertext"]}
+  panes={{ list: false, details: true, bytes: true }}
+  title="Wireshark · frame 14 of lab01.pcapng"
+  caption="Header, header, header, then the message. Each layer's header sits in front of everything above it, which is exactly the encapsulation diagram from CNDC week 1, now as real bytes."
+/>
+
+<QuickCheck
+  id="ip-offset"
+  type="numeric"
+  unit="offset"
+  question="Click Internet Protocol Version 4 in the details pane. At which byte offset (decimal, counting from 0) does the IP header begin?"
+  answer={14}
+  explanation="The Ethernet header is always 14 bytes: 6 destination MAC, 6 source MAC, 2 EtherType. So IP starts at offset 14 and, being a 20-byte header with no options, ends at 33. The trap: the hex pane's row labels are hexadecimal, so the second row starts at 0x0010 = 16, not 10."
+/>
+
+<QuickCheck
+  id="why-readable"
+  question="In the bytes pane, the ASCII column shows GET /wireshark-labs/INTRO-wireshark-file1.html in plain text. Why can you read it?"
+  options={[
+    "HTTP/1.1 is a plaintext protocol and this request was sent without TLS",
+    "Wireshark decrypted it using the browser's session key",
+    "The bytes pane always shows decoded content regardless of encryption",
+    "Text is only readable for GET requests; POST bodies are encoded"
+  ]}
+  answer="HTTP/1.1 is a plaintext protocol and this request was sent without TLS"
+  explanation="The manual uses an http:// URL on purpose. Load any https:// page and the same pane shows TLS records of random-looking bytes; the Protocol column says TLSv1.3 and the GET never appears. That contrast is most of what TLS buys."
+  feedback={{
+    "Wireshark decrypted it using the browser's session key": "Wireshark can decrypt TLS if you give it the keys (SSLKEYLOGFILE), but that was not done here and there was no TLS to decrypt.",
+    "The bytes pane always shows decoded content regardless of encryption": "The bytes pane shows what went on the wire. For an encrypted connection that is ciphertext, and it looks like noise.",
+    "Text is only readable for GET requests; POST bodies are encoded": "A POST's form body is also plaintext in HTTP without TLS, which is exactly why login forms over http:// are a disaster."
+  }}
+/>
+
+<QuickCheck
+  id="ephemeral-port"
+  question="The GET goes from port 51834 to port 80. The 200 OK comes back from port 80 to port 51834. Where did 51834 come from?"
+  options={[
+    "The client's operating system picked it for this connection; the server copies it back",
+    "It is the HTTP alternate port, assigned by IANA",
+    "The server assigned it during the handshake",
+    "It is derived from the client's IP address"
+  ]}
+  answer="The client's operating system picked it for this connection; the server copies it back"
+  explanation="Servers listen on well-known ports (80, 443, 53). Clients use an ephemeral port chosen by the OS, different for every connection, so that replies can be demultiplexed to the right socket. Open a second tab to gaia and you will see a second connection on a different high port."
+  feedback={{
+    "It is the HTTP alternate port, assigned by IANA": "IANA's alternate HTTP port is 8080. Ports above about 32768 on Linux are the ephemeral range, handed out per connection.",
+    "The server assigned it during the handshake": "The client's SYN already carries 51834 as its source port, before the server has said anything.",
+    "It is derived from the client's IP address": "Nothing about 192.168.1.7 produces 51834. It is a counter or random pick inside the kernel."
+  }}
+/>
+
+<Callout type="exam" title="The manual's step 9, verbatim">
+"Minimize the amount of Frame, Ethernet, Internet Protocol, and Transmission Control Protocol information displayed. Maximize the amount of information displayed about the HTTP protocol." If a lab checker asks to see your screen, that is the state they expect: four collapsed lines and an expanded HTTP tree showing the request line and headers.
+</Callout>
+
+<Deeper kind="beyond" title="The same lab from a terminal">
+
+Everything the GUI does, `tshark` does in a pipe. Capture 30 seconds of port-80 traffic and print the HTTP rows with their relative times:
+
+```
+tshark -i wlp0s20f3 -a duration:30 -f "port 80" -Y http \
+  -T fields -e frame.number -e frame.time_relative -e http.request.method -e http.response.code
+```
+
+Note the two filters: `-f` is the capture filter (BPF), `-Y` is the display filter. Question 2 of the lab is one subtraction on that output. On a VPS with no GUI, `tcpdump -w` to a file and open it in Wireshark at home; the pane layout is the same and the timestamps survive.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.wireshark.org/docs/wsug_html_chunked/ChWorkBuildDisplayFilterSection.html",
+    "title": "Wireshark User's Guide: building display filter expressions",
+    "kind": "docs",
+    "time": "15 min",
+    "why": "The full grammar of what the trainer above supports a subset of: comparison operators, slices, membership tests, and functions."
+  },
+  {
+    "href": "https://www.wireshark.org/docs/dfref/",
+    "title": "Display filter reference: every field name",
+    "kind": "docs",
+    "time": "lookup",
+    "why": "When you need a field and do not know its name. Or right-click any line in the details pane and choose Apply as Filter; the name appears in the bar."
+  },
+  {
+    "href": "https://www.tcpdump.org/manpages/pcap-filter.7.html",
+    "title": "pcap-filter(7): the capture filter language",
+    "kind": "docs",
+    "time": "15 min",
+    "why": "The other filter syntax, shared by tcpdump, tshark -f and Wireshark's capture options. Read once so the two never blur again."
+  }
+]} />

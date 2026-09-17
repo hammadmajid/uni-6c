@@ -126,115 +126,118 @@ input[type="range"] {
 }
 
 /* Lesson prose: markdown rendered from MDX */
-.lesson-prose {
-  font-size: 15px;
-  line-height: 26px;
-  color: var(--color-gray-1000);
-}
-.lesson-prose > * + * {
-  margin-top: 16px;
-}
-.lesson-prose h2 {
-  font-size: 22px;
-  line-height: 30px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top: 1px solid var(--color-gray-400);
-}
-.lesson-prose h3 {
-  font-size: 17px;
-  line-height: 26px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-top: 32px;
-}
-.lesson-prose p {
-  color: var(--color-gray-900);
-}
-.lesson-prose strong {
-  color: var(--color-gray-1000);
-  font-weight: 600;
-}
-.lesson-prose a {
-  color: var(--color-blue-600);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.lesson-prose ul,
-.lesson-prose ol {
-  padding-left: 22px;
-  color: var(--color-gray-900);
-}
-.lesson-prose ul {
-  list-style: disc;
-}
-.lesson-prose ol {
-  list-style: decimal;
-}
-.lesson-prose li + li {
-  margin-top: 6px;
-}
-.lesson-prose li::marker {
-  color: var(--color-gray-600);
-}
-.lesson-prose code {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  background: var(--color-gray-100);
-  border: 1px solid var(--color-gray-400);
-  border-radius: 4px;
-  padding: 1px 5px;
-  color: var(--color-gray-1000);
-}
-.lesson-prose pre {
-  background: var(--color-background-200);
-  border: 1px solid var(--color-gray-400);
-  border-radius: 8px;
-  padding: 14px 16px;
-  overflow-x: auto;
-  font-size: 13px;
-  line-height: 20px;
-}
-.lesson-prose pre code {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  color: var(--color-gray-1000);
-}
-.lesson-prose table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  line-height: 20px;
-}
-.lesson-prose th {
-  text-align: left;
-  font-weight: 500;
-  color: var(--color-gray-700);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--color-gray-400);
-}
-.lesson-prose td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--color-gray-300);
-  color: var(--color-gray-900);
-  vertical-align: top;
-}
-.lesson-prose td:first-child {
-  color: var(--color-gray-1000);
-}
-.lesson-prose blockquote {
-  border-left: 2px solid var(--color-gray-500);
-  padding-left: 14px;
-  color: var(--color-gray-700);
-}
-.lesson-prose hr {
-  border: 0;
-  border-top: 1px solid var(--color-gray-400);
-  margin: 32px 0;
+/* In the components layer so Tailwind utilities on a component can override prose defaults. */
+@layer components {
+  .lesson-prose {
+    font-size: 15px;
+    line-height: 26px;
+    color: var(--color-gray-1000);
+  }
+  .lesson-prose > * + * {
+    margin-top: 16px;
+  }
+  .lesson-prose h2 {
+    font-size: 22px;
+    line-height: 30px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--color-gray-400);
+  }
+  .lesson-prose h3 {
+    font-size: 17px;
+    line-height: 26px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-top: 32px;
+  }
+  .lesson-prose p {
+    color: var(--color-gray-900);
+  }
+  .lesson-prose strong {
+    color: var(--color-gray-1000);
+    font-weight: 600;
+  }
+  .lesson-prose a {
+    color: var(--color-blue-600);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .lesson-prose ul,
+  .lesson-prose ol {
+    padding-left: 22px;
+    color: var(--color-gray-900);
+  }
+  .lesson-prose ul {
+    list-style: disc;
+  }
+  .lesson-prose ol {
+    list-style: decimal;
+  }
+  .lesson-prose li + li {
+    margin-top: 6px;
+  }
+  .lesson-prose li::marker {
+    color: var(--color-gray-600);
+  }
+  .lesson-prose code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--color-gray-100);
+    border: 1px solid var(--color-gray-400);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--color-gray-1000);
+  }
+  .lesson-prose pre {
+    background: var(--color-background-200);
+    border: 1px solid var(--color-gray-400);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 20px;
+  }
+  .lesson-prose pre code {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: var(--color-gray-1000);
+  }
+  .lesson-prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .lesson-prose th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--color-gray-700);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-gray-400);
+  }
+  .lesson-prose td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--color-gray-300);
+    color: var(--color-gray-900);
+    vertical-align: top;
+  }
+  .lesson-prose td:first-child {
+    color: var(--color-gray-1000);
+  }
+  .lesson-prose blockquote {
+    border-left: 2px solid var(--color-gray-500);
+    padding-left: 14px;
+    color: var(--color-gray-700);
+  }
+  .lesson-prose hr {
+    border: 0;
+    border-top: 1px solid var(--color-gray-400);
+    margin: 32px 0;
+  }
 }

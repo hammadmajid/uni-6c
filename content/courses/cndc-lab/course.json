@@ -1,0 +1,37 @@
+{
+  "slug": "cndc-lab",
+  "code": "CSC 3205 · Lab",
+  "short": "CNDC Lab",
+  "title": "Data Communication and Computer Networks Lab",
+  "description": "The protocols from CNDC, seen for real. Wireshark captures of your own machine first, Cisco Packet Tracer later. Each lab manual follows Kurose and Ross's Wireshark labs in SZABIST's Journey / Apply / Verify / Assess format, and each one here is rebuilt as something you do in the browser before you do it on your laptop, with the lab questions and home assignment worked through.",
+  "textbook": "Kurose & Ross Wireshark labs (the manuals are adapted from them). Wireshark User's Guide for the tool itself.",
+  "modules": [
+    {
+      "slug": "lab-01",
+      "week": 1,
+      "title": "Lab 01: Wireshark and your first capture",
+      "outline": "Introduction to Wireshark and simple packet capturing. Install, capture a web fetch, filter to HTTP, find the GET, answer four questions. Home activity and Assignment 1: list the protocols at each layer from a browsing session.",
+      "lessons": [
+        {
+          "slug": "what-a-sniffer-sees",
+          "title": "What a packet sniffer sees",
+          "minutes": 35,
+          "objective": "explain where Wireshark sits in the host, name the five parts of its window, and read a packet list without being surprised by what is in it."
+        },
+        {
+          "slug": "capture-and-filter",
+          "title": "Capture, filter, find the GET",
+          "minutes": 50,
+          "objective": "run the lab procedure on your own machine, write display filters that work first time, and walk the GET packet's bytes from Ethernet header to HTTP request line."
+        },
+        {
+          "slug": "lab-1-report",
+          "title": "Lab 1 questions and Assignment 1",
+          "minutes": 30,
+          "kind": "checkpoint",
+          "objective": "answer the manual's four questions from a capture, spot the arithmetic slip in the manual's own solution, and build the protocols-per-layer table Assignment 1 asks for."
+        }
+      ]
+    }
+  ]
+}

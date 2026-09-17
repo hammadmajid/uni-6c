@@ -43,7 +43,7 @@ export default async function Home() {
               <h2 className="text-heading-20 text-gray-1000">{c.short}</h2>
               <p className="text-copy-14 mt-1 text-gray-900">{c.title}</p>
               <p className="text-copy-13 mt-3 text-gray-700">
-                Weeks {builtWeeks[0]}–{builtWeeks[builtWeeks.length - 1]} built · {lessons.length} lessons
+                {builtWeeks.length === 1 ? `Week ${builtWeeks[0]}` : `Weeks ${builtWeeks[0]}–${builtWeeks[builtWeeks.length - 1]}`} built · {lessons.length} lessons
               </p>
               <CourseCardProgress courseSlug={c.slug} total={lessons.length} />
             </Link>
