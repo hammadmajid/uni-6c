@@ -10,7 +10,7 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 - `components/learning/`: generic learning components (QuickCheck, Predict, OrderCheck, WorkedExample, Deeper, Callout, Term, Timeline, HintLadder, lab controls).
 - `components/cndc-lab/`: `capture.ts` builds a byte-accurate synthetic capture of the Lab 01 fetch (real checksums, dissection tree, filter fields) and `filter.ts` is a subset of Wireshark's display-filter language. `WiresharkWindow` renders the five panes over that capture (props: `replay`, `annotate`, `panes`, `initialSelected`, `expand`); `FilterLab` and `LayerSortLab` persist to the store; `SnifferPlacement` and `TimeFormats` are figures. Reuse the window for later Wireshark labs by adding packets to `capture.ts` or passing `packets`.
 - `components/<course>/`: course-specific explorables and figures. CNDC labs: DelayLab, QueueingLab, SwitchingLab, EncapsulationExplorer, ThroughputLab, SharedMediumLab, StatMuxStrip, AccessTechDiagram. CNDC static SVG figures: InternetMap, ProtocolExchange, MediaChart, LayerStacks, HopDiagram, MultiplexingDiagram, CaravanDiagram, IntensityCurve, BottleneckPipes, TracerouteMap. Every figure uses `Figure` and the `P` palette from `components/learning/Figure.tsx` (viewBox width 640, mono labels 9 to 12 px, blue = highlighted path, amber = shared or waiting, green = dedicated or ok, red = loss). Register new ones in `lib/mdx-components.tsx`. Screenshot every new figure in the browser before committing; label overlaps do not show up in the build.
-- `lib/semester.ts`: calendar. Week 1 started 2026-09-14. Midterm is week 8.
+- `lib/semester.ts`: calendar. Week 1 started 2026-09-14. Week 8 is the midterm and spans two calendar weeks, so weeks 9 to 15 start a week later than `14 Sept + 7(N−1)`. Always use `weekStart`/`currentWeek`, never arithmetic on the start date.
 - `lib/learning/progress-store.ts`: zustand store persisted in localStorage. Activities keyed `course/module/lesson/id`, lesson completion, spaced-review queue.
 
 ## Weekly workflow
@@ -40,7 +40,7 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 - Skip "what is a server". Anchor new ideas to systems intuition (queues, latency, failure). Exam-first depth with optional deeper tracks. Budget 3 to 5 hours per week per course.
 - Visual learner. Prefer a diagram, animation, explorable or worked table over prose. Every concept that can be drawn gets drawn (SVG components under `components/<course>/`), and prose is the caption for the picture, not the other way round. If a lesson section is more than two paragraphs without a visual or an interaction, split it or cut it.
 - Wants pointers beyond the course. End each content lesson (not checkpoints) with a `Further` block (`components/learning/Further.tsx`, optional, not part of the course): two to four hand-picked links to official documentation, RFCs, a YouTube video or a blog post, each with one line on why it is worth the time. Prefer sources that are visual (animated explainers, Wireshark walkthroughs) over textbook chapters. The component already labels it optional and not examinable. Verify every URL resolves (curl, or the YouTube oEmbed endpoint for video ids) before committing; never invent a video id.
-- Week 1 started Monday 2026-09-14. Week N starts 14 Sept + 7(N−1) days. Midterm week 8 (from 2026-11-02). Week 15 starts 2026-12-21.
+- Week 1 started Monday 2026-09-14. Weeks 1 to 7 run to 2026-11-01. Week 8 is the midterm block, two calendar weeks, 2026-11-02 to 2026-11-15, no classes. Weeks 9 to 15 run 2026-11-16 to 2027-01-03. The schedule's recurrences continue into the week of 2027-01-04, which is not in any 15-week outline; treat it as a buffer week until the owner says otherwise.
 - Agreed workflow: build two weeks ahead, adapt weekly from slides, assignments and quizzes dropped into `courses/<slug>/`.
 - Past papers may never arrive. Do not wait for them; infer exam style from the instructor's slides and the outline's assessment scheme.
 
@@ -48,11 +48,39 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 
 | Slug | Course | Status |
 |------|--------|--------|
-| `cndc` | CSC 3205 Data Communication and Computer Networks (instructor slides call it DCCN) | Outline in hand. Weeks 1 to 2 built. Lectures 01 to 10 uploaded (lecture 05 missing). |
-| `cndc-lab` | CNDC Lab, a separate course with its own grade. Wireshark and Cisco Packet Tracer. Lab manuals follow the Kurose Wireshark labs, in SZABIST's "Stage J (journey) / Stage a1 (apply) / Stage v (verify) / Stage a2 (assess)" format with worked solutions at the end. Each lab is one module (`lab-NN`, `week` = the week it was held), three lessons: the concept with a simulator, the procedure, a checkpoint with the manual's questions and the home assignment. | No outline yet. Lab 01 built (week 1, go-ahead given 2026-09-17). Build the next lab when its manual is dropped in. |
-| `web-tech` | Web Technologies I (instructor: Zubair Ahmed). Java stack: JDK 26, Servlets on Tomcat 11, PostgreSQL, JDBC, IntelliJ, DBeaver. Slides so far: TCP/IP and ports, HTTP request/response, URLs, Tomcat directory layout, WAR and webapp structure, servlet GET/POST. A separate 160-page Java basics deck (classes, abstract classes, interfaces, singletons, JDBC) is a reference, not lecture order. | No outline yet. Do not build until the owner says so. |
+| `cndc` | CSC 3205 Data Communication and Computer Networks (Dr. Maria Zuraiz; instructor slides call it DCCN) | Outline in hand. Weeks 1 to 2 built. Lectures 01 to 10 uploaded (lecture 05 missing). |
+| `cndc-lab` | CSCL 3205 CNDC Lab (Adeel Ahmed), a separate course with its own grade. Wireshark and Cisco Packet Tracer. Lab manuals follow the Kurose Wireshark labs, in SZABIST's "Stage J (journey) / Stage a1 (apply) / Stage v (verify) / Stage a2 (assess)" format with worked solutions at the end. Each lab is one module (`lab-NN`, `week` = the week it was held), three lessons: the concept with a simulator, the procedure, a checkpoint with the manual's questions and the home assignment. | No outline yet. Lab 01 built (week 1, go-ahead given 2026-09-17). Build the next lab when its manual is dropped in. |
+| `web-tech` | CSC 4717 Web Technologies I (instructor: Zubair Ahmed Chatta). Java stack: JDK 26, Servlets on Tomcat 11, PostgreSQL, JDBC, IntelliJ, DBeaver. Slides so far: TCP/IP and ports, HTTP request/response, URLs, Tomcat directory layout, WAR and webapp structure, servlet GET/POST. A separate 160-page Java basics deck (classes, abstract classes, interfaces, singletons, JDBC) is a reference, not lecture order. | No outline yet. Do not build until the owner says so. |
+| `ai` | CSC 4101 Artificial Intelligence (Awais Nawaz). | No materials, no outline. Do not build until the owner says so. |
+| `ai-lab` | CSCL 4101 AI Lab (Muhammad Ishfaq), separate course with its own grade. | No materials, no outline. Do not build until the owner says so. |
+| `dbms` | CSC 2203 Database Systems (Saira Shaheen). Taken with section BS(CS)-4A. | No materials, no outline. Do not build until the owner says so. |
+| `se` | CSC 3109 Software Engineering (Awais Mahmood). Taken with section BS(CS)-5D. | No materials, no outline. Do not build until the owner says so. |
+| `tbw` | CSC 1205 Technical and Business Writing (Sana Jaffery). | No materials, no outline. Do not build until the owner says so. |
 
-The owner will share the class schedule and remaining outlines. Build only courses that have an outline or an explicit go-ahead.
+Outlines for the five unbuilt courses are expected around the week of 2026-09-28. Build only courses that have an outline or an explicit go-ahead. The slugs above are proposals; if the owner drops materials under a different `courses/<slug>/`, use that.
+
+## Weekly timetable
+
+Source: `content/schedule.ics` (Asia/Karachi, recurring weekly from 2026-09-14, no classes 2026-11-02 to 2026-11-13, last recurrence in the week of 2027-01-04). H-8 is the main campus; HMB is the I-8 campus (rooms prefixed `NB-`). Thursday is free.
+
+| Day | Time | Course | Room |
+|-----|------|--------|------|
+| Mon | 12:30–14:00 | Database Systems | 204, H-8 |
+| Mon | 14:00–16:00 | CNDC Lab | Lab 02, H-8 |
+| Mon | 16:00–18:00 | AI Lab | Lab 01, H-8 |
+| Mon | 18:30–20:00 | Web Technologies I | 205, H-8 |
+| Mon | 20:00–21:30 | Artificial Intelligence | 205, H-8 |
+| Tue | 14:00–15:30 | Web Technologies I | NB-204, HMB |
+| Tue | 15:30–17:00 | Technical and Business Writing | NB-204, HMB |
+| Tue | 17:00–18:30 | CNDC | NB-208, HMB |
+| Wed | 14:00–15:30 | Software Engineering | NB-201, HMB |
+| Wed | 15:30–17:00 | CNDC | 301, H-8 |
+| Wed | 17:00–18:30 | Technical and Business Writing | 104, H-8 |
+| Fri | 15:30–17:00 | Software Engineering | 302, H-8 |
+| Fri | 17:00–18:30 | Database Systems | 202, H-8 |
+| Fri | 20:00–21:30 | Artificial Intelligence | 203, H-8 |
+
+What this means for building: the CNDC lab (Monday) runs before that week's CNDC lectures (Tuesday, Wednesday), so a lab manual may reference material the lectures have not covered yet. Monday is nine hours of contact time; a lesson that lands on Monday should be short. Twenty-two contact hours a week across eight courses, so the 3 to 5 hours per course per week budget is an upper bound, not a target.
 
 ## Instructor material: read with a grain of salt
 
