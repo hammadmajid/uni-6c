@@ -1,0 +1,87 @@
+Tracing is what lab exams and the midterm ask: given a graph, write the order in which nodes are expanded and the path returned. Do each one on paper first, with the frontier written out at every step. Conventions for every question here: neighbours in **alphabetical** order, goal test when a node is **taken off** the frontier, and a node that has already been reached (BFS) or expanded (DFS) is not added again.
+
+<SearchGraphFigure graph="quiz" title="Checkpoint graph: search from S to G" caption="Undirected edges: S–A, S–B, A–C, A–D, B–D, B–E, D–G, E–G. C is a dead end." />
+
+<QuickCheck
+  id="cp-bfs-order"
+  type="short-answer"
+  question="BFS from S to G on the checkpoint graph. Write the expansion order, letters separated by spaces."
+  answer={["S A B C D E G", "SABCDEG", "S-A-B-C-D-E-G", "S, A, B, C, D, E, G"]}
+  explanation="Layer 0: S. Layer 1: A, B. Layer 2: C, D (from A), then E (from B; D is already reached). G was enqueued when D was expanded, so it comes out after E. Queue after each expansion: [A B], [B C D], [C D E], [D E], [E G], [G]."
+/>
+
+<QuickCheck
+  id="cp-bfs-path"
+  type="short-answer"
+  question="Which path does that BFS return? Letters separated by spaces."
+  answer={["S A D G", "SADG", "S-A-D-G", "S, A, D, G"]}
+  explanation="G's parent is D (D enqueued it first; E found it already reached). D's parent is A, A's is S. S B D G is equally short, but D was first reached from A, because A is dequeued before B."
+/>
+
+<QuickCheck
+  id="cp-dfs-order"
+  type="short-answer"
+  question="DFS from S to G on the checkpoint graph. Write the expansion order, letters separated by spaces."
+  answer={["S A C D B E G", "SACDBEG", "S-A-C-D-B-E-G", "S, A, C, D, B, E, G"]}
+  explanation="S; go deep to A, then C (dead end, backtrack), then D. From D the unexpanded neighbours are B and G, and B comes first alphabetically. From B the only unexpanded neighbour is E, and from E it is G. The stack after each expansion, top first: [A B], [C D B], [D B], [B G B], [E G B], [G G B], then G is popped. The duplicate G and B entries are why DFS skips anything already expanded when it pops it."
+/>
+
+<QuickCheck
+  id="cp-dfs-path"
+  type="short-answer"
+  question="Which path does that DFS return? Letters separated by spaces."
+  answer={["S A D B E G", "SADBEG", "S-A-D-B-E-G", "S, A, D, B, E, G"]}
+  explanation="Follow the parents back from G: G was pushed by E, E by B, B by D, D by A, A by S. That is five edges, where BFS found three. DFS is complete here but not optimal."
+/>
+
+<QuickCheck
+  id="cp-early"
+  type="numeric"
+  question="Same graph, BFS again, but now the goal test runs when a node is generated (AIMA 4th edition style). How many nodes are expanded before the search stops? (A count.)"
+  answer={5}
+  tolerance={0}
+  explanation="S, A, B, C, D. G is generated while D is expanded, and the search stops right there, without expanding E or dequeuing G. The path is the same, S A D G. Expected mistake: answering 7 by reusing the goal-on-expand trace."
+/>
+
+<OrderCheck
+  id="cp-tree-bfs"
+  prompt="BFS on the binary tree (A; B, C; D, E, F, G), goal G. Put the nodes in the order BFS expands them."
+  items={["A", "B", "C", "D", "E", "F", "G"]}
+  explanation="Level order: the root, then both children left to right, then all four grandchildren. BFS on a tree with alphabetical ties is exactly a level-order traversal."
+  topLabel="expanded first"
+  bottomLabel="expanded last"
+/>
+
+<QuickCheck
+  id="cp-which"
+  question="A maze solver must find the route with the fewest moves, and memory is not a concern. Which strategy should it use?"
+  options={["BFS", "DFS", "Either, they return the same path", "Neither can guarantee it"]}
+  answer="BFS"
+  explanation="Every move costs 1, so fewest moves means shallowest goal, which BFS always finds first. DFS returns whichever route its branch order stumbles on."
+  feedback={{
+    "DFS": "DFS is complete on a finite maze, but the first route it finds can be far longer than the shortest one, as on the checkpoint graph (5 edges against 3).",
+    "Either, they return the same path": "They agree only by luck, as on the binary tree. On the checkpoint graph they differ.",
+    "Neither can guarantee it": "BFS can, as long as every step has the same cost."
+  }}
+/>
+
+<Predict
+  id="cp-compare"
+  prompt="Exam question (5 marks): compare BFS and DFS on completeness, optimality, time complexity and space complexity, and say when you would choose each."
+  answer="BFS: complete, optimal for equal step costs, O(b^d) time and space. DFS: complete on finite graphs with an explored set, not optimal, O(b^m) time, O(b·m) space. BFS for the shortest path; DFS when memory is tight or solutions are deep and plentiful."
+>
+
+| | BFS | DFS |
+|---|---|---|
+| Complete | yes (finite branching factor) | yes on finite graphs with an explored set; no on infinite depth |
+| Optimal | yes, if all step costs are equal | no |
+| Time | O(b^d) | O(b^m) |
+| Space | O(b^d), the whole frontier layer | O(b·m), one path plus siblings |
+
+b = branching factor, d = depth of the shallowest goal, m = maximum depth.
+
+**Choose BFS** when you need the fewest steps and the state space is small enough to hold a layer in memory. **Choose DFS** when memory is the constraint, when any solution will do and solutions are deep and common, or as the inner loop of iterative deepening, which gets BFS's guarantees in DFS's memory.
+
+For full marks, define b, d and m, and give the frontier data structure for each (FIFO queue, LIFO stack).
+
+</Predict>

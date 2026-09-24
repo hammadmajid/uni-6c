@@ -1,0 +1,182 @@
+You have used sockets through every HTTP library you ever imported. This lesson strips the libraries away and writes the slides' example twice, once over each transport, so the difference between UDP and TCP shows up in the code itself.
+
+The example from the slides: the **client** reads a line from the keyboard and sends it to the server; the **server** converts it to uppercase and sends it back; the client prints the result.
+
+<Predict
+  id="socket-count"
+  prompt="You run the uppercase server twice, once over UDP and once over TCP. Two clients are connected to each at the same moment. How many sockets does the UDP server process have open? How many does the TCP server process have?"
+  answer="UDP: one socket, which receives datagrams from every client. TCP: three, one welcoming socket plus one connection socket per client."
+>
+
+**UDP: 1. TCP: 3.** A UDP server has one socket, and every datagram from every client lands in it with the sender's address attached. A TCP server has a **welcoming socket** that only accepts new connections, and for each client it accepts, a new **connection socket** dedicated to that client. Two clients means 1 + 2 = 3.
+
+</Predict>
+
+## UDP: no connection, an address on every packet
+
+With UDP there is no handshake. The sender **attaches the destination IP address and port to every packet** it sends, and the receiver **extracts the sender's IP address and port from every packet** it receives, so it knows where to reply. Data may be lost or arrive out of order. Kurose's Python, which is what SZABIST labs and most exams quote:
+
+```python
+# UDPClient.py
+from socket import *
+serverName = 'localhost'
+serverPort = 12000
+# SOCK_DGRAM = UDP
+clientSocket = socket(AF_INET, SOCK_DGRAM)
+message = input('Input lowercase sentence: ')
+# destination on every send
+clientSocket.sendto(message.encode(), (serverName, serverPort))
+modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
+print(modifiedMessage.decode())
+clientSocket.close()
+```
+
+```python
+# UDPServer.py
+from socket import *
+serverPort = 12000
+serverSocket = socket(AF_INET, SOCK_DGRAM)
+# claim port 12000 on all interfaces
+serverSocket.bind(('', serverPort))
+print('The server is ready to receive')
+while True:
+    # who sent it comes with the data
+    message, clientAddress = serverSocket.recvfrom(2048)
+    modifiedMessage = message.decode().upper()
+    serverSocket.sendto(modifiedMessage.encode(), clientAddress)
+```
+
+The client never calls `bind`: the OS picks an ephemeral port for it on the first `sendto`. The server must `bind` to a known port, or no client could find it.
+
+<QuickCheck
+  id="udp-dest"
+  question="In the UDP client, where is the server's address specified?"
+  options={[
+    "Once, when the socket is created",
+    "Once, in a connect() call before sending",
+    "In every sendto() call, attached to each packet",
+    "Nowhere; the server finds the client"
+  ]}
+  answer="In every sendto() call, attached to each packet"
+  explanation="UDP has no connection to remember the destination, so each datagram carries it. That is exactly the slide's bullet: the sender explicitly attaches the IP destination address and port number to each packet."
+  feedback={{
+    "Once, when the socket is created": "socket(AF_INET, SOCK_DGRAM) only picks IPv4 and UDP. It has no destination yet.",
+    "Once, in a connect() call before sending": "That is the TCP client. (Python does allow connect() on a UDP socket as a shortcut, but it sends nothing and the slide's model does not use it.)",
+    "Nowhere; the server finds the client": "The client always initiates. The server cannot know the client exists until the first datagram arrives."
+  }}
+/>
+
+## TCP: a welcoming socket, then one socket per client
+
+With TCP, the client must **contact** the server first, so the server process must already be running and must have created a socket that welcomes new clients. When the client creates its socket and connects, the two TCP layers perform the three-way handshake. When the server accepts, TCP creates a **new socket** for the server process to talk to that one client. That is how one server handles many clients at once.
+
+<TcpSockets />
+
+```python
+# TCPClient.py
+from socket import *
+serverName = 'localhost'
+serverPort = 12000
+# SOCK_STREAM = TCP
+clientSocket = socket(AF_INET, SOCK_STREAM)
+# the three-way handshake happens here
+clientSocket.connect((serverName, serverPort))
+sentence = input('Input lowercase sentence: ')
+# no address: the connection knows it
+clientSocket.send(sentence.encode())
+modifiedSentence = clientSocket.recv(1024)
+print('From server:', modifiedSentence.decode())
+clientSocket.close()
+```
+
+```python
+# TCPServer.py
+from socket import *
+serverPort = 12000
+serverSocket = socket(AF_INET, SOCK_STREAM)
+serverSocket.bind(('', serverPort))
+# this is the welcoming socket
+serverSocket.listen(1)
+print('The server is ready to receive')
+while True:
+    # blocks until a client connects; returns a NEW socket
+    connectionSocket, addr = serverSocket.accept()
+    sentence = connectionSocket.recv(1024).decode()
+    connectionSocket.send(sentence.upper().encode())
+    # closes this client's socket, not the welcoming one
+    connectionSocket.close()
+```
+
+<OrderCheck
+  id="tcp-server-calls"
+  prompt="Order the socket calls a TCP server makes to serve its first client."
+  items={["socket()", "bind()", "listen()", "accept()", "recv()", "send()", "close() on the connection socket"]}
+  explanation="Create, bind to the well-known port, start listening (welcoming socket), accept (blocks for a handshake, returns the connection socket), then receive, reply and close that connection socket. The welcoming socket stays open for the next client."
+  topLabel="First"
+  bottomLabel="Last"
+/>
+
+<QuickCheck
+  id="tcp-socket-count"
+  type="numeric"
+  question="A TCP server process has 5 clients connected at the same moment, all to port 80. How many sockets does the server process have open?"
+  answer={6}
+  explanation="One welcoming socket plus one connection socket per client: 1 + 5 = 6. All six are 'on port 80'; the kernel tells the five connection sockets apart by their full 4-tuples."
+/>
+
+<QuickCheck
+  id="tcp-demux"
+  question="Two clients behind different home routers both happen to connect to your server from source port 51834. How does the server's TCP tell their segments apart?"
+  options={[
+    "It cannot; the second connection is refused",
+    "By the source IP address, as part of the 4-tuple (source IP, source port, destination IP, destination port)",
+    "By the order in which the segments arrive",
+    "By a client ID that TCP inserts in every segment"
+  ]}
+  answer="By the source IP address, as part of the 4-tuple (source IP, source port, destination IP, destination port)"
+  explanation="A TCP socket is identified by all four values. Same source port, different source IP means a different 4-tuple and so a different connection socket."
+  feedback={{
+    "It cannot; the second connection is refused": "Nothing clashes. Only an identical 4-tuple would, and different source IPs rule that out.",
+    "By the order in which the segments arrive": "Arrival order says nothing about which connection a segment belongs to; segments from many clients interleave freely.",
+    "By a client ID that TCP inserts in every segment": "TCP has no client ID field. The addresses and ports are the identity."
+  }}
+/>
+
+<Callout type="exam" title="The slide says 'source port numbers used to distinguish clients'">
+Reproduce it if asked, but know it is incomplete. A TCP connection socket is identified by the **4-tuple**: source IP, source port, destination IP, destination port. Two clients can use the same source port if their IP addresses differ, as clients A and B do in the figure. A UDP socket, by contrast, is identified by just the destination IP and port, which is why one UDP socket receives from every client. The transport layer (week 5) covers this as demultiplexing.
+</Callout>
+
+## UDP and TCP sockets side by side
+
+| | UDP | TCP |
+|---|---|---|
+| Socket type | `SOCK_DGRAM` | `SOCK_STREAM` |
+| Before sending | Nothing | Client `connect()`; server `listen()` + `accept()` |
+| Destination address | On every `sendto()` | Once, in `connect()` |
+| Server sockets | One, for every client | One welcoming + one per client |
+| Unit of data | Datagrams: message boundaries preserved | Byte stream: no boundaries |
+| Delivery | May be lost or out of order | Reliable, in order |
+
+Run both on your machine: start `python3 UDPServer.py` and talk to it with `nc -u localhost 12000`, then start the TCP server and use `nc localhost 12000`. While a TCP client is connected, `ss -tn` shows the connection's 4-tuple, and `ss -ltn` shows the welcoming socket in state LISTEN.
+
+<Deeper kind="edge" title="Two things the textbook code gets away with">
+
+1. **TCP is a byte stream, not a message stream.** `recv(1024)` returns whatever bytes have arrived, up to 1024: possibly half a line, possibly two lines glued together. The demo works because one short line fits in one segment on localhost. Real protocols add framing: HTTP/1.1 uses the blank line and Content-Length, and Redis's protocol prefixes lengths. UDP keeps each `sendto` as one datagram.
+2. **The TCP server serves one client at a time.** While it is inside `accept()`...`close()` for one client, the next waits in the listen backlog. Real servers hand each connection socket to a thread (Tomcat), a process (classic Apache), or an event loop with `epoll` (Nginx, Node).
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://docs.python.org/3/howto/sockets.html",
+    "title": "Python docs: Socket Programming HOWTO",
+    "kind": "docs",
+    "why": "Short and honest about the byte-stream problem above, and about why real servers use select or non-blocking sockets."
+  },
+  {
+    "href": "https://beej.us/guide/bgnet/",
+    "title": "Beej's Guide to Network Programming",
+    "kind": "book",
+    "why": "The classic free guide to the C socket API that Python wraps. Read the client-server chapter if you want to see what socket(), bind() and accept() really do."
+  }
+]} />

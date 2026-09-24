@@ -9,29 +9,13 @@ import { WorkedExample, Step } from "@/components/learning/WorkedExample";
 import { HintLadder } from "@/components/learning/HintLadder";
 import { Term } from "@/components/learning/Term";
 import { Timeline } from "@/components/learning/Timeline";
-import { DelayLab } from "@/components/cndc/DelayLab";
-import { QueueingLab } from "@/components/cndc/QueueingLab";
-import { SwitchingLab } from "@/components/cndc/SwitchingLab";
-import { EncapsulationExplorer } from "@/components/cndc/EncapsulationExplorer";
-import { ThroughputLab } from "@/components/cndc/ThroughputLab";
-import { SharedMediumLab } from "@/components/cndc/SharedMediumLab";
-import { InternetMap } from "@/components/cndc/InternetMap";
-import { ProtocolExchange } from "@/components/cndc/ProtocolExchange";
-import { AccessTechDiagram } from "@/components/cndc/AccessTechDiagram";
-import { MediaChart } from "@/components/cndc/MediaChart";
-import { LayerStacks } from "@/components/cndc/LayerStacks";
-import { HopDiagram } from "@/components/cndc/HopDiagram";
-import { MultiplexingDiagram } from "@/components/cndc/MultiplexingDiagram";
-import { StatMuxStrip } from "@/components/cndc/StatMuxStrip";
-import { CaravanDiagram } from "@/components/cndc/CaravanDiagram";
-import { IntensityCurve } from "@/components/cndc/IntensityCurve";
-import { BottleneckPipes } from "@/components/cndc/BottleneckPipes";
-import { TracerouteMap } from "@/components/cndc/TracerouteMap";
-import { WiresharkWindow } from "@/components/cndc-lab/WiresharkWindow";
-import { FilterLab } from "@/components/cndc-lab/FilterLab";
-import { LayerSortLab } from "@/components/cndc-lab/LayerSortLab";
-import { SnifferPlacement } from "@/components/cndc-lab/SnifferPlacement";
-import { TimeFormats } from "@/components/cndc-lab/TimeFormats";
+
+import { cndcComponents } from "@/components/cndc";
+import { cndcLabComponents } from "@/components/cndc-lab";
+import { aiComponents } from "@/components/ai";
+import { aiLabComponents } from "@/components/ai-lab";
+import { dbComponents } from "@/components/db";
+import { webTechComponents } from "@/components/web-tech";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mdxComponents: Record<string, ComponentType<any>> = {
@@ -46,27 +30,10 @@ export const mdxComponents: Record<string, ComponentType<any>> = {
   HintLadder,
   Term,
   Timeline,
-  DelayLab,
-  QueueingLab,
-  SwitchingLab,
-  EncapsulationExplorer,
-  ThroughputLab,
-  SharedMediumLab,
-  InternetMap,
-  ProtocolExchange,
-  AccessTechDiagram,
-  MediaChart,
-  LayerStacks,
-  HopDiagram,
-  MultiplexingDiagram,
-  StatMuxStrip,
-  CaravanDiagram,
-  IntensityCurve,
-  BottleneckPipes,
-  TracerouteMap,
-  WiresharkWindow,
-  FilterLab,
-  LayerSortLab,
-  SnifferPlacement,
-  TimeFormats,
+  ...cndcComponents,
+  ...cndcLabComponents,
+  ...aiComponents,
+  ...aiLabComponents,
+  ...dbComponents,
+  ...webTechComponents,
 };

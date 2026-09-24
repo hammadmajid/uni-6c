@@ -1,0 +1,233 @@
+The agent function says **what** to do. This lesson is about **how** the program decides: the five agent designs from lecture 2, each one adding a single capability to the one before.
+
+<Predict
+  id="brake-light"
+  prompt="Two self-driving cars both brake when the car ahead shows brake lights. Car 1 has a rule: brake lights → brake. Car 2 reasons: brake lights mean the car ahead is slowing, so I will hit it unless I slow down, and I want to not crash, so I brake. They do the same thing. What can Car 2 do that Car 1 cannot?"
+  answer="Car 2 can handle situations nobody wrote a rule for, and its behaviour changes when its goal changes. If the car ahead brakes but Car 2 is already far behind, or a new hazard appears, it can reason from the goal ('don't crash', 'reach the destination') to a new action. Car 1 can only do what its rule table says."
+>
+
+This is the slide's own example. **Car 1 is a simple reflex agent**: a lookup from percept to action. **Car 2 is a goal-based agent**: it predicts the result of its actions and picks the one that leads to its goal.
+
+They agree on this percept, but only Car 2's knowledge is **explicit**. Change its goal (drive to a different city, or "get to hospital fast") and its behaviour changes without rewriting a single rule. That flexibility is what the lecture means by "the knowledge supporting a decision is explicitly modeled, allowing for modifications".
+
+</Predict>
+
+<AgentArchitectures />
+
+Click through the five tabs in order. Each one keeps what the previous had and adds one thing: memory, then goals, then a score, then the ability to improve. The rest of this lesson takes them one at a time.
+
+## 1. Simple reflex agent
+
+It chooses actions **only on the current percept**, using **condition–action rules**: if condition then action. The lecture's example is a frog:
+
+| Percept (size, motion) | Action |
+|---|---|
+| Small moving object | SNAP |
+| Large moving object | AVOID (and inhibit SNAP) |
+| Not moving | NOOP (the default, needed for completeness) |
+
+The vacuum agent from the last lesson is one. So is a thermostat, and so is a firewall rule list. In backend terms this is a **stateless request handler**: the same request always gets the same response.
+
+The catch, stated on the slide: it is rational only if the right decision can be made from the current percept alone, which means the environment must be **fully observable**. In a partially observable world it gets stuck in loops. A vacuum with no location sensor cannot tell A from B, and with only "Right" and "Left" rules it may push against a wall forever. (Randomising the action sometimes gets it out.)
+
+<QuickCheck
+  id="thermostat"
+  question="A thermostat switches the heating on when the temperature reads below 20 °C and off when it reads above 22 °C. What type of agent is it?"
+  options={["Simple reflex agent", "Model-based reflex agent", "Goal-based agent", "Learning agent"]}
+  answer="Simple reflex agent"
+  explanation="It maps the current percept (temperature) directly to an action with condition–action rules. No memory, no prediction, no improvement."
+  feedback={{
+    "Model-based reflex agent": "It keeps no internal state about the world beyond the current reading. A model-based agent would track something it cannot see, such as whether a window is open.",
+    "Goal-based agent": "There is a desired temperature, but the thermostat never predicts outcomes or chooses between actions to reach it. It just fires a rule.",
+    "Learning agent": "Its thresholds never change with experience. A 'smart' thermostat that learns your schedule would be a learning agent."
+  }}
+/>
+
+## 2. Model-based reflex agent
+
+It keeps an **internal state**: a representation of the parts of the world it cannot currently see, built from the percept history. Updating that state needs a **model**, knowledge of "how things happen in the world", in two parts:
+
+- **How the world evolves** on its own (other cars keep moving while you look away).
+- **What my actions do** (turning the wheel left moves me left).
+
+Then it still picks an action with **rules**, but the rules look at the state, not just the percept. The lecture's table agent:
+
+| If (state built from percepts) | Then |
+|---|---|
+| Saw an object ahead, turned right, and now it is clear ahead | Go straight |
+| Saw an object ahead, turned right, and there is an object ahead again | Halt |
+| See no objects ahead | Go straight |
+| See an object ahead | Turn randomly |
+
+The first two rows are the whole point. The percept "clear ahead" means different things depending on **what happened before**, and only an agent with memory can tell.
+
+For an engineer, the internal state is a **cache of world state** and the model is what tells you when the cache has gone stale. That is exactly the re-check slider in the vacuum lab: a model-based agent with a wrong model of how the world evolves ("clean stays clean") did worse than one with no memory at all.
+
+<Deeper kind="edge" title="The wall-following robot (the lecture's longer example)">
+
+Actions: left, right, straight, open-door. The rules read the current walls, but the robot also needs to remember which way it has been going to follow a wall around a maze without retracing:
+
+1. open left, open right, open straight → choose randomly between left and right
+2. wall left, open right, open straight → straight
+3. wall right, open left, open straight → straight
+4. wall right, open left, wall straight → left
+5. wall left, open right, wall straight → right
+6. wall left, door right, wall straight → open-door
+7. wall right, wall left, open straight → straight
+8. default → move randomly
+
+Rules 1 to 7 on their own are a simple reflex agent. The slide calls it "a reflex agent with internal state" because following a wall around corners needs the robot to remember which side the wall was on.
+
+</Deeper>
+
+<QuickCheck
+  id="model-parts"
+  question="A model-based agent updates its internal state using knowledge of which two things?"
+  options={[
+    "How the world evolves, and what its own actions do",
+    "Its goals, and its utility function",
+    "The performance standard, and the critic's feedback",
+    "Its sensors, and its actuators"
+  ]}
+  answer="How the world evolves, and what its own actions do"
+  explanation="Those two together are the model. The first predicts change the agent does not cause, the second predicts the effect of its own actions."
+  feedback={{
+    "Its goals, and its utility function": "Goals and utility come later (types 3 and 4). A model-based reflex agent still acts on rules.",
+    "The performance standard, and the critic's feedback": "Those belong to the learning agent.",
+    "Its sensors, and its actuators": "Every agent has sensors and actuators. The model is knowledge about the world, not hardware."
+  }}
+/>
+
+## 3. Goal-based agent
+
+It chooses actions **to achieve goals**, where a goal is a description of desirable situations. To do that it must look ahead: "what will the world be like **if I do action A**?". The slide's chain:
+
+> brake light → the car in front is stopping → I should stop → I should use the brake
+
+When the goal is far away (a route across a city, a sequence of moves in a puzzle), looking ahead one step is not enough, and the agent needs **search** and **planning**. That is the next several weeks of this course and of the AI lab.
+
+Why it is **more flexible than a reflex agent**: the knowledge behind each decision is explicit, so you can change it. A reflex taxi needs a new rule table for every destination; a goal-based taxi takes the destination as input.
+
+## 4. Utility-based agent
+
+Goals are binary: reached or not. A **utility function** gives each state a number, how "happy" the agent would be there, so it can compare outcomes that all reach the goal. The slide lists when goals are not enough:
+
+- **Conflicting goals**, only some of which can be achieved: fast versus safe, cheap versus comfortable. Utility says how to trade them.
+- **Uncertainty**: several goals, none certain. You weigh the **likelihood** of success against the **importance** of each goal.
+
+A rational utility-based agent picks the action with the highest **expected** utility. This is the same "expected" as in the definition of rationality, and it is how every scheduler with a cost function works: a Kubernetes scheduler scoring nodes, a query planner costing plans, a ride-hailing dispatcher trading pickup time against driver idle time.
+
+<QuickCheck
+  id="utility-vs-goal"
+  question="A navigation app finds three routes that all reach your destination. It picks the one with the best mix of travel time, tolls and fuel. Why is this a utility-based agent rather than a goal-based one?"
+  options={[
+    "Because it has a goal",
+    "Because all three routes satisfy the goal, and it needs a numeric measure to choose between them",
+    "Because it remembers past traffic",
+    "Because it learns from your choices"
+  ]}
+  answer="Because all three routes satisfy the goal, and it needs a numeric measure to choose between them"
+  explanation="Goal-based can only say 'reaches the destination: yes'. Choosing the best among routes that all reach it needs a utility, a score that combines time, tolls and fuel."
+  feedback={{
+    "Because it has a goal": "Goal-based agents have goals too. The question is what lets it choose among several routes that all achieve the goal.",
+    "Because it remembers past traffic": "Memory makes it model-based, which utility-based agents also are. It does not explain the choice between routes.",
+    "Because it learns from your choices": "That would make it a learning agent. Nothing here says it improves over time."
+  }}
+/>
+
+## 5. Learning agent
+
+Any of the four agents above can be wrapped so it **improves with experience**. The slide's four components:
+
+| Component | Job | Systems analogy |
+|---|---|---|
+| **Performance element** | Selects external actions. This is "what was previously the whole agent". | The production service |
+| **Critic** | Tells the learning element how well the agent is doing against a **fixed performance standard** | Monitoring against an SLO |
+| **Learning element** | Makes improvements to the performance element | The team shipping fixes |
+| **Problem generator** | Suggests actions that lead to new, informative experiences | Canary releases and A/B experiments |
+
+The critic needs an **external** standard. The agent's own percepts cannot tell it whether it did well. A chess program sees that it is checkmated, but only the standard says checkmate is bad.
+
+The problem generator is what makes the agent **explore**. Without it the agent only ever repeats what currently looks best and never finds anything better, the classic exploration-versus-exploitation trade-off.
+
+<OrderCheck
+  id="agent-order"
+  prompt="Order the four non-learning agent types from least to most capable, where each adds one capability to the one before."
+  items={["Simple reflex agent", "Model-based reflex agent", "Goal-based agent", "Utility-based agent"]}
+  explanation="Reflex (current percept + rules) → model-based (adds internal state and a model) → goal-based (adds goals and look-ahead) → utility-based (replaces yes/no goals with a numeric utility). A learning agent can wrap any of them."
+  topLabel="Least capable"
+  bottomLabel="Most capable"
+/>
+
+## Pick the agent
+
+<QuickCheck
+  id="pick-roomba"
+  question="A robot vacuum builds a map of the house as it drives, so it knows which rooms it has already cleaned even when it cannot see them. The simplest agent type that fits?"
+  options={["Simple reflex agent", "Model-based reflex agent", "Utility-based agent", "Learning agent"]}
+  answer="Model-based reflex agent"
+  explanation="The map is internal state about parts of the world it cannot currently perceive. That is the defining feature of a model-based agent."
+  feedback={{
+    "Simple reflex agent": "A simple reflex agent has no memory, so it could not know which rooms are done once it has left them.",
+    "Utility-based agent": "Nothing here involves scoring and trading off outcomes. Remembering the world is enough.",
+    "Learning agent": "Building a map is updating state, not improving its own decision-making. A vacuum that learns which rooms get dirty fastest would be a learning agent."
+  }}
+/>
+
+<QuickCheck
+  id="pick-recommender"
+  question="A video platform's recommender tracks which suggestions you watch to the end and adjusts future recommendations to match. The best description?"
+  options={["Simple reflex agent", "Goal-based agent", "Learning agent", "Model-based reflex agent"]}
+  answer="Learning agent"
+  explanation="Watch-to-the-end is the critic's feedback against a standard (engagement). The system changes its own recommendation policy as a result, which is the learning element at work."
+  feedback={{
+    "Simple reflex agent": "Its behaviour changes with experience. A reflex agent's rules never change.",
+    "Goal-based agent": "It has an objective, but the defining feature described is that it improves from feedback.",
+    "Model-based reflex agent": "It does keep state about you, but updating a model of the world is not the same as improving how it decides. The feedback loop that changes its policy is what makes it a learning agent."
+  }}
+/>
+
+## All five in one table
+
+| Type | Decides using | Handles | Breaks when |
+|---|---|---|---|
+| Simple reflex | Current percept + condition–action rules | Fully observable, simple worlds | Anything relevant is not visible right now |
+| Model-based reflex | Internal state + model + rules | Partial observability | Its model of the world is wrong |
+| Goal-based | Model + goals + look-ahead (search, planning) | New situations; goals that change | Several ways reach the goal and some are better |
+| Utility-based | Model + utility function, maximising expected utility | Conflicting goals, uncertainty | The utility function is badly designed |
+| Learning | A critic, a learning element and a problem generator around any of the above | Unknown or changing environments | The performance standard is wrong |
+
+<Deeper kind="exam" title="Model answer: explain the types of agents, with diagrams (10 marks)">
+
+Budget two marks per type: one line of definition, one diagram or example.
+
+1. **Simple reflex**: acts on the current percept only, using condition–action rules. Rational only in a fully observable environment. Example: the vacuum agent, or the frog (small moving object → snap). Diagram: sensors → "what the world is like now" → condition–action rules → "what action I should do now" → actuators.
+2. **Model-based reflex**: keeps an internal state from the percept history, updated by a model of how the world evolves and what its actions do. Handles partial observability. Example: the wall-following robot. Diagram: add State, "how the world evolves" and "what my actions do" feeding "what the world is like now".
+3. **Goal-based**: chooses actions that achieve goals by predicting "what it will be like if I do action A". More flexible because its knowledge is explicit and can be modified. Example: brake light → the car in front is stopping → I should stop → brake.
+4. **Utility-based**: uses a utility function (a preference for each state) instead of binary goals. Needed for conflicting goals and for uncertain goals, where likelihood is weighed against importance. Diagram: add "how happy I will be in such a state".
+5. **Learning**: performance element (selects actions), critic (feedback against a fixed performance standard), learning element (makes improvements), problem generator (suggests exploratory actions).
+
+Draw at least the reflex and the learning diagrams. Examiners reward the labelled boxes more than the prose.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=NG3MHjcvk2A",
+    "title": "Berkeley CS188 lecture 1: intro to AI, rational agents",
+    "kind": "video",
+    "why": "Berkeley treats Pac-Man as an agent and shows why its reflex rules stop working once the world is not fully observable."
+  },
+  {
+    "href": "https://github.com/aimacode/aima-python/blob/master/aima/agents.py",
+    "title": "aima-python agents.py",
+    "kind": "tool",
+    "why": "SimpleReflexAgentProgram and ModelBasedReflexAgentProgram, each about ten lines of Python. Read them before AI Lab week 3."
+  },
+  {
+    "href": "https://inst.eecs.berkeley.edu/~cs188/archive/su24/assets/lectures/cs188-su24-lec01.pdf",
+    "title": "CS188 lecture 1 slides",
+    "kind": "docs",
+    "why": "Compact slides for this lecture. The last few spell out how the environment type (observable, stochastic) decides which agent design you need."
+  }
+]} />

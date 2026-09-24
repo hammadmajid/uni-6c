@@ -1,0 +1,228 @@
+Lecture 01 end to end, in the instructor's style: short factual questions, URL writing, and code-reading. No notes. Where the slides and the standard disagree, the question says which one it wants.
+
+## Network and HTTP
+
+<QuickCheck
+  id="cp-tomcat-port"
+  type="numeric"
+  unit="port number"
+  question="A freshly unzipped Tomcat 11: which port does its HTTP connector listen on?"
+  answer={8080}
+  tolerance={0}
+  explanation="8080, set on the Connector element in conf/server.xml. Port 80 is HTTP's registered port, and binding it needs root on Linux, which is why Tomcat defaults to the alternate."
+/>
+
+<QuickCheck
+  id="cp-socket"
+  question="What uniquely identifies one TCP connection between a browser and Tomcat?"
+  options={["Source IP, source port, destination IP, destination port", "The destination IP and port", "The URL", "The server's MAC address"]}
+  answer="Source IP, source port, destination IP, destination port"
+  explanation="The four-tuple, also called the socket pair. The destination alone is shared by every client of the server."
+  feedback={{
+    "The destination IP and port": "Every browser connecting to Tomcat has the same destination. The client's ephemeral port is what tells connections apart.",
+    "The URL": "Many connections can fetch the same URL, and one connection can fetch many URLs.",
+    "The server's MAC address": "MAC addresses belong to the link layer and change at every hop. TCP never sees them."
+  }}
+/>
+
+<QuickCheck
+  id="cp-well-known"
+  question="According to the IANA registry, which pairing is correct?"
+  options={["HTTP 80, HTTPS 443, SMTP 25", "HTTP 80, HTTPS 443, SMTP 23", "HTTP 8080, HTTPS 443, SMTP 25", "HTTP 80, HTTPS 8443, SMTP 110"]}
+  answer="HTTP 80, HTTPS 443, SMTP 25"
+  explanation="SMTP is 25; 23 is Telnet, whatever slide 6 says. 8080 and 8443 are common alternates (Tomcat's defaults), not the registered ports."
+  feedback={{
+    "HTTP 80, HTTPS 443, SMTP 23": "That is slide 6's version. 23 is Telnet.",
+    "HTTP 8080, HTTPS 443, SMTP 25": "8080 is Tomcat's default, not HTTP's registered port.",
+    "HTTP 80, HTTPS 8443, SMTP 110": "8443 is Tomcat's default HTTPS connector; 110 is POP3."
+  }}
+/>
+
+## URLs and the webapp
+
+<QuickCheck
+  id="cp-url-write"
+  type="short-answer"
+  question="An app is deployed as webapps/portal/. A servlet in it is annotated @WebServlet(name = &quot;studentList&quot;, value = &quot;/students&quot;). Tomcat is on localhost with its default port. Full URL of the servlet?"
+  answer={["http://localhost:8080/portal/students", "localhost:8080/portal/students", "/portal/students"]}
+  explanation="Context path /portal (the folder's name) plus the mapping /students. The servlet name studentList never appears in a URL."
+/>
+
+<QuickCheck
+  id="cp-private"
+  question="Which request returns 404 even though the file exists in webapps/portal/?"
+  options={["/portal/WEB-INF/lib/postgresql.jar", "/portal/index.html", "/portal/images/logo.png", "/portal/index.jsp"]}
+  answer="/portal/WEB-INF/lib/postgresql.jar"
+  explanation="Everything under WEB-INF is the private area: read by the container, never served to a client."
+  feedback={{
+    "/portal/index.html": "Files at the webapp root are public; the default servlet sends them.",
+    "/portal/images/logo.png": "Any folder outside WEB-INF is public.",
+    "/portal/index.jsp": "JSPs at the root are public; Tomcat compiles and runs them."
+  }}
+/>
+
+<QuickCheck
+  id="cp-war"
+  question="What is a WAR file?"
+  options={["A zip archive of one web application in the standard layout, deployed by placing it in webapps", "Tomcat's webapps directory", "A compiled servlet class", "Tomcat's configuration file"]}
+  answer="A zip archive of one web application in the standard layout, deployed by placing it in webapps"
+  explanation="One app per WAR. Tomcat expands demo.war into webapps/demo/ and serves it at /demo. Slide 28 blurs the WAR with the webapps directory; they are the package and the place it goes."
+  feedback={{
+    "Tomcat's webapps directory": "webapps holds many applications. A WAR is one of them, packed.",
+    "A compiled servlet class": "Compiled classes go inside the WAR, in WEB-INF/classes.",
+    "Tomcat's configuration file": "That is conf/server.xml."
+  }}
+/>
+
+<QuickCheck
+  id="cp-app-name"
+  question="According to the lecture slides, what does the segment 7sport represent in http://www.7sport.net/7sport/index.htm?"
+  options={["App name", "Domain name", "Resource within the app", "Protocol"]}
+  answer="App name"
+  explanation="Slide 19's label. In Tomcat terms it is the context path, and it picks an app only if one with that name is deployed; to the URL standard it is just the start of the path."
+  feedback={{
+    "Domain name": "The domain is www.7sport.net, before the first single slash.",
+    "Resource within the app": "That is index.htm, after the app name.",
+    "Protocol": "The protocol is http."
+  }}
+/>
+
+## Servlets
+
+<OrderCheck
+  id="cp-lifecycle"
+  prompt="Order the servlet lifecycle."
+  items={["Container loads the class and creates one instance", "init() is called once", "service() is called for each request, dispatching to doGet or doPost", "destroy() is called once at undeploy or shutdown"]}
+  explanation="One instance, one init, many service calls on many threads, one destroy."
+  topLabel="first"
+  bottomLabel="last"
+/>
+
+<QuickCheck
+  id="cp-instance-per-request"
+  type="true-false"
+  question="Tomcat creates a new servlet object for every request, so instance fields are safe for request data."
+  answer="False"
+  explanation="One instance serves every request, each on its own thread. Instance fields are shared by all concurrent requests. Request data belongs in local variables."
+/>
+
+<QuickCheck
+  id="cp-405"
+  question="A form with method=&quot;post&quot; submits to a servlet that overrides only doGet. The response status is:"
+  options={["405 Method Not Allowed", "404 Not Found", "500 Internal Server Error", "200 with an empty page"]}
+  answer="405 Method Not Allowed"
+  explanation="service() dispatches POST to doPost; the doPost inherited from HttpServlet sends 405. The URL matched, so it is not 404, and nothing threw, so it is not 500."
+  feedback={{
+    "404 Not Found": "The path matched the servlet. 404 means nothing matched.",
+    "500 Internal Server Error": "Nothing threw. The parent class rejected the method deliberately.",
+    "200 with an empty page": "That is how slide 55 makes it look, but the status is 405. Check the Network tab."
+  }}
+/>
+
+<QuickCheck
+  id="cp-getparam"
+  question="request.getParameter(&quot;email&quot;) when the request has no email parameter returns:"
+  options={["null", "an empty string", "it throws a NullPointerException", "the string \"email\""]}
+  answer="null"
+  explanation="Missing parameter: null. A field that was present but left empty gives an empty string. Nothing throws until you call a method on the null."
+  feedback={{
+    "an empty string": "Only a submitted but empty field gives an empty string.",
+    "it throws a NullPointerException": "getParameter itself never throws for a missing name. The exception comes later, if you call a method on the result.",
+    "the string \"email\"": "That is the name you passed in, not a value."
+  }}
+/>
+
+<QuickCheck
+  id="cp-query-sep"
+  question="In http://localhost:8080/demo/search?q=java&page=2, what separates the two parameters?"
+  options={["&", "?", "=", "/"]}
+  answer="&"
+  explanation="? starts the query string, = separates each name from its value, & separates the pairs (slide 45)."
+  feedback={{
+    "?": "? appears once and marks where the query string begins.",
+    "=": "= joins a name to its value within one pair.",
+    "/": "/ separates path segments, before the query string."
+  }}
+/>
+
+<QuickCheck
+  id="cp-mapping-exact"
+  question="With @WebServlet(&quot;/hi&quot;) in the app at /demo, which URL reaches the servlet?"
+  options={["/demo/hi", "/demo/courses/hi", "/hi", "/demo/hi.html"]}
+  answer="/demo/hi"
+  explanation="Exact match on the path after the context path. 'Ending with /hi' is not the rule."
+  feedback={{
+    "/demo/courses/hi": "Ends with /hi but the path after /demo is /courses/hi. No match.",
+    "/hi": "Without /demo the request goes to the ROOT app.",
+    "/demo/hi.html": "/hi.html is a different path; the default servlet looks for a file of that name."
+  }}
+/>
+
+## Long answers
+
+<Predict
+  id="cp-trace-login"
+  prompt="Trace what happens, from the click to the page, when a user submits the login form (method post, action login) of an app deployed at /demo. Name the HTTP request, the Tomcat steps and the servlet methods. (6 marks)"
+  answer="Browser builds POST /demo/login with a urlencoded body userid=...&password=..., opens or reuses a TCP connection to localhost:8080, sends it. Tomcat's connector hands it to a pool thread, parses it into HttpServletRequest, selects the /demo context, matches /login to LoginServlet, calls service(), which calls doPost. doPost reads getParameter(userid/password), checks them, writes HTML to the response. Tomcat sends a 200 response; the browser renders it."
+>
+
+1. **Browser.** The form's action `login` resolves against the page's URL to `/demo/login`. The browser sends `POST /demo/login HTTP/1.1` with `Host: localhost:8080`, `Content-Type: application/x-www-form-urlencoded`, an empty line, and the body `userid=ali&password=123`, over a TCP connection to port 8080.
+2. **Connector.** Tomcat's HTTP connector accepts the connection and gives the request to a worker thread from its pool.
+3. **Context.** Tomcat parses the bytes into an `HttpServletRequest` and `HttpServletResponse`, and picks the webapp whose context path prefixes the path: `/demo`.
+4. **Mapping.** The remaining path `/login` exactly matches the LoginServlet's mapping.
+5. **Servlet.** The container calls `service(request, response)` on the single LoginServlet instance. It sees POST and calls `doPost`. `doPost` reads `request.getParameter("userid")` and `"password"` into local variables, compares them with the stored credentials, and writes HTML through `response.getWriter()`.
+6. **Response.** Tomcat sends `HTTP/1.1 200` with the headers and the HTML body. The browser renders it.
+
+</Predict>
+
+<Predict
+  id="cp-write-servlet"
+  prompt="Write a servlet mapped to /greet that reads name and age from a GET request (for example /demo/greet?name=Ali&age=21) and responds with an HTML heading 'Ali is 21'. If name is missing, respond 'Who are you?'. (5 marks)"
+  answer="@WebServlet(&quot;/greet&quot;) class extending HttpServlet, overriding doGet; String name = request.getParameter(&quot;name&quot;), String age = request.getParameter(&quot;age&quot;); setContentType text/html; if name == null print Who are you? else print the heading with name and age via response.getWriter()."
+>
+
+```java
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/greet")
+public class GreetServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String name = request.getParameter("name");   // locals, never fields
+        String age = request.getParameter("age");
+
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        out.println("<html><body>");
+        if (name == null) {
+            out.println("<h1>Who are you?</h1>");
+        } else {
+            out.println("<h1>" + name + " is " + age + "</h1>");
+        }
+        out.println("</body></html>");
+    }
+}
+```
+
+Marks usually go to: the annotation with the right path (1), extending HttpServlet and overriding **doGet** because the request is GET (1), getParameter with names matching the query string exactly (1), the null check (1), and setContentType plus getWriter to write the response (1). Beyond the marks: in real code, escape `name` before writing it into HTML, or a user can inject a script.
+
+</Predict>
+
+<Predict
+  id="cp-dev-vs-deploy"
+  prompt="Slides 25 to 29 contrast the development view with the server's view. Explain the difference and how one becomes the other. (4 marks)"
+  answer="Development view is IntelliJ's Maven project: src/main/java for Java source, src/main/resources, src/main/webapp for web files and WEB-INF/web.xml, pom.xml for dependencies. The build compiles the Java into WEB-INF/classes, copies webapp files to the root, puts dependency jars in WEB-INF/lib, and zips it into a WAR in target/. Deployed into Tomcat's webapps, the WAR is expanded into the standard webapp layout the server understands, with the file name as the context path."
+>
+
+- **Development view** (slide 26): the IntelliJ Maven project. Java sources in `src/main/java`, web files in `src/main/webapp` (including `WEB-INF/web.xml`), dependencies declared in `pom.xml`, tests in `src/test`.
+- **Build**: compiles sources into `WEB-INF/classes`, copies `src/main/webapp` to the archive's root, copies compile-scope dependency jars into `WEB-INF/lib`, leaves tests and provided-scope jars (the servlet API) out, and zips the result into `target/demo.war`.
+- **Server view** (slide 29): the WAR is placed in Tomcat's `webapps/`, expanded into `webapps/demo/`, and served at context path `/demo`: public files at the root, private WEB-INF beside them.
+- The point: you edit the development view, and Tomcat only understands the server view. The WAR is the artifact that carries one into the other.
+
+</Predict>

@@ -1,0 +1,236 @@
+Everyone has a working definition of AI. The trouble is that they disagree, and the exam will ask for one. Start by testing yours.
+
+<Predict
+  id="deep-blue"
+  prompt="In 1997 IBM's Deep Blue beat the world chess champion, Garry Kasparov. Was Deep Blue intelligent? Could it have passed the Turing test? Commit to a yes or no for each, with one reason."
+  answer="It depends on the yardstick. Judged by behaviour against an ideal of good play (acting rationally), yes: within chess it chose excellent moves. Judged by humanlike behaviour (the Turing test), no: it could not hold a conversation at all, so a judge would unmask it with one question."
+>
+
+Both answers are defensible, and that is the point. Deep Blue **acted rationally** in one narrow environment. It could not **act humanly**: ask it about the weather and there is nothing there. Which answer counts as "intelligent" depends on which definition of AI you hold, so the field has four of them.
+
+</Predict>
+
+## Four definitions, one grid
+
+The lecture gives one definition:
+
+> Artificial Intelligence (AI) refers to the simulation of human intelligence in machines, enabling them to perform tasks that typically require human intelligence, such as learning, reasoning, problem-solving, and perception.
+
+The textbook sorts every definition by two questions. Is AI about **thought** or about **behaviour**? And is it measured against **humans**, or against an ideal standard of **rationality**, doing the right thing given what you know?
+
+<AiFourApproaches />
+
+The lecture's definition, "simulation of *human* intelligence", sits in the human column. Russell and Norvig build their book, and so this course, on the bottom-right cell: **AI is the study of agents that act rationally.** Lecture 2 starts there. For a backend engineer the distinction is familiar: you do not test a service by checking that it reasons like you would. You check its outputs against a spec. The rational-agent view is the spec view.
+
+The slide also defines **intelligence**: "the computational part of the ability to achieve goals in the world." That sentence is John McCarthy's, the man who named the field, and it is a rational-agent definition: intelligence is measured by goals achieved, not by resemblance to a person.
+
+<QuickCheck
+  id="grid-theorem"
+  question="A program proves theorems by applying the rules of formal logic, step by step. Which cell of the grid does this approach belong to?"
+  options={["Thinking humanly", "Thinking rationally", "Acting humanly", "Acting rationally"]}
+  answer="Thinking rationally"
+  explanation="Logic is a standard of correct thought, not a model of how people actually think. This is Aristotle's 'laws of thought' tradition."
+  feedback={{
+    "Thinking humanly": "That cell is cognitive modelling: matching how people actually think, mistakes included. People are bad at formal logic; this program is not imitating them.",
+    "Acting humanly": "Nothing here is about fooling an observer. The program's inner process, correct inference, is the point.",
+    "Acting rationally": "Close, but the approach is defined by correct reasoning steps rather than by the outcome of actions in an environment. The rational-agent view would accept any method that produces good actions, logic or not."
+  }}
+/>
+
+## The Turing test
+
+In 1950 Alan Turing published "Computing Machinery and Intelligence" in the journal *Mind*. Instead of arguing about what "think" means, he proposed a game you can actually run.
+
+<TuringTestFigure />
+
+The slide splits it into four parts, and quizzes like to ask for them in that order:
+
+1. **Setup.** A human judge holds text conversations through a terminal and does not know who is on the other end.
+2. **Participants.** One human respondent and one machine.
+3. **Goal.** The machine tries to answer so convincingly that the judge cannot reliably tell it from the human.
+4. **Evaluation.** If the judge cannot consistently identify the machine, the machine passes.
+
+**Why it mattered**, per the slides: it set a benchmark for machine intelligence, it pushed research into natural language processing, understanding and generation, and it started a debate about what "truly intelligent" means that still runs.
+
+In systems terms, the Turing test is a **black-box acceptance test**. It checks behaviour at the interface and ignores the implementation, which is exactly why critics say it measures imitation rather than understanding.
+
+<QuickCheck
+  id="turing-wall"
+  question="Why does the judge communicate only by text, with the respondents hidden?"
+  options={[
+    "Text was the only interface computers had in 1950",
+    "So the judgement rests on conversational behaviour alone, not on voice or appearance",
+    "So the machine has more time to compute each answer",
+    "Because the test measures typing speed"
+  ]}
+  answer="So the judgement rests on conversational behaviour alone, not on voice or appearance"
+  explanation="Turing wanted to separate intellectual capacity from physical form. A machine should not fail for lacking a face, so the channel carries only what is being tested."
+  feedback={{
+    "Text was the only interface computers had in 1950": "Turing proposed teleprinters for a reason, but the reason was fairness, not technology. He explicitly wanted to remove voice and looks from the judgement.",
+    "So the machine has more time to compute each answer": "Turing actually suggested the machine might deliberately delay or make arithmetic slips to seem human. Timing is not what the hiding is for.",
+    "Because the test measures typing speed": "The test measures whether answers are humanlike, not how fast they arrive."
+  }}
+/>
+
+<Deeper kind="edge" title="Criticisms, and the 2025 result">
+
+- **The Chinese room** (John Searle, 1980). A person who speaks no Chinese follows a rulebook to answer Chinese questions perfectly. The room passes; nobody inside understands. Searle's claim: passing the test shows symbol manipulation, not understanding.
+- **Humans are easy to fool.** ELIZA (1966) was a page of pattern-matching rules, and people confided in it. Passing can reflect the judge's gullibility more than the machine's ability.
+- **The total Turing test** adds a video signal and objects to hand over, so the machine also needs vision and robotics. Russell and Norvig use it to list the six capabilities a humanlike AI would need: natural language processing, knowledge representation, automated reasoning, machine learning, computer vision and robotics.
+- **It finally happened.** In a pre-registered three-party study published in 2025, GPT-4.5 told to adopt a humanlike persona was judged to be the human 73% of the time, more often than the real humans. ELIZA scored 23%. Whether that says more about the machines or about the test is the same debate Turing started.
+
+</Deeper>
+
+## A short history
+
+Scrub through it. The dates are exam material, and the slides get two of them wrong; the callout below lists which.
+
+<Timeline
+  title="AI milestones"
+  events={[
+    { label: "1950", description: "Turing publishes 'Computing Machinery and Intelligence' and proposes the imitation game, now called the Turing test.", detail: "Turing had worked on codebreaking and early computers during the Second World War." },
+    { label: "1955", description: "McCarthy, Minsky, Rochester and Shannon write the Dartmouth proposal, dated 31 August 1955. The phrase 'artificial intelligence' first appears here.", detail: "The slide says McCarthy coined the term in 1957. The proposal predates the workshop itself." },
+    { label: "1956", description: "The Dartmouth workshop, planned as a two-month study by ten researchers. Conventionally the birth of AI as a field." },
+    { label: "1964–65", description: "DENDRAL starts at Stanford (Feigenbaum, Buchanan, Lederberg, Djerassi): infer a molecule's structure from mass-spectrometer data. The first expert system.", detail: "The slide gives 1967. Work began in 1964–65; the well-known paper is from 1969." },
+    { label: "1974–80", description: "First AI winter. Promises outran results; the 1973 Lighthill report in the UK and funding cuts in the US dried up research money." },
+    { label: "1980s", description: "Expert systems boom. Rule-based systems such as DEC's R1/XCON saved companies millions and AI became an industry." },
+    { label: "1987–early 90s", description: "Second AI winter. The LISP-machine market collapsed in 1987, expert systems proved brittle and expensive to maintain, and funding fell again." },
+    { label: "1997", description: "IBM's Deep Blue beats world chess champion Garry Kasparov." },
+    { label: "late 1990s–2000s", description: "Machine learning takes over: more compute and more data, applied to speech recognition and computer vision." },
+    { label: "2010s", description: "The deep learning revolution: image recognition, natural language processing, autonomous vehicles, heavy industry investment." },
+    { label: "2016", description: "DeepMind's AlphaGo beats Lee Sedol, one of the world's strongest Go players, 4 games to 1." }
+  ]}
+/>
+
+<Callout type="exam" title="The slides' dates, and what to write">
+The slide says **"1957: John McCarthy coins the term Artificial Intelligence"**. The term first appears in the Dartmouth proposal of **31 August 1955**, written by McCarthy and three co-authors. If a quiz asks "according to the lecture", 1957 is the marked answer. Otherwise write 1955, or "McCarthy, for the 1956 Dartmouth workshop", which is safe either way.
+
+The slide gives **DENDRAL as 1967**. Work began in **1964–65**.
+
+The slides date the first winter **"mid-1970s to mid-1980s"**. Most histories give **about 1974 to 1980**, because the early 1980s were the expert-systems boom that the same deck lists under "1980s". The second winter, "late 1980s to early 1990s", matches the usual account: it starts with the 1987 collapse of the LISP-machine market.
+</Callout>
+
+<OrderCheck
+  id="history-order"
+  prompt="Put these in chronological order, earliest first."
+  items={["Turing's imitation game paper", "The Dartmouth workshop", "DENDRAL begins", "First AI winter", "Deep Blue beats Kasparov", "AlphaGo beats Lee Sedol"]}
+  explanation="1950, 1956, 1964–65, 1974–80, 1997, 2016. Anchor on three: Turing 1950, Dartmouth 1956, Deep Blue 1997. The rest fall between them."
+  topLabel="Earliest"
+  bottomLabel="Latest"
+/>
+
+<QuickCheck
+  id="ai-winter-cause"
+  question="What caused both AI winters?"
+  options={[
+    "Expectations outran results, so funding and interest collapsed",
+    "Computers were banned from universities",
+    "The Turing test was proven impossible to pass",
+    "Neural networks were invented"
+  ]}
+  answer="Expectations outran results, so funding and interest collapsed"
+  explanation="Both winters follow the same hype cycle. Big promises bring money, the systems hit limits (combinatorial explosion in the 1970s, brittle expert systems in the late 1980s), and the money leaves."
+  feedback={{
+    "Computers were banned from universities": "Nothing like that happened. Research continued, just with far less money.",
+    "The Turing test was proven impossible to pass": "No such proof exists, and machines have since passed it.",
+    "Neural networks were invented": "Neural networks go back to 1943. Their revival in the mid-1980s helped end the first winter rather than cause one."
+  }}
+/>
+
+## Human intelligence vs AI
+
+The lecture contrasts the two. Read this as a table of where each side wins.
+
+| Humans are strong at | Machines are strong at |
+|---|---|
+| **Adaptability**: learning from experience and changing behaviour | **Speed and accuracy** of computation |
+| **Creativity**: new ideas and solutions | **Repetitive tasks** without fatigue |
+| **Emotional intelligence**: reading and managing emotions | **Large datasets**: patterns no person could scan |
+| **Common sense** and **contextual understanding** | Consistency: the same input gives the same answer |
+| **Social interaction**: communication, empathy, relationships | |
+| Handling ambiguity, moral and ethical judgement | |
+
+Humans have limits too: cognitive biases, errors in judgement, slow processing. And AI lacks consciousness and emotions. The slide's closing quote is Fei-Fei Li's: AI is "a tool to assist and augment human intelligence", not a substitute for it.
+
+The slides list ten **limitations of AI**. Ten unconnected bullets are hard to recall under pressure, so learn them in four groups:
+
+| Group | Limitations |
+|---|---|
+| **Knowing** | Lack of common sense and contextual understanding · generalisation challenges |
+| **Data** | Data dependency · bias and fairness |
+| **Trust** | Interpretability (deep models are "black boxes") · ethical and privacy concerns · security risks |
+| **Cost** | Energy consumption · high development costs |
+| | Plus: human–machine collaboration, making people and AI work well together |
+
+<QuickCheck
+  id="limit-bias"
+  question="A loan-approval model trained on ten years of past decisions rejects most applicants from one district, because past human officers did. Which limitation is this?"
+  options={["Interpretability", "Bias and fairness", "Energy consumption", "Generalisation challenges"]}
+  answer="Bias and fairness"
+  explanation="The model learned the bias in its training data and now applies it at scale. It is working exactly as trained; the data was unfair."
+  feedback={{
+    "Interpretability": "Interpretability is about not knowing why the model decided. Here we know why: it copied past decisions.",
+    "Energy consumption": "Nothing here is about compute cost.",
+    "Generalisation challenges": "Generalisation failure means doing badly on data unlike the training set. This model does exactly what its training set taught it."
+  }}
+/>
+
+<QuickCheck
+  id="limit-interp"
+  question="A hospital's deep-learning model flags a scan as high-risk, but nobody can say which features of the scan led to that decision. Which limitation is this?"
+  options={["Data dependency", "Interpretability", "Security risks", "Lack of common sense"]}
+  answer="Interpretability"
+  explanation="Deep networks are 'black boxes': millions of weights, no human-readable reason. In medicine and finance that alone can block deployment."
+  feedback={{
+    "Data dependency": "Data dependency is needing large amounts of good data. The problem here is explaining the output, not getting the input.",
+    "Security risks": "Security would be someone attacking or manipulating the model. Nobody is attacking here.",
+    "Lack of common sense": "The model may lack common sense, but the stated problem is that its reasoning cannot be inspected."
+  }}
+/>
+
+<Callout type="key-idea" title="Where this course goes next">
+The slides ask "Can AI replace human intelligence?" and leave it as a debate. For the rest of the course the working answer is narrower: build **agents** that act rationally in a defined environment. Deep Blue did that for chess. Lecture 2 makes "agent" and "rational" precise.
+</Callout>
+
+<Deeper kind="exam" title="Model answer: define AI and describe the Turing test (5 marks)">
+
+**Definition (1 mark).** AI is the simulation of human intelligence in machines so they can perform tasks that normally need human intelligence, such as learning, reasoning, problem-solving and perception. For a stronger answer, add: definitions differ on two axes, thinking versus acting and human versus rational, and the textbook adopts "acting rationally", the study of rational agents.
+
+**Turing test (3 marks).** Proposed by Alan Turing in "Computing Machinery and Intelligence" (1950). A human judge holds text-only conversations with two hidden respondents, one human and one machine. The machine tries to make its answers indistinguishable from the human's. If the judge cannot reliably tell which is the machine, the machine is said to pass.
+
+**Significance (1 mark).** It gave a concrete benchmark for machine intelligence, drove work on natural language processing, and started the lasting debate about what counts as real intelligence. The criticism worth one line: it tests imitation of behaviour, not understanding (Searle's Chinese room).
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: compare human intelligence and AI (5 marks)">
+
+Give a two-column table with at least four rows. Humans: adaptability, creativity, emotional intelligence, common sense and context, social interaction, moral judgement. AI: speed and accuracy, tirelessness on repetitive tasks, scale on large datasets, consistency. Then one line each on limits. Humans are subject to cognitive bias, errors and slow processing. AI lacks common sense and consciousness, depends on data and inherits its bias, is hard to interpret, and generalises poorly outside its training. Finish with the lecture's framing: AI augments human intelligence rather than replacing it (Fei-Fei Li).
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=a0_lo_GDcFw",
+    "title": "Crash Course AI #1: What is artificial intelligence?",
+    "kind": "video",
+    "why": "Animated tour of the same ground as lecture 1, with more on how data and compute ended the winters."
+  },
+  {
+    "href": "https://courses.cs.umbc.edu/471/papers/turing.pdf",
+    "title": "Turing (1950), Computing Machinery and Intelligence",
+    "kind": "book",
+    "why": "Read section 1 (two pages) for the game in Turing's own words, then section 6 for his answers to objections that people still raise."
+  },
+  {
+    "href": "http://jmc.stanford.edu/articles/dartmouth/dartmouth.pdf",
+    "title": "The 1955 Dartmouth proposal",
+    "kind": "docs",
+    "why": "The document that named the field. The first paragraph shows how optimistic 1955 was: they expected real progress in one summer."
+  },
+  {
+    "href": "https://arxiv.org/abs/2503.23674",
+    "title": "Jones & Bergen (2025), Large Language Models Pass the Turing Test",
+    "kind": "blog",
+    "why": "The first controlled three-party Turing test that a machine passed. The abstract alone is enough."
+  }
+]} />

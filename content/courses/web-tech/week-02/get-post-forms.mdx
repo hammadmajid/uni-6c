@@ -1,0 +1,129 @@
+Slides 44 to 59 build a form, submit it, and hit a wall: "Server shows nothing?" The wall is one HTTP status code, and once you can predict it you will never lose an afternoon to it.
+
+<Predict
+  id="post-to-doget"
+  prompt="index.html has a form with method=&quot;post&quot; and action=&quot;hello-servlet&quot;. HelloServlet overrides only doGet, which prints the name parameter. You fill in the form and press Submit. What comes back, and does any of your doGet code run?"
+  answer="An HTTP 405 Method Not Allowed page (&quot;HTTP method POST is not supported by this URL&quot;). None of your code runs: service() sees POST, calls doPost, and the doPost inherited from HttpServlet sends 405."
+>
+
+**405 Method Not Allowed**, with Tomcat's page saying *HTTP method POST is not supported by this URL*. Your `doGet` never runs. The browser sent POST, `HttpServlet.service()` dispatched to `doPost()`, and since you did not override it, the inherited one answered 405. The slides call this "the server shows nothing". Open DevTools, Network tab, and the 405 is there in red. Load the first preset below and watch it happen.
+
+</Predict>
+
+<FormToServletLab />
+
+Work through the presets in order. Each one isolates a single variable: the method the form sends, the method the servlet handles, and the parameter name.
+
+## Sending parameters with GET: the query string
+
+Slide 45: parameters ride in the URL after a `?`, as `name=value` pairs separated by `&`:
+
+```
+http://localhost:8080/demo/hello-servlet?name=ali&password=123&age=23
+```
+
+Values are percent-encoded: a space becomes `+` or `%20`, and `&` inside a value becomes `%26`, so it cannot be mistaken for a separator. The browser encodes a form for you. If you build a query string by hand, you must encode it yourself.
+
+## Receiving them: getParameter
+
+```java
+String name = request.getParameter("name");         // "ali"
+String password = request.getParameter("password"); // "123"
+String missing = request.getParameter("email");     // null: absent
+```
+
+Three rules cover every surprise on slides 47 to 58:
+
+1. **The same call reads GET and POST.** For GET the container parses the query string; for a form POST it parses the request body (`application/x-www-form-urlencoded`). Your code does not change.
+2. **Names are case-sensitive and must match the form's `name` attribute exactly.** `name` is not `Name`.
+3. **A missing parameter is `null`, not an empty string.** An empty text box that was submitted gives `""`.
+
+<QuickCheck
+  id="null-concat"
+  question="The URL is ...hello-servlet?Name=ali (capital N). The servlet does String name = request.getParameter(&quot;name&quot;); then out.println(&quot;&lt;h1&gt;&quot; + name + &quot;&lt;/h1&gt;&quot;). What happens?"
+  options={["The page shows the word null", "NullPointerException, error 500", "The page shows ali", "The page shows an empty heading"]}
+  answer="The page shows the word null"
+  explanation="getParameter is case-sensitive, so it returns null. Java string concatenation converts null to the four characters n-u-l-l. A NullPointerException needs a method call or field access on the null, for example name.length() or name.equals(...)."
+  feedback={{
+    "NullPointerException, error 500": "Slide 48 says NullPointerException, but concatenation never throws on null. It only throws if you call a method on it, such as name.trim().",
+    "The page shows ali": "Parameter names are case-sensitive. The URL sent Name; the code asked for name.",
+    "The page shows an empty heading": "An empty string would come from a submitted but empty field. A missing parameter is null, and concatenation prints it as 'null'."
+  }}
+/>
+
+<Callout type="exam" title="Slides 48 and 55: what the slides say versus what happens">
+- Slide 48 writes **"NullPointerException, name != Name"** beside the code. The mismatch is real: `getParameter("name")` returns **null** when the URL has `Name`. But that code only concatenates, so the page prints **null** and nothing throws. You would get a NullPointerException, and a 500 page, only by calling a method on it, such as `name.equals(...)`.
+- Slide 55 asks **"Server shows nothing?"** after posting to a doGet-only servlet. The server does respond: **405 Method Not Allowed**. Slide 58's diagnosis, "It's because of wrong http method", is right.
+
+If a quiz asks why the servlet "shows nothing", answer "the form uses POST but the servlet only overrides doGet; the inherited doPost returns HTTP 405. Fix: override doPost (slide 59)."
+</Callout>
+
+## GET or POST is HTTP's decision, not the servlet's
+
+`doGet` and `doPost` are just two methods the container picks between by reading the request line. Nothing stops you from deleting database rows in `doGet`. What stops you is HTTP's definition of the methods (RFC 9110):
+
+| | GET | POST |
+|---|---|---|
+| Meaning | retrieve a representation; **safe** (no side effects the user asked for) and **idempotent** | process the enclosed data; may change server state; not idempotent |
+| Parameters | in the URL, so in history, bookmarks, server access logs, Referer headers | in the body, not in the URL |
+| Caching and prefetch | browsers and proxies may cache, prefetch, and retry it | never cached by default; the browser warns before resending |
+| Size | limited by URL length (about 8 KB in practice) | effectively unlimited |
+| Use for | search, filters, pagination, viewing a record | login, registration, placing an order, uploads |
+
+<QuickCheck
+  id="login-method"
+  question="The login form in the assignment sends a user id and a password. Which method, and why?"
+  options={["POST, so the password does not end up in the URL, history and access logs, and because logging in changes server state", "GET, because it is faster", "POST, because POST encrypts the body", "Either; the servlet can read both with getParameter"]}
+  answer="POST, so the password does not end up in the URL, history and access logs, and because logging in changes server state"
+  explanation="Slide 51's URL ends in password=123: that string now sits in the browser history and in Tomcat's localhost_access_log. POST keeps it out of the URL. Logging in also creates a session, a state change, which is POST's job by HTTP's definition."
+  feedback={{
+    "GET, because it is faster": "There is no meaningful speed difference. The difference is where the data goes and what the method promises.",
+    "POST, because POST encrypts the body": "POST encrypts nothing. Over http:// the body is as readable on the wire as the URL. Only HTTPS encrypts, and it encrypts both.",
+    "Either; the servlet can read both with getParameter": "The servlet can, which is exactly why the servlet cannot be the one to decide. HTTP semantics decide."
+  }}
+/>
+
+<QuickCheck
+  id="post-encrypts"
+  type="true-false"
+  question="Switching a login form from GET to POST protects the password from someone sniffing the Wi-Fi when the site uses http://."
+  answer="False"
+  explanation="On plain HTTP, every byte of the request is readable on the wire, request line and body alike. POST only keeps the password out of URLs, history and logs. Only HTTPS (TLS) stops a sniffer. You saw this in CNDC Lab 1: Wireshark shows HTTP bodies in clear text."
+/>
+
+<Deeper kind="edge" title="Things that bite later">
+
+- **Checkboxes and multi-selects** send the same name several times (`course=CS&course=AI`). `getParameter` returns only the first; use `getParameterValues("course")`.
+- **Non-English input.** Call `request.setCharacterEncoding("UTF-8")` before the first `getParameter` if a POST body may carry Urdu or accented names, or set `request-character-encoding` in web.xml once for the whole app.
+- **Handling both methods.** A common idiom is a doPost that just calls `doGet(request, response)`. Convenient, but it tells the world the two are interchangeable, which HTTP says they are not.
+- **Refresh after POST** makes the browser offer to resend the form. The standard fix is Post/Redirect/Get: doPost does the work, then `response.sendRedirect(...)` to a GET page.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: differentiate GET and POST (4 to 5 marks)">
+
+Reproduce the table above with at least four rows: where the data goes, visibility (URL, history, logs), caching and bookmarking, size limit, and when to use each. Then add: "In a servlet, a GET request is handled by doGet() and a POST request by doPost(). Both read parameters with request.getParameter(name). If the servlet does not override the method that matches the request, HttpServlet responds with HTTP 405 Method Not Allowed." Close with one example of each: a search form uses GET, a login form uses POST.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Sending_and_retrieving_form_data",
+    "title": "MDN: Sending form data",
+    "kind": "docs",
+    "time": "15 min",
+    "why": "Shows the exact request each form method produces, the same view as the lab above, with the security notes."
+  },
+  {
+    "href": "https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1",
+    "title": "RFC 9110 §9.2: safe and idempotent methods",
+    "kind": "rfc",
+    "why": "Two short sections that are the actual source of every GET versus POST rule. Cite them over any slide."
+  },
+  {
+    "href": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods",
+    "title": "MDN: HTTP request methods",
+    "kind": "docs",
+    "why": "One table of every method with safe, idempotent and cacheable columns. You will need PUT and DELETE later."
+  }
+]} />

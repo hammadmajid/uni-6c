@@ -1,0 +1,124 @@
+The reflex agent in the previous lesson cleans the world by tick 3 and then wastes every tick after that, because nothing it sees tells it the job is done. This lesson adds the two things the lecture's later agent types have: a **model** of the parts of the world it cannot currently see, and a **goal** it can test against that model.
+
+<Predict
+  id="goal-clean-world"
+  prompt="The agent now remembers what it has seen of each square, starting from Unknown, and stops once it believes both are clean. Both squares are already clean and it starts in B. How many moves does it make before it stops, and why not zero?"
+  answer="Exactly one move (Left). It has never seen A, so its model says A is Unknown, not Clean, and it has to go and look."
+>
+
+**One move.** At tick 1 it sees B is clean, but its model still says A is Unknown, so the goal "everything clean" is not yet believed. It moves Left, sees A is clean, and from tick 2 onward it returns NoOp every tick.
+
+Zero moves would need the agent to know something it never perceived. A goal-based agent acts on what it believes, and belief comes only from percepts plus the model.
+
+</Predict>
+
+## The agent now has state, so it is a class
+
+A function forgets everything between calls. An agent with memory needs somewhere to keep it, so it becomes a class. Defining `__call__` makes an instance callable like a function, so the same `run(world, agent)` loop from the last lesson works unchanged.
+
+```python
+class GoalBasedVacuumAgent:
+    def __init__(self):
+        self.model = {"A": "Unknown", "B": "Unknown"}   # what it believes
+
+    def goal_reached(self):
+        return all(s == "Clean" for s in self.model.values())
+
+    def __call__(self, percept):
+        location, status = percept
+        self.model[location] = status        # update the model
+        if status == "Dirty":
+            self.model[location] = "Clean"   # predict what Suck will do
+            return "Suck"
+        if self.goal_reached():
+            return "NoOp"
+        if location == "A":
+            return "Right"
+        return "Left"
+
+run(VacuumWorld({"A": "Dirty", "B": "Dirty"}), GoalBasedVacuumAgent())
+```
+
+```text
+1 ('A', 'Dirty') Suck 1
+2 ('A', 'Clean') Right 2
+3 ('B', 'Dirty') Suck 4
+4 ('B', 'Clean') NoOp 6
+5 ('B', 'Clean') NoOp 8
+6 ('B', 'Clean') NoOp 10
+```
+
+Three lines map onto the lecture's vocabulary. `self.model[location] = status` is **updating internal state from the percept**. `self.model[location] = "Clean"` before returning Suck is **knowing how its own actions affect the world**. `goal_reached()` is the **goal**: a description of a desirable situation, tested explicitly.
+
+<AgentTrace defaultAgent="goal" />
+
+<QuickCheck
+  id="goal-score"
+  type="numeric"
+  question="Both squares start dirty, the agent starts in A, six ticks, 1 point charged per move. What does run return for the goal-based agent? (Points.)"
+  answer={9}
+  tolerance={0}
+  explanation="It scores the same 10 clean-square points as the reflex agent but moves only once, at tick 2. 10 − 1 = 9, against the reflex agent's 6."
+/>
+
+<QuickCheck
+  id="which-line"
+  question="Delete one line and, in a world where both squares start clean, the goal-based agent shuttles forever like the reflex agent. Which line?"
+  options={["self.model[location] = status", "location, status = percept", "return \"Suck\"", "def goal_reached(self):"]}
+  answer="self.model[location] = status"
+  explanation="Without it the model only learns about squares it sucked, never about squares it found already clean. With both squares starting dirty it still works, because it sucks both. With both clean it never marks anything, the goal is never believed, and it shuttles: Left, Right, Left, forever."
+  feedback={{
+    "location, status = percept": "Removing it is a NameError, not a behaviour change.",
+    "return \"Suck\"": "Then a dirty square would fall through to the goal test and moving. The agent would stop cleaning, not start shuttling.",
+    "def goal_reached(self):": "Removing the method definition crashes the agent when __call__ calls it."
+  }}
+/>
+
+## Three agent types, as code
+
+| | Simple reflex | Model-based reflex | Goal-based |
+|---|---|---|---|
+| Looks at | current percept only | current percept and internal state | internal state and a goal |
+| Python shape | a function | a class with `self.model` | a class with `self.model` and a goal test |
+| Knows the job is done | never | only if a rule says so | yes, by testing the goal |
+| In the vacuum world | shuttles forever | can stop, with a hand-written rule | stops when both squares are believed clean |
+
+Strictly, the class above is a model-based agent with an explicit goal test. Russell and Norvig's full goal-based agent also **looks ahead**: it considers sequences of actions and picks one that reaches the goal. In a two-square world there is nothing to look ahead over. In a maze or a map there is, and finding that sequence is exactly what BFS and DFS do in lab 04.
+
+<Callout type="exam" title="Lecture phrasing to reproduce">
+The slides: "Reflex agent breaks when it sees brake lights. Goal based agent reasons: brake light → car in front is stopping → I should stop → I should use brake." In a lab viva, point at `goal_reached()` and say the goal is explicit, so it can be changed without rewriting the rules. That flexibility is the slide's main claim for goal-based agents.
+</Callout>
+
+<QuickCheck
+  id="dirt-returns"
+  question="Now dirt can reappear in a square after it has been cleaned. What goes wrong with this goal-based agent?"
+  options={["It sits on NoOp forever while the other square gets dirty again, because its model still says Clean", "It crashes with a KeyError", "It starts shuttling like the reflex agent", "Nothing: the model updates itself"]}
+  answer="It sits on NoOp forever while the other square gets dirty again, because its model still says Clean"
+  explanation="The model is only updated for the square it stands in. Once it believes the goal is reached it never moves again, so it never perceives the other square getting dirty. A model is only as good as its assumption about how the world evolves, and this one assumes dirt never comes back."
+  feedback={{
+    "It crashes with a KeyError": "The keys are still A and B. Nothing new is looked up.",
+    "It starts shuttling like the reflex agent": "It would have to believe something is dirty or unknown to move, and nothing it perceives tells it that.",
+    "Nothing: the model updates itself": "The model only changes when the agent perceives something. Standing still in B, it never perceives A."
+  }}
+/>
+
+<Deeper kind="edge" title="Fixing the stale model">
+
+Two standard fixes. **Forget over time:** after k ticks without seeing a square, reset its belief to Unknown, which sends the agent back to look. **Model the dynamics:** if dirt appears with probability p per tick, the agent should expect a square to be dirty after roughly 1/p ticks and revisit on that schedule. The second is a utility-based agent: it trades the cost of a move against the expected dirt it removes. That is the fourth agent type in lecture 2.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://github.com/aimacode/aima-python/blob/master/notebooks/agents.ipynb",
+    "title": "aima-python: agents notebook",
+    "kind": "docs",
+    "why": "The textbook's notebook builds an environment class and an agent program step by step (a blind dog in a park instead of a vacuum), then moves it into a rendered 2D world. The same percept-act loop as this lab, in a different costume."
+  },
+  {
+    "href": "https://docs.python.org/3/reference/datamodel.html#object.__call__",
+    "title": "Python data model: __call__",
+    "kind": "docs",
+    "why": "One paragraph on what makes an instance callable. It is the trick that lets a stateful agent plug into the same loop as a plain function."
+  }
+]} />

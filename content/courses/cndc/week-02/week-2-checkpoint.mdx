@@ -177,6 +177,49 @@ Closing sentence: OSI is the conceptual reference; TCP/IP is the working archite
 
 </Predict>
 
+## Assignment 1
+
+Brief: `courses/cndc/assignments/assignment-1-layers-switching-performance.pdf`. It is worth 3 marks and due **Monday 28 September 2026**, with no late submissions. The instructor zeroes copied or shared work, so below is what a full-marks answer has to *hit* for each question, not text to copy. Write it in your own words, and use the scenario's names (Islamabad, New York, Tokyo; Mars and Earth) in your answers: markers look for application, not definitions.
+
+**Q1. The Islamabad, New York and Tokyo offices.** Reread [What the Internet actually is](/learn/cndc/week-01/what-the-internet-is) and [Why layers](/learn/cndc/week-01/why-layers).
+
+- Part 1: define a protocol (format, order of messages, actions taken). Show why three offices on different networks, vendors and operating systems can only talk because both ends follow the same protocols. Name at least two by layer (HTTP or SMTP, TCP, IP).
+- Part 1: "algorithms" means the procedures running inside the network: routing (choosing a path across continents), congestion control (TCP backing off on a busy transoceanic link), error detection and retransmission. Give one concrete example for this company.
+- Part 2: two issues without layering. The strongest pair is **no modularity** (changing one technology, say moving from DSL to fibre in Tokyo, would force changes to every application) and **no interoperability or common vocabulary** (every pair of vendors needs custom glue, and N sites need on the order of N² agreements). Duplicated work and impossible troubleshooting are acceptable alternatives.
+
+**Q2. Buffering and skipped frames.** Reread [The four delays](/learn/cndc/week-02/four-delays) and [Throughput and loss](/learn/cndc/week-02/throughput-and-loss).
+
+- Pick **throughput** (buffering: the bottleneck link's rate falls below the video's bit rate, so the playout buffer drains) and **delay** (queueing delay that varies, called jitter, makes frames arrive after their playout time). Explain loss as the mechanism linking them: full router buffers drop packets, and dropped or late packets become skipped frames.
+- Show the interconnection explicitly: as traffic intensity La/R approaches 1, queueing delay grows, then buffers overflow into loss, and retransmissions cut effective throughput. One causal chain written as arrows earns the marks.
+- The brief says "path loss". In the course that means packet loss along the path, which is Kurose's "loss". Say which you mean in one phrase. Radio path loss is attenuation, a different thing.
+
+**Q3. Matching networks A, B and C.** Reread [Circuit vs packet switching](/learn/cndc/week-02/circuit-vs-packet), plus the LPWAN section of week 3's [media lesson](/learn/cndc/week-03/media-and-lpwan).
+
+- A (3 users, constant connection) matches **circuit switching**: reserved resources and a guaranteed constant rate, and with only 3 users nothing idle is wasted on bursty traffic.
+- B (100 users, small random bursts) matches **packet switching**: statistical multiplexing. Quote the 10-versus-35 example to show you understand why it wins.
+- C (long distance, variable signal strength) matches **Low-Power WAN** by elimination. Justify it with long range and a low data rate, and note that LPWAN modulation (LoRa's spread spectrum) tolerates very weak signals.
+
+<Deeper kind="beyond" title="Low-Power WAN in one paragraph (for Q3)">
+
+LPWAN (low-power wide-area network) is a family of wireless technologies for IoT devices that send a few bytes occasionally, over kilometres, on a battery that lasts years. **LoRaWAN** runs in unlicensed sub-GHz spectrum and reaches roughly 2 to 5 km in a city and 15 km in open country, at 0.3 to 50 kbps. **NB-IoT** does the same inside mobile operators' licensed LTE bands. Both trade data rate for range and power, and both decode signals far below what Wi-Fi could use. Week 3 covers it properly.
+
+</Deeper>
+
+<Callout type="exam" title="Q3's wording fits LPWAN only loosely">
+"Long-distance link with variable signal strength" describes a link, not an application, and LPWAN is not designed around *variable* signal strength. What defines it is long range, low data rate and low power. It is the intended answer because it is the only long-range option on the list. Say so in one sentence ("chosen for range and robustness to weak signals; it assumes the traffic is low-rate"). That shows the marker you know what LPWAN is for, rather than matching keywords.
+</Callout>
+
+**Q4. The Mars and Earth link.** Reread [Why layers](/learn/cndc/week-01/why-layers).
+
+- Part 1: either model can earn the marks, but only with a justification. **TCP/IP** is the stronger choice: it is what is deployed, simpler, and proven at scale. But be honest that its assumptions break at Mars distance: one-way propagation is 3 to 22 minutes, so TCP's handshake and acknowledgements would time out. **OSI** can be argued as protocol independent, a clean reference to design new protocols against. Using the four-delay model, propagation delay dominates everything else here.
+- Part 2: no single right answer. Graders look for **(a)** a named layer, **(b)** which of its functions disappear or must move elsewhere, and **(c)** the concrete effect on this link. Safe choices: OSI's **session** or **presentation** layer (TCP/IP already folds them into the application, so the cost is small, which shows you understand the models). A bold choice is the transport layer with end-to-end reliability, since you cannot wait for acknowledgements across 40 minutes, but then say what replaces it.
+
+<Deeper kind="beyond" title="What NASA actually uses: delay-tolerant networking">
+
+Real interplanetary links use **DTN** and its **Bundle Protocol** (RFC 9171). It adds a *bundle layer* above transport that works store-and-forward over hours: each node holds data in persistent storage until the next contact window, much as a packet switch stores and forwards packets, but on a timescale of minutes to days. The Licklider Transmission Protocol (LTP) replaces TCP on the long hops. Mentioning DTN in one sentence in Q4 part 1 shows reading beyond the slides; it is not required.
+
+</Deeper>
+
 <Callout type="done" title="Two weeks in">
-Everything from here to the midterm builds on these two weeks: the layers give the map, the delay and throughput formulas give the arithmetic. Week 3 moves to network types (LAN, MAN, WAN, low-power WAN) and transmission media. It will be built once your slides for it arrive, or from the outline if they do not.
+Everything from here to the midterm builds on these two weeks: the layers give the map, and the delay and throughput formulas give the arithmetic. [Week 3](/learn/cndc/week-03/network-types) moves to network types (LAN, MAN, WAN, low-power WAN), topologies and transmission media.
 </Callout>

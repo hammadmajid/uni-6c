@@ -1,0 +1,196 @@
+Two of the oldest application protocols still examined everywhere. FTP is interesting for how it uses connections; email for how three protocols divide one job.
+
+<Predict
+  id="gmail-to-outlook"
+  prompt="You write an email in Gmail in your browser and send it to a friend who reads mail in the Outlook app on a phone, with an outlook.com address. Name the protocol on each hop, from your browser to your friend's screen."
+  answer="Browser to Gmail's servers: HTTPS (webmail). Gmail's mail server to Microsoft's mail server: SMTP. Microsoft's server to the Outlook app: a mail access protocol, IMAP or Microsoft's own over HTTPS. SMTP only carries the middle hop, from server to server."
+>
+
+**Three hops, and SMTP carries only the middle one.** Your browser hands the message to Gmail over **HTTPS**. Gmail's mail server pushes it to Microsoft's mail server with **SMTP**. Your friend's app pulls it down with a **mail access protocol**: IMAP, or Microsoft's own protocol over HTTPS. The figure below is the same picture with the slides' names.
+
+</Predict>
+
+## FTP: the file transfer protocol
+
+FTP (RFC 959) moves files between a local host and a remote one. The client is the side that initiates, whichever direction the file goes. The user logs in with a user name and password, browses the remote directory tree, and gets or puts files.
+
+<FtpConnections />
+
+- The client contacts the server on **TCP port 21** and opens the **control connection**. User name, password, directory changes and transfer commands all go over it, as ASCII text.
+- When the server receives a transfer command, it opens a **second TCP connection**, the **data connection**, to the client (from port 20), sends exactly one file, and closes it. The next file gets a new data connection.
+- The control connection stays open for the whole session. Because control travels on a different connection from the data, FTP sends its control information **out-of-band**. HTTP sends headers and body on the same connection: **in-band**.
+- The server keeps **state** for the session: the logged-in user and the current directory. HTTP keeps none.
+
+| Command | Does |
+|---|---|
+| `USER username` | Send user name |
+| `PASS password` | Send password (in cleartext) |
+| `LIST` | List files in the current remote directory, over a data connection |
+| `RETR filename` | Retrieve (get) a file |
+| `STOR filename` | Store (put) a file on the remote host |
+
+Replies are a status code and a phrase, like HTTP: `331 Username OK, password required`, `125 Data connection already open; transfer starting`, `425 Can't open data connection`, `452 Error writing file`.
+
+<QuickCheck
+  id="ftp-oob"
+  question="FTP is said to send its control information 'out-of-band'. What does that mean?"
+  options={[
+    "Commands are encrypted separately from the data",
+    "Commands travel on a separate TCP connection from the file data",
+    "Commands are sent over UDP while files use TCP",
+    "Commands are sent only after the file transfer finishes"
+  ]}
+  answer="Commands travel on a separate TCP connection from the file data"
+  explanation="The control connection (port 21) carries commands and replies for the whole session; each file travels on its own data connection. HTTP, by contrast, carries its headers in-band on the same connection as the object."
+  feedback={{
+    "Commands are encrypted separately from the data": "Classic FTP encrypts nothing. Passwords cross the network in cleartext.",
+    "Commands are sent over UDP while files use TCP": "Both connections are TCP. Out-of-band is about separate connections, not separate transport protocols.",
+    "Commands are sent only after the file transfer finishes": "The control connection is open before, during and after every transfer."
+  }}
+/>
+
+<QuickCheck
+  id="ftp-state"
+  type="true-false"
+  question="Like HTTP, an FTP server keeps no state about the client between commands."
+  answer="False"
+  explanation="The FTP server tracks the user's login and current directory for the whole control connection, and must match each data connection to it. That limits how many sessions a server can hold at once. HTTP servers keep none of this."
+/>
+
+<Callout type="exam" title="Port 20 is only half the story">
+The slide says the data connection is 'server port 20'. That is **active mode**: the server connects out to the client. Behind NAT or a firewall that connection is usually blocked, so almost every client today uses **passive mode**: the client opens the data connection to a port the server picks, not port 20. For the exam, write port 21 for control and port 20 for data, as the slides do. In practice you move files to your VPS with `scp`, `rsync` or `sftp`, all over SSH, because FTP sends your password in cleartext.
+</Callout>
+
+## Electronic mail
+
+Three major components: **user agents** (Outlook, Thunderbird, the iPhone Mail app: compose, read, reply), **mail servers** (each user has a **mailbox** there; each server also keeps an outgoing **message queue**), and **SMTP**, the protocol mail servers use to send mail to each other.
+
+<MailPath />
+
+The slides' scenario, one step at a time:
+
+1. Alice uses her user agent to compose a message to `bob@someschool.edu`.
+2. Her user agent sends the message to her mail server, where it is placed in the message queue.
+3. The client side of SMTP on Alice's server opens a TCP connection to Bob's mail server.
+4. The SMTP client sends Alice's message over that connection.
+5. Bob's mail server places the message in Bob's mailbox.
+6. Bob invokes his user agent to read it.
+
+On step 3, Alice's server is the SMTP **client** and Bob's server is the SMTP **server**. The same machine plays the server role when receiving mail for Alice. SMTP transfers **directly** from the sending server to the receiving server, never via an intermediate mail server, and if Bob's server is down, the message waits in the queue and is retried, typically every 30 minutes.
+
+## SMTP up close
+
+SMTP (RFC 5321) uses **TCP port 25** and has three phases: **handshaking** (greeting), **transfer of messages**, and **closure**. Like HTTP and FTP it is a command/response protocol: commands in ASCII text, responses as a status code and phrase. Here is Kurose's transcript, `C:` for the client (the sending server) and `S:` for the server:
+
+```
+S: 220 hamburger.edu
+C: HELO crepes.fr
+S: 250 Hello crepes.fr, pleased to meet you
+C: MAIL FROM: <alice@crepes.fr>
+S: 250 alice@crepes.fr ... Sender ok
+C: RCPT TO: <bob@hamburger.edu>
+S: 250 bob@hamburger.edu ... Recipient ok
+C: DATA
+S: 354 Enter mail, end with "." on a line by itself
+C: Do you like ketchup?
+C: How about pickles?
+C: .
+S: 250 Message accepted for delivery
+C: QUIT
+S: 221 hamburger.edu closing connection
+```
+
+<OrderCheck
+  id="smtp-order"
+  prompt="Put the SMTP client's commands in the order it sends them to deliver one message."
+  items={["HELO", "MAIL FROM", "RCPT TO", "DATA", "The message, ending with a line containing only a period", "QUIT"]}
+  explanation="Greet (HELO), say who it is from (MAIL FROM), say who it is to (RCPT TO, repeated per recipient), start the body (DATA), send it ending with a lone period, and close (QUIT). SMTP uses persistent connections: several messages can go between MAIL FROM and QUIT."
+  topLabel="First"
+  bottomLabel="Last"
+/>
+
+| | HTTP | SMTP |
+|---|---|---|
+| Direction | **Pull**: the client asks for what it wants | **Push**: the sending server pushes to the receiving server |
+| Encoding | Any bytes in the body | Whole message, body included, in **7-bit ASCII** |
+| Objects | One object per response | All objects (text, images) in one multipart message |
+| Connection | Persistent (1.1 onward) | Persistent |
+| Style | ASCII commands, status codes | ASCII commands, status codes |
+
+A **mail message** (RFC 822, today RFC 5322) is a **header** (lines such as `To:`, `From:`, `Subject:`), a **blank line**, then the **body**. These header lines are part of the message itself. They are not the SMTP commands `MAIL FROM` and `RCPT TO`, which address the envelope.
+
+<QuickCheck
+  id="smtp-push"
+  question="Why can't Bob's user agent use SMTP to fetch mail from his mail server?"
+  options={[
+    "SMTP only works between servers in the same domain",
+    "SMTP is a push protocol: it can deliver a message to a server but has no way to request one",
+    "SMTP runs over UDP, which is unreliable for downloads",
+    "SMTP cannot carry messages larger than one packet"
+  ]}
+  answer="SMTP is a push protocol: it can deliver a message to a server but has no way to request one"
+  explanation="Every SMTP command sends mail toward the server. Retrieving mail is a pull operation, so it needs a different protocol: POP3, IMAP, or HTTP for webmail."
+  feedback={{
+    "SMTP only works between servers in the same domain": "The opposite: SMTP's main job is between servers in different domains (crepes.fr to hamburger.edu).",
+    "SMTP runs over UDP, which is unreliable for downloads": "SMTP runs over TCP port 25.",
+    "SMTP cannot carry messages larger than one packet": "TCP carries a byte stream of any length. Size is not the issue; direction is."
+  }}
+/>
+
+<Callout type="exam" title="The 7-bit ASCII rule">
+The slide says SMTP messages 'must be in 7-bit ASCII'. That is the rule of the original protocol, and the right exam answer. It is why attachments are **encoded** (MIME, usually base64) into ASCII before sending, and base64 makes a file about 33% bigger. Modern servers negotiate an 8BITMIME extension, but the encoding convention stuck. Also, the slides cite obsolete RFCs: SMTP is RFC 5321 (not 2821), IMAP is RFC 9051 (not 1730), and the message format is RFC 5322 (not 822).
+</Callout>
+
+## Mail access protocols
+
+SMTP delivers to and stores in the receiver's server. A **mail access protocol** retrieves from it.
+
+| | POP3 (RFC 1939) | IMAP (RFC 9051) | HTTP |
+|---|---|---|---|
+| Model | Authorize, download, usually delete from server | Messages stay on the server; client manipulates them there | Webmail in the browser |
+| Folders | Local only | Kept on the server | On the server |
+| Several devices | Poor: the phone downloads and deletes, the laptop never sees it | Good: every device sees the same folders and read state | Good |
+| Server state across sessions | None | Folder structure, flags | Everything |
+| Examples | Old desktop clients | Thunderbird, the iPhone Mail app | Gmail, Outlook.com |
+
+<QuickCheck
+  id="imap-multi"
+  question="A student reads mail on a phone and a laptop and wants read or unread status and folders to match on both. Which access protocol fits?"
+  options={["POP3 in download-and-delete mode", "IMAP", "SMTP", "FTP"]}
+  answer="IMAP"
+  explanation="IMAP keeps messages and folders on the server, so every client sees the same state. POP3's download-and-delete model is exactly the one that breaks with two devices."
+  feedback={{
+    "POP3 in download-and-delete mode": "The first device to connect downloads and deletes the mail, and the second never sees it.",
+    "SMTP": "SMTP pushes mail to servers. It cannot read a mailbox.",
+    "FTP": "FTP transfers files, not mailbox contents, and knows nothing about read flags."
+  }}
+/>
+
+<Deeper kind="beyond" title="Sending mail from your own VPS">
+
+Most VPS providers block outbound port 25, because spam. User agents submit mail on **port 587** with authentication; port 25 is for server-to-server relay. Even with 25 open, receiving servers check three DNS records before trusting you: **SPF** (which IPs may send for your domain), **DKIM** (a signature on each message, public key in DNS), and **DMARC** (what to do when those fail). That is why most people send application mail through a relay service. All three are DNS TXT records, which the DNS lesson explains.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: components of Internet email, with a diagram (5 marks)">
+
+Draw the figure above: two user agents, two mail servers, SMTP arrows between the UA and the sender's server and between the two servers, and an access-protocol arrow from the receiver's server to the receiver's UA.
+
+Name the three components: **user agents** compose and read mail; **mail servers** hold each user's mailbox and a queue of outgoing messages; **SMTP** (TCP port 25) transfers mail from the sender's server directly to the receiver's server in three phases (handshaking, transfer, closure), using ASCII commands and status-code replies, with messages in 7-bit ASCII. Finish with retrieval: SMTP is push-only, so the receiver uses POP3, IMAP or HTTP to pull mail from their server.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.rfc-editor.org/rfc/rfc5321",
+    "title": "RFC 5321: Simple Mail Transfer Protocol",
+    "kind": "rfc",
+    "why": "Section 4.1 lists every command in the transcript above, and appendix D has complete example sessions. More readable than most RFCs."
+  },
+  {
+    "href": "https://www.rfc-editor.org/rfc/rfc959",
+    "title": "RFC 959: File Transfer Protocol",
+    "kind": "rfc",
+    "why": "The 1985 spec. Section 2.3's model diagram is the source of the control and data connection picture."
+  }
+]} />

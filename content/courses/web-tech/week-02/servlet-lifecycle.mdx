@@ -1,0 +1,183 @@
+A servlet looks like an ordinary Java class, and you will be tempted to treat it like one: fields for state, one object per user. The container does not work that way, and the bug it causes only shows up under load.
+
+<Predict
+  id="hit-counter"
+  prompt="A servlet has a field private int hits = 0; and its doGet does hits++ and prints hits. You refresh it 3 times in Chrome, then 2 times in Firefox. What number does Firefox show on its second refresh: 2 or 5? And is the counter guaranteed to be exact under heavy traffic?"
+  answer="5. There is one servlet object for the whole application, so every browser and every user shares the one field. And no: hits++ is a read, an add and a write, so two threads running it at once can both read the same value and lose an increment."
+>
+
+**5.** The container creates **one** instance of your servlet class for the whole app. Every request, from every browser and every user, runs `doGet` on that same object, so there is one `hits`.
+
+**Not exact under load.** Each request runs on its own thread, and `hits++` is three steps (read, add one, write back). Two threads can both read 41 and both write 42, and one hit is lost. This lesson is about that model: one object, many threads.
+
+</Predict>
+
+## A servlet is a class the container calls
+
+Slide 35 annotates the class IntelliJ generates. Here it is as it compiles against Tomcat 11:
+
+```java
+package com.example.demo;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet(name = "helloServlet", value = "/hello-servlet")   // "reach me at this URL"
+public class HelloServlet extends HttpServlet {                   // the parent class
+    private String message;                                        // set once, read-only after
+
+    @Override
+    public void init() {                                           // once, before any request
+        message = "Hello World!";
+    }
+
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();                    // bytes go back on the socket
+        out.println("<html><body>");
+        out.println("<h1>" + message + "</h1>");
+        out.println("</body></html>");
+    }
+
+    @Override
+    public void destroy() {                                        // once, at undeploy or shutdown
+    }
+}
+```
+
+You never write `new HelloServlet()` and never write a `main`. Tomcat finds the class, constructs it, and calls these methods. The `request` object is Tomcat's parse of the HTTP request (slide 42). The `response` object is where you write the reply (slide 43).
+
+<Callout type="careful" title="jakarta, not javax">
+Tomcat 10 and later implement Jakarta EE, where the package is `jakarta.servlet`. Most tutorials online, and the Servlet 4 era, use `javax.servlet`. A `javax` servlet will not compile against Tomcat 11's API, and if an old jar sneaks one in, Tomcat never sees its annotation, so the URL just returns 404. Tomcat 11 implements **Servlet 6.1** (Jakarta EE 11) and needs Java 17 or later; you have JDK 26.
+</Callout>
+
+## Mapping a URL to the class
+
+The class sits in `WEB-INF/classes`, the private area, so a URL can only reach it through a **mapping**. Slides 37 to 39 show the two ways:
+
+```xml
+<!-- WEB-INF/web.xml -->
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee" version="6.1">
+    <servlet>
+        <servlet-name>hello</servlet-name>
+        <servlet-class>com.example.demo.HelloWorld</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>hello</servlet-name>
+        <url-pattern>/hi</url-pattern>
+    </servlet-mapping>
+</web-app>
+```
+
+```java
+@WebServlet(name = "hello", value = "/hi")
+public class HelloWorld extends HttpServlet { }
+```
+
+Both say the same thing: requests whose path, after the context path, is `/hi` go to this class. The `servlet-name` only links the two XML blocks together and never appears in a URL. The annotation is scanned at deploy time. web.xml is the older way, keeps all mappings in one file, and wins if both define the same servlet.
+
+<QuickCheck
+  id="which-reaches-hi"
+  question="The app is deployed at context path /demo and a servlet is annotated @WebServlet(&quot;/hi&quot;). Which request reaches it?"
+  options={["http://localhost:8080/demo/hi", "http://localhost:8080/demo/x/hi", "http://localhost:8080/hi", "http://localhost:8080/demo/hi/"]}
+  answer="http://localhost:8080/demo/hi"
+  explanation="The pattern /hi is an exact match against the path after the context path. /demo is stripped, /hi remains, and it matches exactly."
+  feedback={{
+    "http://localhost:8080/demo/x/hi": "After /demo the path is /x/hi, which is not /hi. The slide's words 'url ending with /hi' suggest this would work; it does not.",
+    "http://localhost:8080/hi": "No /demo, so this request goes to the ROOT webapp, which has no such servlet.",
+    "http://localhost:8080/demo/hi/": "The trailing slash makes the path /hi/, which does not exactly match /hi. The default servlet gets it and answers 404."
+  }}
+/>
+
+<Callout type="exam" title="Slide 39: &quot;Mapped to url ending with /hi&quot;">
+The slide's annotation note says the servlet is mapped to a URL **ending with** /hi. The precise rule: the pattern is matched against the path **after the context path**, and `/hi` is an **exact** match. `/demo/x/hi` ends with /hi and does not reach it. Patterns come in four kinds, tried in this order: exact (`/hi`), longest path prefix (`/api/*`), extension (`*.jsp`), and the default servlet (`/`). The URL lab in "From URL to file" shows all four.
+</Callout>
+
+## The lifecycle
+
+<ServletLifecycle />
+
+1. **Load and construct**, once, when the first request arrives. Add `loadOnStartup = 1` to the annotation to do it at deploy time instead.
+2. **`init()`**, once. Put one-time setup here: read configuration, build a connection pool.
+3. **`service(req, res)`**, once per request, on whichever pool thread picked up the connection. `HttpServlet.service` reads the method and calls `doGet`, `doPost`, `doPut` or `doDelete`. The inherited versions of those send **405 Method Not Allowed**, which is why you override only the ones you support.
+4. **`destroy()`**, once, when the app is undeployed or Tomcat stops. Close what `init` opened.
+
+<QuickCheck
+  id="init-count"
+  type="numeric"
+  unit="calls"
+  question="A servlet with no loadOnStartup receives 1,000 requests from 50 users between one Tomcat start and the next shutdown. How many times is init() called?"
+  answer={1}
+  explanation="init runs once per servlet instance, and the container keeps one instance for the app's lifetime. 1,000 requests means 1,000 service calls, 50 users means nothing to the container. The trap is thinking in users or sessions: the servlet object knows neither."
+  tolerance={0}
+/>
+
+## One object, many threads
+
+Tomcat's connector has a pool of worker threads (200 by default). Every request gets one, and they all run inside the **same** servlet object. Anything in a field is shared by all of them at once. Step through what that does to a greeting servlet:
+
+<SharedFieldRace />
+
+<Callout type="pitfall" title="Request data never goes in a field">
+Parameters, the current user, a partial result: all local variables inside `doGet` or `doPost`. Each thread has its own stack, so locals cannot collide. Fields are safe only for things that do not change after `init` (like `message` above), or that are built to be shared across threads (a connection pool, a `ConcurrentHashMap`, an `AtomicInteger` for the hit counter).
+</Callout>
+
+<QuickCheck
+  id="field-safe"
+  question="Which of these is safe to keep in a servlet field?"
+  options={["A DataSource (connection pool) created in init()", "The logged-in user's id, set in doPost", "A StringBuilder that doGet appends the page to", "The last value of getParameter(\"q\")"]}
+  answer="A DataSource (connection pool) created in init()"
+  explanation="A pool is created once and is designed to be used from many threads at once; that is its whole job. The other three hold per-request data and will leak between users under concurrency."
+  feedback={{
+    "The logged-in user's id, set in doPost": "One field, every user. The next request overwrites it and users see each other's data. Per-user state belongs in the HttpSession.",
+    "A StringBuilder that doGet appends the page to": "StringBuilder is not thread-safe, and even if it were, two requests' pages would interleave into one.",
+    "The last value of getParameter(\"q\")": "This is exactly the greeting bug in the lab above."
+  }}
+/>
+
+<Deeper kind="why" title="Why one instance and not one per request">
+
+Constructing and initialising a servlet can be expensive: reading config, opening pools. Doing it per request would waste that work thousands of times a second. So the spec says a container "must use only one instance per servlet declaration" and calls it from as many threads as there are requests. Servlet 2.x had an escape hatch, `SingleThreadModel`, which made the container serialise access or pool instances. It never really fixed shared state, was deprecated in Servlet 2.4, and was **removed in Servlet 6.0**. It does not exist in Tomcat 11.
+
+</Deeper>
+
+<Deeper kind="beyond" title="Virtual threads in Tomcat 11">
+
+With 200 platform threads, request 201 waits while 200 threads sit blocked on slow database calls. Tomcat 11's HTTP connector takes `useVirtualThreads="true"` in conf/server.xml, which runs each request on a Java virtual thread instead: cheap enough to have thousands, parked while blocked on I/O. The servlet model is unchanged, so the shared-field rule is too. There are just more threads that can collide.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: explain the servlet lifecycle (5 marks)">
+
+"The servlet lifecycle is managed by the servlet container such as Tomcat. (1) Loading and instantiation: the container loads the servlet class and creates a single instance, either at startup (load-on-startup) or on the first request. (2) Initialisation: the container calls init() once, where one-time setup is done. (3) Request handling: for every client request the container calls service(request, response) on a separate thread; for HTTP servlets service() dispatches to doGet(), doPost() and so on according to the request method. (4) Destruction: when the application is stopped or undeployed the container calls destroy() once to release resources, and the instance is garbage-collected."
+
+Draw the ServletLifecycle figure in simplified form: init → service, service, service → destroy.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://jakarta.ee/specifications/servlet/6.1/jakarta-servlet-spec-6.1",
+    "title": "Jakarta Servlet 6.1 specification",
+    "kind": "docs",
+    "why": "Chapter 2 is the lifecycle and threading contract; chapter 12 is URL mapping. Short chapters, and they settle any argument with a slide."
+  },
+  {
+    "href": "https://tomcat.apache.org/tomcat-11.0-doc/config/http.html",
+    "title": "Tomcat 11: the HTTP connector",
+    "kind": "docs",
+    "why": "Where port, maxThreads and useVirtualThreads live. Skim the attribute table once so conf/server.xml stops being a black box."
+  },
+  {
+    "href": "https://tomcat.apache.org/migration-10.html",
+    "title": "Tomcat 10 migration guide: javax to jakarta",
+    "kind": "docs",
+    "why": "The one-page explanation of why every tutorial older than 2021 imports the wrong package."
+  }
+]} />

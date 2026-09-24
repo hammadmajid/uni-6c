@@ -1,0 +1,213 @@
+Lectures 6 and 7, without notes. Classification questions are easy marks if you have the lists cold; the mesh and decibel numericals are the ones people drop.
+
+## Numericals
+
+<QuickCheck
+  id="cp3-mesh-links"
+  type="numeric"
+  unit="links"
+  question="A full mesh of 6 devices uses duplex links. How many links?"
+  answer={15}
+  explanation="n(n − 1)/2 = 6 × 5 ÷ 2 = 15. Without the ÷ 2 you get 30, which counts each link from both ends."
+/>
+
+<QuickCheck
+  id="cp3-mesh-ports"
+  type="numeric"
+  unit="ports"
+  question="A full mesh has 12 devices. How many I/O ports does each device need?"
+  answer={11}
+  explanation="n − 1 = 11, one for every other device."
+/>
+
+<QuickCheck
+  id="cp3-db-half"
+  type="numeric"
+  unit="dB"
+  question="A signal's power drops from 20 mW to 10 mW along a cable. What is the loss in dB? (Positive number, nearest whole dB.)"
+  answer={3}
+  tolerance={0.1}
+  explanation="10 log₁₀(10 ÷ 20) = 10 log₁₀(0.5) ≈ −3.01 dB, a 3 dB loss. Halving is always 3 dB."
+/>
+
+<QuickCheck
+  id="cp3-db-chain"
+  type="numeric"
+  unit="dB"
+  question="A signal loses 4 dB on a first cable, is amplified by 10 dB, then loses 3 dB on a second cable. What is the overall gain in dB?"
+  answer={3}
+  explanation="Decibels add: −4 + 10 − 3 = +3 dB, so the output has about twice the input power. Do not multiply decibels. That is the trap."
+/>
+
+<QuickCheck
+  id="cp3-fibre-span"
+  type="numeric"
+  unit="km"
+  question="A fibre attenuates 0.2 dB/km. The receiver needs the signal no weaker than 30 dB below what was sent. What is the longest span without a repeater, in km?"
+  answer={150}
+  explanation="30 dB ÷ 0.2 dB/km = 150 km. Check the unit in the spec: if it were 0.2 dB per 100 m, the answer would be 15 km."
+/>
+
+## Concepts
+
+<QuickCheck
+  id="cp3-man-example"
+  question="Which is the lecture's example of a MAN?"
+  options={["A home Bluetooth network", "A university computer lab", "A city's cable TV network", "The Internet"]}
+  answer="A city's cable TV network"
+  explanation="A MAN covers a city and uses LAN-like technology. The slide's example is cable TV."
+  feedback={{
+    "A home Bluetooth network": "Devices around one person: a PAN.",
+    "A university computer lab": "One site, privately owned: a LAN.",
+    "The Internet": "The largest WAN, a network of networks spanning the planet."
+  }}
+/>
+
+<QuickCheck
+  id="cp3-ring-token"
+  question="In a ring topology, how is it decided which computer may transmit?"
+  options={["The hub schedules transmissions", "Token passing: only the computer holding the token sends", "Every computer listens and sends when the ring is quiet", "The computer with the lowest address always goes first"]}
+  answer="Token passing: only the computer holding the token sends"
+  explanation="A token circulates around the ring. Holding it grants the right to send, so there are no collisions."
+  feedback={{
+    "The hub schedules transmissions": "A ring has no hub. Every node is a repeater in the chain.",
+    "Every computer listens and sends when the ring is quiet": "That is carrier sensing, how classic Ethernet on a bus worked.",
+    "The computer with the lowest address always goes first": "That would starve everyone else. The token rotates so every node gets a turn."
+  }}
+/>
+
+<QuickCheck
+  id="cp3-bus-terminator"
+  type="true-false"
+  question="In a bus topology, a break anywhere in the trunk cable can stop communication between all computers, even those on the same side of the break."
+  answer="True"
+  explanation="The cut leaves unterminated ends. Signals reflect off them and interfere, so the whole segment fails."
+/>
+
+<QuickCheck
+  id="cp3-cs-adv"
+  question="Which is an advantage of a client-server network over peer-to-peer?"
+  options={["Lower cost", "No need for an administrator", "Centralised backup and security", "Easier setup"]}
+  answer="Centralised backup and security"
+  explanation="Resources and security live on the server, so they are managed and backed up in one place."
+  feedback={{
+    "Lower cost": "Client-server costs more: dedicated hardware and software.",
+    "No need for an administrator": "The lecture lists 'requires professional administration' as a client-server disadvantage.",
+    "Easier setup": "Peer-to-peer wins on setup. Client-server buys security and reliability with complexity."
+  }}
+/>
+
+<QuickCheck
+  id="cp3-impairment"
+  question="Different frequency components of a signal travel at different speeds and arrive at different times. Which impairment is this?"
+  options={["Attenuation", "Distortion", "Noise", "Interference"]}
+  answer="Distortion"
+  explanation="Delay distortion: the signal's shape changes because its components arrive out of step."
+  feedback={{
+    "Attenuation": "Attenuation is loss of energy. The shape is kept and only the size shrinks.",
+    "Noise": "Noise is unwanted energy added from outside. Here nothing is added; the signal's own parts drift apart.",
+    "Interference": "Interference is an outside signal disrupting yours, a form of noise."
+  }}
+/>
+
+<QuickCheck
+  id="cp3-fibre-emi"
+  question="Why is optical fibre immune to electromagnetic interference?"
+  options={["Its metal shield blocks EMI", "It carries light in glass rather than electric current in metal", "Its wires are twisted", "It uses a lower frequency"]}
+  answer="It carries light in glass rather than electric current in metal"
+  explanation="EMI induces currents in conductors. Glass carrying light has no conductor to induce into."
+  feedback={{
+    "Its metal shield blocks EMI": "That is STP and coax. Fibre has no metal shield, and needs none.",
+    "Its wires are twisted": "Twisting is twisted-pair copper's trick.",
+    "It uses a lower frequency": "Light is hundreds of terahertz, far higher than any radio frequency."
+  }}
+/>
+
+<QuickCheck
+  id="cp3-lpwan"
+  question="LPWAN technologies trade away which property to gain range and battery life?"
+  options={["Security", "Data rate", "Coverage", "Standardisation"]}
+  answer="Data rate"
+  explanation="LPWAN offers bits to tens of kilobits per second. The trade is rate for range and power."
+  feedback={{
+    "Security": "LoRaWAN and NB-IoT both encrypt. Security is not what they give up.",
+    "Coverage": "Coverage (range) is exactly what they gain: kilometres.",
+    "Standardisation": "LoRaWAN is an alliance standard and NB-IoT is a 3GPP standard."
+  }}
+/>
+
+<OrderCheck
+  id="cp3-area-order"
+  prompt="Order the network types from smallest area to largest."
+  items={["PAN", "LAN", "CAN", "MAN", "WAN"]}
+  explanation="Personal, local, campus, metropolitan, wide. The boundaries overlap, but this order never changes."
+  topLabel="Smallest"
+  bottomLabel="Largest"
+/>
+
+## Long answers
+
+<Predict
+  id="cp3-lan-man-wan"
+  prompt="Differentiate between LAN, MAN and WAN. (5 marks)"
+  answer="Definitions with examples (LAN: lab or office; MAN: city cable TV or metro network; WAN: nationwide or the Internet), then a table on ownership, area, design and maintenance, medium, data rate and delay."
+>
+
+A **LAN** covers a small area such as a building or campus, is privately owned, and is easy to design and maintain. Example: a university lab. A **MAN** spans a city, can be private or public, and uses LAN-like technology over fibre or coax. Example: a city's cable TV network. A **WAN** spans countries using leased lines, PSTN or satellite links. Example: a bank's national branch network, or the Internet.
+
+| Parameter | LAN | MAN | WAN |
+|---|---|---|---|
+| Ownership | Private | Private or public | Private or public |
+| Area | Small | Moderate (city) | Very large |
+| Design and maintenance | Easy | Not easy | Not easy |
+| Medium | Twisted pair, coax, Wi-Fi | Fibre, coax, wireless | Leased lines, PSTN, satellite |
+| Data rate | High | Moderate | Low per connection |
+| Delay and errors | Low | Moderate | High |
+
+</Predict>
+
+<Predict
+  id="cp3-topologies"
+  prompt="Explain bus, star and ring topologies with one advantage and one disadvantage of each. (6 marks)"
+  answer="Bus: one trunk that all nodes tap onto; cheap and simple; one trunk break kills the whole network. Star: every node cabled to a central hub or switch; a faulty cable isolates only its own node; the hub is a single point of failure. Ring: each node connects to the next and repeats the signal, with a token deciding who sends; no collisions; one failed node or cable stops a simple ring."
+>
+
+**Bus**: all computers attach to a single cable (trunk or backbone), terminated at both ends; only one computer can send at a time. *Advantage*: simple, lowest cost, least cable. *Disadvantage*: a break in the trunk stops the whole network, and faults are hard to find.
+
+**Star**: each computer has its own cable to a central hub or switch. *Advantage*: a cable fault affects only its computer, and nodes are easy to add. *Disadvantage*: more cable, and if the hub fails the entire network is down.
+
+**Ring**: each computer connects to two neighbours in a closed loop and acts as a repeater; a token circulates, and only its holder may transmit. *Advantage*: no collisions, and the signal is regenerated at every node. *Disadvantage*: hard to add computers, and one failed computer or link breaks the ring (unless a dual ring is used).
+
+Draw a small sketch of each; sketches are marked.
+
+</Predict>
+
+<Predict
+  id="cp3-impairment-long"
+  prompt="What is transmission impairment? Explain its three causes. (5 marks)"
+  answer="The received signal differs from the transmitted one. Attenuation: energy lost with distance, measured in dB, fixed by amplifiers or repeaters. Distortion: change of shape because frequency components travel at different speeds (delay distortion). Noise: unwanted signals added in transit, such as thermal, induced, crosstalk and impulse noise."
+>
+
+**Transmission impairment**: the signal at the receiver is not identical to the signal sent, because the medium is imperfect.
+
+1. **Attenuation**: the signal loses energy as it travels, so its strength falls with distance. It is measured in decibels, dB = 10 log₁₀(P₂ ÷ P₁); halving the power is −3 dB. Amplifiers or repeaters restore it.
+2. **Distortion**: the signal changes shape. A composite signal's frequency components travel at different speeds, arrive at different times, and no longer line up (delay distortion).
+3. **Noise**: unwanted energy added to the signal: thermal (random electron motion), induced (motors, appliances), crosstalk (from a neighbouring wire), impulse (lightning, power lines). It is measured against the signal as the SNR.
+
+</Predict>
+
+<Predict
+  id="cp3-lpwan-long"
+  prompt="What is LPWAN and why is it needed for IoT? (4 marks)"
+  answer="Low Power Wide Area Network. IoT devices need long range, low data rate and years of battery life. Existing technologies are either short range (Bluetooth, ZigBee, Wi-Fi) or power-hungry (cellular). LPWAN fills the long-range, low-bandwidth gap. Examples: LoRaWAN, Sigfox, NB-IoT."
+>
+
+**LPWAN** (Low Power Wide Area Network) is a class of wireless technologies for long-range, low-bandwidth, low-power communication, aimed at IoT and M2M.
+
+IoT devices such as meters, sensors and trackers send small amounts of data, are often far from infrastructure, and run on batteries for years. Short-range technologies (Bluetooth, ZigBee, Wi-Fi) do not reach far enough; cellular 3G and 4G reach, but draw too much power and cost too much per device. On the range and bandwidth map, the long-range, low-bandwidth corner was empty. LPWAN fills it, trading data rate for kilometres of range and multi-year battery life. Examples: **LoRaWAN** and **Sigfox** (unlicensed spectrum), **NB-IoT** and **LTE-M** (licensed, run by mobile operators).
+
+</Predict>
+
+<Callout type="done" title="Week 3 done">
+With classification, topologies and media covered, the course moves up the stack. Week 4 is the application layer: HTTP, FTP, SMTP, DNS, peer-to-peer and sockets.
+</Callout>

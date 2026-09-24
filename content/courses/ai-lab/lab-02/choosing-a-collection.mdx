@@ -1,0 +1,181 @@
+Python gives you four built-in collections, and every task in this lab comes down to picking the right one. You already know arrays and hash maps. The new parts are the two rules Python enforces about them: mutability and hashability.
+
+<Predict
+  id="tuple-mutation"
+  prompt="t = ([1, 2], 3). Tuples are immutable. What happens when you run t[0].append(4), and what happens when you run t[1] = 5?"
+  answer="t[0].append(4) works and t becomes ([1, 2, 4], 3). t[1] = 5 raises TypeError."
+>
+
+**`t[0].append(4)` succeeds.** The tuple is immutable, meaning its slots cannot be rebound. Slot 0 still points at the same list; you mutated the list, not the tuple. `t` is now `([1, 2, 4], 3)`.
+
+**`t[1] = 5` raises** `TypeError: 'tuple' object does not support item assignment`. That would rebind a slot.
+
+The consequence you will meet in a minute: this tuple cannot be a dict key or a set element, because something inside it can change.
+
+</Predict>
+
+## The four, side by side
+
+<CollectionsFigure />
+
+In systems terms: a tuple is a row, a list is an array, a set is a hash set, and a dict is a hash map. The class and lab tasks map onto them directly. A student record `(name, roll, grade)` is a tuple, two semesters' courses are sets, and a catalogue from title to price is a dict.
+
+<QuickCheck
+  id="pick-collection"
+  question="You need to check, thousands of times, whether a roll number has already submitted. Which collection should hold the roll numbers that have submitted?"
+  options={["set", "list", "tuple", "dict with the roll number as key and None as value"]}
+  answer="set"
+  explanation="Membership (`roll in submitted`) is a hash lookup in a set, O(1) on average. In a list or tuple it is a scan, O(n) per check. A dict with dummy values works, but it is a set that is pretending to be something else."
+  feedback={{
+    "list": "Works, but every `in` walks the whole list. Thousands of checks against thousands of entries is millions of comparisons.",
+    "tuple": "Same O(n) scan as a list, and you could not add new submissions as they arrive.",
+    "dict with the roll number as key and None as value": "It is fast, but it is a set in disguise. Use a dict when there is a real value to attach, such as the submission time."
+  }}
+/>
+
+## Hashable means it can be a key
+
+Sets and dicts store items by their hash. If an object could change after it was stored, its hash would change and the table could never find it again. It is the same bug as mutating a cache key after the insert. So Python only accepts hashable objects as set elements and dict keys: numbers, strings, `None`, and tuples of hashable things. Lists, sets and dicts are rejected.
+
+```python
+{(1, 2): "ok"}   # fine: a tuple of ints
+{[1, 2]: "x"}    # TypeError: unhashable type: 'list'
+{([1], 2)}       # TypeError: the tuple holds a list
+```
+
+<QuickCheck
+  id="hashable"
+  question="Which of these can be a key in a dict?"
+  options={["('Sara', 2312201)", "['Sara', 2312201]", "{'Sara'}", "(['Sara'], 2312201)"]}
+  answer="('Sara', 2312201)"
+  explanation="A tuple of a string and an int is hashable. Lists and sets are mutable, so they are never hashable, and a tuple containing a list is not hashable either."
+  feedback={{
+    "['Sara', 2312201]": "Lists are mutable, so they are unhashable. Convert to a tuple first if you need it as a key.",
+    "{'Sara'}": "A set is mutable. The immutable version, frozenset, is hashable.",
+    "(['Sara'], 2312201)": "The tuple is immutable, but it contains a list, and Python hashes a tuple by hashing its contents."
+  }}
+/>
+
+## Names point at objects; multiplication copies pointers
+
+Assignment never copies. `a = b = []` makes two names for one list, so appending through `a` shows up in `b`. The same rule gives the most common grid bug in AI labs, where a board or maze is built with `*`:
+
+<AliasFigure />
+
+```python
+grid = [[0] * 3] * 2
+grid[0][0] = 9
+print(grid)            # [[9, 0, 0], [9, 0, 0]]
+
+grid = [[0] * 3 for _ in range(2)]
+grid[0][0] = 9
+print(grid)            # [[9, 0, 0], [0, 0, 0]]
+```
+
+You will build grids for the search labs in weeks 4 to 6. Build them with a comprehension.
+
+## Set algebra
+
+Four operators, four regions of a Venn diagram. Lab Task 1, question 2, "courses offered in both semesters", is one of them.
+
+<SetOpsLab />
+
+<QuickCheck
+  id="set-op"
+  question="sem1 and sem2 are sets of course names. Which expression gives the courses that run in exactly one of the two semesters?"
+  options={["sem1 ^ sem2", "sem1 | sem2", "sem1 - sem2", "sem1 & sem2"]}
+  answer="sem1 ^ sem2"
+  explanation="^ is symmetric difference: in one or the other but not both. It equals (sem1 | sem2) - (sem1 & sem2)."
+  feedback={{
+    "sem1 | sem2": "Union includes the shared courses too.",
+    "sem1 - sem2": "Difference is one-sided: only the courses that are in sem1 and missing from sem2.",
+    "sem1 & sem2": "Intersection is the courses in both, which is exactly what this question excludes."
+  }}
+/>
+
+## Dict idioms you will use every lab
+
+```python
+marks = {"Ali": 72, "Sara": 45}
+
+marks["Omar"]                  # KeyError: 'Omar'
+marks.get("Omar")              # None
+marks.get("Omar", 0)           # 0
+
+for name, m in marks.items():  # key and value together
+    print(name, m)
+
+# dict comprehension
+passed = {n: m for n, m in marks.items() if m >= 50}
+print(passed)                  # {'Ali': 72}
+```
+
+## Sorting and picking by a key
+
+`sorted`, `min` and `max` take a `key` function that says what to compare. This is how you find "the student with the highest GPA" in one line, and it is the same idea as the priority in the A* frontier in week 6.
+
+```python
+students = [("Ali", 3.1), ("Sara", 3.8), ("Omar", 3.5)]
+
+sorted(students, key=lambda s: s[1], reverse=True)
+# [('Sara', 3.8), ('Omar', 3.5), ('Ali', 3.1)]
+
+max(students, key=lambda s: s[1])      # ('Sara', 3.8)
+
+marks = {"Ali": 72, "Sara": 45}
+# iterating a dict gives its keys
+max(marks, key=marks.get)              # 'Ali'
+```
+
+<QuickCheck
+  id="max-dict"
+  question="marks = a dict from name to mark. What does max(marks) return, with no key argument?"
+  options={["The name that comes last alphabetically", "The name with the highest mark", "The highest mark", "A TypeError"]}
+  answer="The name that comes last alphabetically"
+  explanation="Iterating a dict yields its keys, so max compares the names as strings. To get the name with the highest mark, pass key=marks.get. To get the highest mark itself, use max(marks.values())."
+  feedback={{
+    "The name with the highest mark": "Only with key=marks.get. Without a key, the names are compared with each other.",
+    "The highest mark": "That is max(marks.values()). max(marks) never looks at the values.",
+    "A TypeError": "Strings compare fine with each other, so there is no error. That is what makes this bug quiet."
+  }}
+/>
+
+<QuickCheck
+  id="empty-braces"
+  question="What is the type of an empty pair of curly braces in Python?"
+  options={["dict", "set", "tuple", "SyntaxError"]}
+  answer="dict"
+  explanation="Dicts came first, so empty braces were already taken. The empty set has to be written set(). A one-element tuple needs a trailing comma, (5,), because (5) is just the int 5 in parentheses."
+  feedback={{
+    "set": "The natural guess, and wrong. The empty set is set().",
+    "tuple": "Tuples use parentheses, or just commas.",
+    "SyntaxError": "It is valid syntax: an empty dict."
+  }}
+/>
+
+<Deeper kind="beyond" title="The collections module">
+
+`collections.deque` is a list with O(1) appends and pops at **both** ends. It is the queue for BFS in week 4, where `list.pop(0)` would be O(n). `collections.Counter` counts hashable things (`Counter(words).most_common(3)`), and `defaultdict(list)` removes the "if key not in d: d[key] = []" dance. All three come back in the machine-learning labs.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://docs.python.org/3/tutorial/datastructures.html",
+    "title": "Python tutorial: Data structures",
+    "kind": "docs",
+    "why": "The official chapter on lists, tuples, sets, dicts and comprehensions. Skim the section headings against this lesson and read the ones that surprised you."
+  },
+  {
+    "href": "https://wiki.python.org/moin/TimeComplexity",
+    "title": "Python wiki: Time complexity of built-in operations",
+    "kind": "docs",
+    "why": "The O(1) versus O(n) table for every list, set, dict and deque operation. The quickest way to see why `in` on a list is a trap."
+  },
+  {
+    "href": "https://pythontutor.com/visualize.html#mode=edit",
+    "title": "Python Tutor",
+    "kind": "tool",
+    "why": "Paste the grid example and watch both rows point at one list."
+  }
+]} />

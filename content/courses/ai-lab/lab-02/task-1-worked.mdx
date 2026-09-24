@@ -1,0 +1,253 @@
+Both tasks are already submitted: Class Task 1 was due at 7 pm on 21 September and Lab Task 1 at 11:59 pm on 22 September. This checkpoint is for the next time the same shapes come up, in a lab exam or in the week 3 agent code. For each question, write your answer in the box before you reveal the model solution. Every model solution below was run with Python 3, and the comments show the real output.
+
+<Callout type="exam" title="What graders look for in lab tasks">
+Correct output first, then the right collection for the job (a tuple for a fixed record, a set for "common" or "both"), then readable names. A one-line comprehension is fine, but a function that the question asked for must be a `def` that returns a value, not a loop that only prints.
+</Callout>
+
+## Class Task 1 (in lab)
+
+<Predict
+  id="ct1-q1"
+  prompt="Q1. Store a student's (Name, Roll No, Grade) in a tuple and print them."
+  answer="A 3-tuple, unpacked into three names, printed with an f-string."
+>
+
+```python
+student = ("Hammad", "BSCS-2301", "A")
+name, roll, grade = student
+print(f"Name: {name}, Roll No: {roll}, Grade: {grade}")
+# Name: Hammad, Roll No: BSCS-2301, Grade: A
+```
+
+Keep the roll number a string. It is an identifier, not a quantity: you never add roll numbers, and a leading zero or a dash would break an int.
+
+</Predict>
+
+<Predict
+  id="ct1-q2"
+  prompt="Q2. Two students selected different courses. Find the common courses."
+  answer="Convert both lists to sets and intersect them with &."
+>
+
+```python
+ali = ["AI", "DBMS", "CNDC"]
+sara = ["CNDC", "SE", "AI"]
+common = set(ali) & set(sara)
+print(sorted(common))   # ['AI', 'CNDC']
+```
+
+**Hidden edge case:** printing the set directly can list AI first on one run and CNDC first on the next, because string hashing is randomised per process. Wrap it in `sorted()` if the output must be stable. The nested-loop version works but is O(n × m) and three times longer.
+
+</Predict>
+
+<Predict
+  id="ct1-q3"
+  prompt="Q3. Create a dictionary for a library book: title, author, year. Print all details."
+  answer="A dict with three string keys, printed with a loop over .items()."
+>
+
+```python
+book = {
+    "title": "Artificial Intelligence: A Modern Approach",
+    "author": "Russell and Norvig",
+    "year": 2020,
+}
+for key, value in book.items():
+    print(f"{key}: {value}")
+# title: Artificial Intelligence: A Modern Approach
+# author: Russell and Norvig
+# year: 2020
+```
+
+Dicts keep insertion order (guaranteed since Python 3.7), so this prints in the order you wrote the keys.
+
+</Predict>
+
+<Predict
+  id="ct1-q4"
+  prompt="Q4. Write a function that calculates the average marks from a dictionary of students."
+  answer="sum(marks.values()) / len(marks), with a guard for an empty dict."
+>
+
+```python
+def average_marks(marks):
+    if not marks:
+        return 0.0
+    return sum(marks.values()) / len(marks)
+
+marks = {"Ali": 72, "Sara": 45, "Omar": 38}
+print(average_marks(marks))   # 51.666666666666664
+print(average_marks({}))      # 0.0
+```
+
+**Hidden edge cases:** an empty dict raises `ZeroDivisionError` without the guard. And the result is a float with a long tail, so format it with the `.2f` spec if it is going to be read by a person.
+
+</Predict>
+
+<Predict
+  id="ct1-q5"
+  prompt="Q5. A university stores student data (name, department, GPA) in a dictionary. Write a function to find the student with the highest GPA."
+  answer="Key the dict by name, then max over the keys with a key function that reads the GPA."
+>
+
+```python
+students = {
+    "Ali":  {"department": "CS", "gpa": 3.1},
+    "Sara": {"department": "AI", "gpa": 3.8},
+    "Omar": {"department": "SE", "gpa": 3.8},
+}
+
+def top_student(students):
+    return max(students, key=lambda n: students[n]["gpa"])
+
+print(top_student(students))   # Sara
+```
+
+**Hidden edge case: ties.** Sara and Omar both have 3.8, and `max` returns the first one it meets in insertion order. If the question means "all students with the highest GPA", compute the best value first:
+
+```python
+def top_students(students):
+    best = max(s["gpa"] for s in students.values())
+    return [n for n, s in students.items() if s["gpa"] == best]
+
+print(top_students(students))  # ['Sara', 'Omar']
+```
+
+</Predict>
+
+## Lab Task 1 (home)
+
+<Predict
+  id="lt1-q1"
+  prompt="Q1. Create a tuple (name, roll number, grade) for one student and print their grade."
+  answer="Index 2 of the tuple, or unpack it."
+>
+
+```python
+student = ("Sara", "BSCS-2302", "B+")
+print(student[2])   # B+
+```
+
+`student[-1]` also works, but `[2]` says "the third field" more plainly. For a record you use often, `collections.namedtuple` lets you write `student.grade` instead.
+
+</Predict>
+
+<Predict
+  id="lt1-q2"
+  prompt="Q2. Given two sets of courses, one for Semester 1 and one for Semester 2, display which courses are offered in both."
+  answer="sem1 & sem2, printed sorted."
+>
+
+```python
+sem1 = {"Programming", "Calculus", "Physics", "English"}
+sem2 = {"Data Structures", "Calculus", "English", "Discrete Maths"}
+print(sorted(sem1 & sem2))   # ['Calculus', 'English']
+```
+
+Same operator as Class Task Q2, but here the data already arrives as sets, which is the hint. `sem1.intersection(sem2)` is the method spelling. Unlike `&`, the method also accepts a list as its argument.
+
+</Predict>
+
+<Predict
+  id="lt1-q3"
+  prompt="Q3. A bookstore catalogue is a dict from title to price. Create one with 3 books and display the total cost of buying all of them."
+  answer="sum(catalog.values())."
+>
+
+```python
+catalog = {"AIMA": 4500, "Clean Code": 2800, "SICP": 3200}
+print(sum(catalog.values()))   # 10500
+```
+
+Summing `catalog` itself would try to add the titles, which are strings, and raise `TypeError`. `.values()` is the point of the question.
+
+</Predict>
+
+<Predict
+  id="lt1-q4"
+  prompt="Q4. Employee data (name, department, salary) is in a dictionary. Increase the salary of every employee in the AI department by 15%."
+  answer="Loop over the employee records, test the department, multiply by 1.15, and round."
+>
+
+```python
+employees = {
+    "E1": {"name": "Ali",  "department": "AI", "salary": 150000},
+    "E2": {"name": "Sara", "department": "HR", "salary": 120000},
+    "E3": {"name": "Omar", "department": "AI", "salary": 99999},
+}
+for emp in employees.values():
+    if emp["department"] == "AI":
+        emp["salary"] = round(emp["salary"] * 1.15, 2)
+print(employees["E3"]["salary"])   # 114998.85
+```
+
+**Hidden edge cases.** First, floats: `99999 * 1.15` is `114998.84999999999`, and `50000 * 1.15` is `57499.99999999999`, because 1.15 has no exact binary representation. Round money for display, or keep it in integer paisa and compute `salary * 115 // 100`. Second, the type changes: 150000 was an int and comes back as `172500.0`. Third, the dict is mutated in place: `emp` is the inner record itself, not a copy, which is why assigning to `emp["salary"]` works.
+
+</Predict>
+
+<Predict
+  id="lt1-q5"
+  prompt="Q5. A shopping cart is a dict from item to price. Write a function that returns the total bill after a 5% discount if the total exceeds 1000."
+  answer="Sum the values; if total > 1000 multiply by 0.95; return the rounded total."
+>
+
+```python
+def bill(cart):
+    total = sum(cart.values())
+    if total > 1000:
+        total *= 0.95
+    return round(total, 2)
+
+print(bill({"pen": 200, "notebook": 800}))   # 1000
+print(bill({"pen": 200, "notebook": 801}))   # 950.95
+print(bill({}))                              # 0
+```
+
+**Hidden edge case:** "exceeds 1000" means strictly greater, so a total of exactly 1000 gets no discount. Writing `>=` is the most common mistake on this question. Say which reading you chose in a comment if the wording is ambiguous in an exam. Also note the discount threshold applies to the total, not per item.
+
+</Predict>
+
+## Quick checks on the traps
+
+<QuickCheck
+  id="cp-discount-boundary"
+  type="numeric"
+  question="Using the bill function above, what does bill for a cart totalling exactly 1000 return? (A number, in rupees.)"
+  answer={1000}
+  tolerance={0}
+  explanation="1000 does not exceed 1000, so no discount: the bill is 1000. A >= comparison would give 950, which is the classic mis-read of 'exceeds'."
+/>
+
+<QuickCheck
+  id="cp-float-raise"
+  question="print(50000 * 1.15) outputs:"
+  options={["57499.99999999999", "57500.0", "57500", "57500.00"]}
+  answer="57499.99999999999"
+  explanation="1.15 is stored as the nearest binary double, which is a hair below 1.15. The product lands just under 57500, and print shows the shortest decimal that round-trips, including the tail. round(x, 2) gives 57500.0."
+  feedback={{
+    "57500.0": "That is what round(50000 * 1.15, 2) prints. Without rounding you see the binary error.",
+    "57500": "Multiplying an int by a float always gives a float, so there is at least a .0, and here there is a floating-point tail as well.",
+    "57500.00": "print never pads to two decimals on its own. That needs f'{x:.2f}'."
+  }}
+/>
+
+<QuickCheck
+  id="cp-max-tie"
+  question="Two students tie on the highest GPA. max(students, key=lambda n: students[n]['gpa']) returns:"
+  options={["The first of the tied students in the dict's insertion order", "Both, as a list", "The last of the tied students", "It raises an error because the answer is ambiguous"]}
+  answer="The first of the tied students in the dict's insertion order"
+  explanation="max keeps the first maximum it finds and only replaces it on a strictly greater key. To return every student who ties, compute the best GPA first and filter."
+  feedback={{
+    "Both, as a list": "max always returns one element. Use a comprehension over the best value to get all of them.",
+    "The last of the tied students": "max only replaces on strictly greater, so the first one stays.",
+    "It raises an error because the answer is ambiguous": "Ties are not an error for max."
+  }}
+/>
+
+<QuickCheck
+  id="cp-set-print"
+  type="true-false"
+  question="print(set(['AI', 'CNDC'])) always prints the two courses in the same order on every run of the program."
+  answer="False"
+  explanation="String hashes are randomised per process (PYTHONHASHSEED), so a set of strings can iterate in a different order on each run. Use sorted() when the order of the output matters."
+/>

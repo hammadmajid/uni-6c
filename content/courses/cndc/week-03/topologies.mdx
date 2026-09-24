@@ -1,0 +1,117 @@
+A topology is the shape of the wiring: which machine connects to which. The lecture draws bus, star and ring. Mesh is the fourth that every textbook adds, and it is where the numericals come from.
+
+<Predict
+  id="bus-cut"
+  prompt="Eight PCs share one coax bus. Someone cuts the cable between PC 3 and PC 4. Can PC 1 still talk to PC 2, which is on the same side of the cut?"
+  answer="No. A cut bus has two unterminated ends. The signal reflects off them and interferes with itself, so the whole segment stops working, including between PCs on the same side."
+>
+
+**No, and this surprises most people.** The intuitive answer is "yes, they are still wired together". But a bus needs a **terminator** at each end to absorb the signal. A cut creates two new ends with no terminators. Every transmission reflects back off the cut and collides with itself, so nothing gets through anywhere on the segment. Try it below: pick Bus and click a trunk segment.
+
+</Predict>
+
+<TopologyLab />
+
+## The four shapes
+
+**Bus.** One cable, the *trunk* or backbone, with every machine tapped onto it. It is cheap and simple and uses the least cable. Only one machine can send at a time, because everyone shares the one medium. Machines only listen; they do not regenerate the signal. One break in the trunk takes down the whole bus, and a fault is hard to locate.
+
+**Star.** Every machine has its own cable to a central device. It uses more cable than a bus, but a broken cable affects only its own machine, and adding one is just plugging in. The centre is a single point of failure. Whether two machines can send at once depends on that central box, which is the next section.
+
+**Ring.** Each machine connects to the next, and the last back to the first. Every machine **repeats** the signal on to its neighbour, so the signal is regenerated at each hop and a ring can span more distance than a bus. Who sends is decided by **token passing**: only the holder of the token may transmit. The drawbacks are that it is hard to add a machine without breaking the ring, and in a simple ring one failed machine or cable stops everything. FDDI's answer was a second ring running the other way: after a fault, traffic wraps around onto it.
+
+**Mesh.** Every machine has a dedicated link to every other one. A failed link costs nothing, because traffic goes around it. It is robust and private, and many pairs can talk at once. The price is cabling that grows with the square of the number of machines.
+
+<Callout type="key-idea" title="The mesh formula">
+A full mesh of **n** devices needs **n(n − 1)/2** duplex links, and each device needs **n − 1** ports. For 8 devices that is 28 cables and 7 ports on every machine. That is why nobody full-meshes PCs. Full or partial mesh is used between a few core routers, where the redundancy is worth paying for.
+</Callout>
+
+<QuickCheck
+  id="mesh-links"
+  type="numeric"
+  unit="links"
+  question="A full mesh connects 10 routers with duplex links. How many links are needed?"
+  answer={45}
+  explanation="n(n − 1)/2 = 10 × 9 ÷ 2 = 45. The trap is forgetting the ÷ 2: 90 counts every link twice, once from each end. With simplex (one-way) links the answer would be 90."
+/>
+
+<QuickCheck
+  id="mesh-ports"
+  type="numeric"
+  unit="ports"
+  question="In that same 10-router full mesh, how many ports (I/O interfaces) does each router need?"
+  answer={9}
+  explanation="One port for every other router: n − 1 = 9. Across all routers that is 90 ports, two per link, which is another way to see the 45."
+/>
+
+## Hub or switch: what the star really is
+
+The lecture says the star's central device is a hub, and that "depending on the intelligence of the hub, two or more computers may send at the same time". Those are really two different devices:
+
+- A **hub** is a layer 1 repeater. Every bit that arrives on one port goes out of all the others. Electrically the star is still a bus: one sender at a time, everyone hears everything. People call it a *physical star, logical bus*.
+- A **switch** is a layer 2 device. It learns which MAC address sits behind which port and forwards each frame only to its destination. PC 1 to PC 2 and PC 3 to PC 4 can then run at full speed simultaneously.
+
+A modern Ethernet LAN is a star built on switches. Hubs are obsolete, and so are coax buses. The ring survives as a logical idea in some metro fibre networks, and mesh survives in the core and in Wi-Fi mesh systems.
+
+<QuickCheck
+  id="hub-fails"
+  question="In a star topology, which single failure disconnects every computer?"
+  options={["One computer's cable", "The central hub or switch", "Any one computer", "None: a star has no single point of failure"]}
+  answer="The central hub or switch"
+  explanation="Every path in a star goes through the centre. Kill it and each PC is left with a cable to nowhere."
+  feedback={{
+    "One computer's cable": "That isolates only that one computer. Losing just the broken branch is the star's main advantage over a bus.",
+    "Any one computer": "Machines in a star do not relay for each other. That is a ring's weakness.",
+    "None: a star has no single point of failure": "It has exactly one: the centre. Try clicking the hub in the lab."
+  }}
+/>
+
+<QuickCheck
+  id="ring-repeat"
+  type="true-false"
+  question="In a ring topology, every computer acts as a repeater that regenerates the signal before passing it on."
+  answer="True"
+  explanation="This is straight from the slide, and it explains both the ring's strength (distance, because the signal is refreshed at every hop) and its weakness (one dead repeater breaks the chain)."
+/>
+
+| | Bus | Star | Ring | Mesh |
+|---|---|---|---|---|
+| Cables for n PCs | 1 trunk + n drops | n | n | n(n − 1)/2 |
+| One device fails | Only that PC | Only that PC (unless it is the hub) | Whole ring (simple ring) | Only that device |
+| One cable fails | Whole bus (trunk) | Only that PC | Whole ring (simple ring) | Nothing: traffic reroutes |
+| Adding a PC | Tap the trunk | Plug into a spare port | Break the ring to insert | New link to every other device |
+| Who sends | One at a time | Hub: one · switch: many | Token holder | Every pair at once |
+| Cost | Lowest | Moderate | Moderate to high | Highest |
+
+<Deeper kind="why" title="Why shared media need an access protocol">
+
+On a bus, or a star with a hub, two machines that transmit at the same moment garble each other: a **collision**. Something has to decide who talks. Classic Ethernet listened before sending and backed off after a collision (CSMA/CD). Token Ring avoided collisions by passing permission around. That decision is **medium access control**, and it gets all of weeks 9 and 10. A switched star mostly makes the problem go away, because each cable connects only two devices.
+
+</Deeper>
+
+<Deeper kind="edge" title="Tree and hybrid topologies">
+
+The slide mentions tree in passing. A **tree** is stars of stars: the building switch feeds a floor switch, which feeds the room switches. It is what every real office network looks like. A **hybrid** mixes shapes, such as star LANs joined by a mesh of core routers. If an exam asks for "any two other topologies", give tree and hybrid with one line each.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: compare bus, star and ring topologies (5 marks)">
+
+Draw all three: a labelled sketch earns marks on its own. Then compare on four rows: cable required, effect of one failure, ease of adding a node, and who may transmit. Use the table above. One sentence on each topology's main advantage and main drawback: bus is cheapest but one trunk break kills all; star isolates faults but the hub is a single point of failure; ring regenerates the signal and avoids collisions through the token, but one failure stops the simple ring. If mesh is included, state n(n − 1)/2.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=zbqrNg4C98U",
+    "title": "PowerCert: Network topologies (star, bus, ring, mesh, ad hoc, infrastructure)",
+    "kind": "video",
+    "why": "Animated version of all four shapes, including the terminator and token details."
+  },
+  {
+    "href": "https://www.youtube.com/watch?v=1z0ULvg_pW8",
+    "title": "PowerCert: Hub, switch and router explained",
+    "kind": "video",
+    "why": "Shows why a hub behaves like a bus and what a switch does differently, the point the slide blurs."
+  }
+]} />

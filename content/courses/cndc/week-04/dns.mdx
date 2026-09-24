@@ -1,0 +1,170 @@
+Every HTTP fetch in the Lab 01 capture started with a DNS query 46 ms before the TCP handshake. DNS is the application-layer protocol that every other application depends on, and a favourite long question because it has a hierarchy to draw and a message sequence to number.
+
+<Predict
+  id="dns-hops"
+  prompt="Your laptop asks for the IP address of gaia.cs.umass.edu, and every cache involved is empty. How many different DNS servers have to be consulted before the answer comes back, and which one actually holds the record?"
+  answer="Four: the local DNS server (which does the work), a root server, the .edu TLD server, and the authoritative server for umass.edu. Only the authoritative server holds the A record; the others only point the way."
+>
+
+**Four servers, and only the last one knows the answer.** Your laptop asks its **local DNS server**. That server asks a **root** server, which only knows who runs **.edu**. The **.edu TLD** server only knows who runs **umass.edu**. The **authoritative** server for umass.edu holds the record. Eight messages in all; step through them below.
+
+</Predict>
+
+## What DNS does
+
+Hosts have two identifiers: names people can remember (`gaia.cs.umass.edu`) and 32-bit IP addresses routers can use (`128.119.245.12`). DNS maps between them. It is two things at once: a **distributed database** implemented in a hierarchy of name servers, and an **application-layer protocol** that hosts and name servers use to query it, usually over **UDP port 53**.
+
+| Service | What it means | Record |
+|---|---|---|
+| Name to address | The main job | A (AAAA for IPv6) |
+| Host aliasing | `www.example.com` is an alias; the **canonical** name may be something ugly like `lb-7.eu-west.example.net` | CNAME |
+| Mail server aliasing | Mail to `@example.com` goes to whichever host the domain names as its mail server | MX |
+| Load distribution | A busy site lists several addresses; DNS rotates their order in each reply, spreading clients across replicas | several A |
+
+DNS is a core Internet function built as an application at the edge, exactly like the apps in the previous lessons. Users rarely touch it directly; other applications (browsers, mail servers, `ssh`) call it first, and its delay adds to theirs.
+
+<QuickCheck
+  id="why-not-central"
+  question="Which is NOT a reason DNS is distributed rather than run on one central server?"
+  options={[
+    "A single server would be a single point of failure",
+    "One server could not handle the query volume of the whole Internet",
+    "UDP cannot carry queries to a single server",
+    "A single server would be far away from most clients, and every query would pay that delay"
+  ]}
+  answer="UDP cannot carry queries to a single server"
+  explanation="Kurose's reasons are: single point of failure, traffic volume, distant centralized database, and maintenance (one database would need updating for every new host on Earth). In short, it would not scale. The transport protocol has nothing to do with it."
+  feedback={{
+    "A single server would be a single point of failure": "This is a real reason: one crash and the whole Internet stops resolving names.",
+    "One server could not handle the query volume of the whole Internet": "This is a real reason: traffic volume.",
+    "A single server would be far away from most clients, and every query would pay that delay": "This is a real reason: a distant centralized database."
+  }}
+/>
+
+## The hierarchy
+
+<DnsHierarchy />
+
+- **Root servers**: 13 named root servers (a to m), operated by 12 organisations and replicated as well over a thousand anycast instances worldwide. They return the addresses of TLD servers.
+- **Top-level domain (TLD) servers**: one set per TLD: `.com`, `.org`, `.edu`, and country codes like `.pk`, `.uk`. Verisign runs `.com`; PKNIC runs `.pk`.
+- **Authoritative servers**: every organisation with public hosts must have one (its own, or a provider's such as Cloudflare or Route 53). It holds the records for that organisation's names.
+- **Local DNS server**: not strictly part of the hierarchy. Every ISP, university or public service (1.1.1.1, 8.8.8.8) runs one. It is the server your laptop is configured to ask, and it does the walking and caching on your behalf.
+
+## Walking it: iterative and recursive
+
+<DnsWalk />
+
+The first query, from your laptop to the local server, is **recursive**: 'get me the final answer'. The rest are, in practice, **iterative**: each server replies either with the answer or with a **referral**, 'I don't know, but ask this server next', and the local server does the next step itself. In a fully **recursive** chain, each server would forward the query and hold it open until the answer came back up, which puts all the load and state on the servers at the top of the tree.
+
+<QuickCheck
+  id="dns-msgs"
+  type="numeric"
+  question="Cold caches everywhere, iterative resolution as in the walk above. How many DNS messages are sent in total, counting every query and every reply, including the laptop's own query and its answer?"
+  answer={8}
+  explanation="Laptop to local and back (2), local to root and back (2), to TLD and back (2), to authoritative and back (2). 8 messages, 4 of them queries. Count both directions: a common slip is to count only queries and write 4."
+/>
+
+<QuickCheck
+  id="dns-recursive-which"
+  question="In the usual resolution process, which query is recursive?"
+  options={["The local DNS server's query to the root", "The local DNS server's query to the TLD server", "The host's query to its local DNS server", "The local DNS server's query to the authoritative server"]}
+  answer="The host's query to its local DNS server"
+  explanation="The host wants a final answer and lets the local server do the work. Everything after that is iterative: the local server gets referrals and follows them itself."
+  feedback={{
+    "The local DNS server's query to the root": "Root servers answer with referrals (iterative). They are far too busy to chase answers for everyone.",
+    "The local DNS server's query to the TLD server": "The TLD server answers with a referral to the authoritative server. Iterative.",
+    "The local DNS server's query to the authoritative server": "This one does return the answer, but only because the authoritative server holds it, not because it went looking. It is still an iterative query."
+  }}
+/>
+
+## Caching is what makes it fast
+
+Every server caches every reply it receives, for the **TTL** the record carries. TLD addresses are usually cached for two days, so real lookups almost never reach a root. Popular names like `google.com` sit in your ISP's resolver permanently. The cost: a changed record keeps its old value until caches expire. That is why you lower the TTL a day before moving a site to a new VPS.
+
+`dig +trace` makes your own machine act as the local server and do the iterative walk, printing each referral. Trimmed and simplified, with times and some server names varying per run:
+
+```
+$ dig +trace gaia.cs.umass.edu
+.                   518400  IN  NS  a.root-servers.net.
+edu.                172800  IN  NS  a.edu-servers.net.
+;; from a.root-servers.net in 16 ms
+umass.edu.          172800  IN  NS  ns1.umass.edu.
+;; from a.edu-servers.net in 20 ms
+gaia.cs.umass.edu.  3600    IN  A   128.119.245.12
+;; from ns1.umass.edu in 221 ms
+```
+
+<Callout type="exam" title="The slide says 'client queries root server...'">
+Lecture 10's three bullets ('client queries root server to find com DNS server', and so on) are labelled a first approximation, and that matters: in reality your **host sends one query to its local DNS server**, and **the local DNS server** queries root, TLD and authoritative. If asked to describe resolution, include the local DNS server and number all eight messages. If asked to reproduce the slide's three steps, say 'the client (via its local DNS server)'.
+</Callout>
+
+## Resource records
+
+The database stores **resource records**: (Name, Value, Type, TTL).
+
+| Type | Name | Value | Example |
+|---|---|---|---|
+| A | a host name | its IPv4 address | `gaia.cs.umass.edu  A  128.119.245.12` |
+| NS | a domain | the host name of an authoritative server for it | `umass.edu  NS  ns1.umass.edu` |
+| CNAME | an alias | the canonical name | `www.example.com  CNAME  example.netlify.app` |
+| MX | a domain | the canonical name of its mail server | `example.com  MX  mail.example.com` |
+
+When you point a domain at your VPS, you are adding these in your registrar's panel: an A record for the apex, a CNAME for `www`, and MX records if you use a mail provider. And NS records at the registrar are how the `.com` TLD servers learn which authoritative servers to refer people to.
+
+<QuickCheck
+  id="rr-mx"
+  question="A mail server needs to deliver a message to someone@example.com. Which record type does it look up first?"
+  options={["A for example.com", "MX for example.com", "NS for example.com", "CNAME for example.com"]}
+  answer="MX for example.com"
+  explanation="MX says which host receives mail for the domain, for example mail.example.com. Then an A lookup gives that host's address. This is DNS's mail server aliasing: the mail host can be moved without changing anyone's address."
+  feedback={{
+    "A for example.com": "That is the web server's address, which is often a different machine from the mail server.",
+    "NS for example.com": "NS names the domain's DNS servers, not its mail servers.",
+    "CNAME for example.com": "CNAME aliases a host name to a canonical name. Mail routing uses MX."
+  }}
+/>
+
+<Deeper kind="beyond" title="The protocol, and why it is attacked">
+
+A DNS message has the same format for queries and replies: a 12-byte header (a 16-bit ID that matches replies to queries, and flags such as 'recursion desired'), then question, answer, authority and additional sections. It is usually a single UDP datagram each way, with no handshake, which is why DNS is fast, and TCP is used for large answers and zone transfers.
+
+UDP and caching are also why DNS gets attacked. Floods against root servers (2002, 2015) mostly failed because of anycast and caching; the 2016 attack on Dyn, an authoritative provider, took down Twitter and GitHub for hours. **Cache poisoning** tricks a resolver into caching a forged reply, which is what DNSSEC signs against. **DNS over HTTPS** (DoH) hides your queries from the network by sending them to the resolver inside TLS.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: explain the DNS hierarchy and how a name is resolved (6 marks)">
+
+Draw the hierarchy (root, TLD servers for com, org, edu, authoritative servers below) and the resolution figure with the host, the local DNS server and the three servers.
+
+Explain: DNS is a distributed, hierarchical database, because a centralized one would be a single point of failure, could not carry the traffic, would be distant from most clients and impossible to maintain. **Root** servers return TLD server addresses; **TLD** servers return authoritative server addresses; **authoritative** servers hold the records for their organisation. The **local DNS server** acts on the host's behalf.
+
+Resolution of gaia.cs.umass.edu: (1) host sends a recursive query to the local server; (2, 3) local server asks root, gets a referral to .edu; (4, 5) asks .edu, gets a referral to umass.edu's authoritative server; (6, 7) asks it, gets the A record; (8) returns the answer to the host. Queries 2 to 7 are iterative. Close with caching: every server caches replies for the record's TTL, so most lookups skip the root.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=mpQZVYPuDGU",
+    "title": "PowerCert: How a DNS server works",
+    "kind": "video",
+    "why": "Animated resolver, root, TLD and authoritative walk, the same sequence as the DnsWalk above."
+  },
+  {
+    "href": "https://messwithdns.net/",
+    "title": "Mess With DNS (Julia Evans)",
+    "kind": "tool",
+    "why": "A free subdomain you can add A, CNAME and MX records to, with a live log of every query that hits it. The fastest way to make TTLs and caching concrete."
+  },
+  {
+    "href": "https://howdns.works/",
+    "title": "How DNS Works (comic)",
+    "kind": "blog",
+    "why": "An illustrated comic of a resolution, including caching and TTLs. Ten minutes."
+  },
+  {
+    "href": "https://www.youtube.com/watch?v=27r4Bzuj5NQ",
+    "title": "ByteByteGo: Everything you need to know about DNS",
+    "kind": "video",
+    "why": "The system-design view: record types, TTLs, and how DNS is used for load balancing and failover."
+  }
+]} />

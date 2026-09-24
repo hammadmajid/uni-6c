@@ -1,0 +1,208 @@
+No notes. This covers lectures 1 and 2, which is likely to be the scope of quiz 1 (4.5 marks). Attempt every item before revealing; anything you miss goes into your review queue. The slides' own wording is marked where it differs from the textbook. Write the lecture's version on the quiz and add the textbook's precision in one clause.
+
+## Short answers
+
+<QuickCheck
+  id="cp-turing-year"
+  question="In which year did Alan Turing publish 'Computing Machinery and Intelligence'?"
+  options={["1943", "1950", "1956", "1966"]}
+  answer="1950"
+  explanation="1950, in the journal Mind. 1956 is the Dartmouth workshop; 1966 is ELIZA; 1943 is McCulloch and Pitts' artificial neuron."
+  feedback={{
+    "1943": "1943 is McCulloch and Pitts' model of an artificial neuron, not Turing's paper.",
+    "1956": "1956 is the Dartmouth workshop, the conventional birth of AI as a field.",
+    "1966": "1966 is ELIZA, the pattern-matching chatbot."
+  }}
+/>
+
+<QuickCheck
+  id="cp-dartmouth"
+  question="According to the lecture slides, which event is considered the birth of AI as a field?"
+  options={["Turing's 1950 paper", "The Dartmouth workshop, 1956", "Deep Blue beating Kasparov", "The first expert system, DENDRAL"]}
+  answer="The Dartmouth workshop, 1956"
+  explanation="The slide: '1956: Dartmouth Workshop, considered the birth of AI as a field.' The name itself comes from the proposal for that workshop (1955), which the slide misdates as 1957."
+  feedback={{
+    "Turing's 1950 paper": "Turing's paper came first and is foundational, but the field was born, and named, around Dartmouth.",
+    "Deep Blue beating Kasparov": "That was 1997, a milestone for a field already forty years old.",
+    "The first expert system, DENDRAL": "DENDRAL (from 1964–65) was the first expert system, not the start of the field."
+  }}
+/>
+
+<QuickCheck
+  id="cp-four-approaches"
+  question="Russell and Norvig adopt which of the four approaches to AI as the basis of their book?"
+  options={["Thinking humanly", "Thinking rationally", "Acting humanly", "Acting rationally"]}
+  answer="Acting rationally"
+  explanation="The rational-agent approach: build agents that do the right thing, meaning the action expected to maximise the performance measure. It is more general than 'laws of thought' (correct inference is only one way to act well) and more testable than imitating humans."
+  feedback={{
+    "Thinking humanly": "That is cognitive modelling, the domain of cognitive science. The textbook does not build on it.",
+    "Thinking rationally": "Correct inference is one route to rational action, but it is not the whole of it. Reflexes (pulling your hand off a hot stove) are rational without deliberation.",
+    "Acting humanly": "That is the Turing test approach. The book discusses it but does not adopt it."
+  }}
+/>
+
+<QuickCheck
+  id="cp-percept-seq"
+  question="The complete history of everything an agent has ever perceived is called its:"
+  options={["Percept", "Percept sequence", "Agent function", "Internal state"]}
+  answer="Percept sequence"
+  explanation="A percept is one instant's input; the percept sequence is all of them to date. The agent function maps percept sequences to actions."
+  feedback={{
+    "Percept": "A percept is the input at a single instant, not the history.",
+    "Agent function": "The agent function is the mapping from percept sequences to actions, not the sequence itself.",
+    "Internal state": "Internal state is what a model-based agent derives from the percept sequence. It is usually a summary, not the complete history."
+  }}
+/>
+
+<QuickCheck
+  id="cp-agent-eq"
+  type="short-answer"
+  question="Complete the lecture's equation: Agent = ______ + Program."
+  answer={["architecture", "Architecture"]}
+  explanation="Agent = architecture + program. The architecture is the device with sensors and actuators; the program implements the agent function on it."
+/>
+
+<QuickCheck
+  id="cp-rational-def"
+  type="true-false"
+  question="A rational agent is one that always knows the actual outcome of its actions and picks the best one."
+  answer="False"
+  explanation="That describes an omniscient agent. A rational agent picks the action with the best expected performance given its percepts and built-in knowledge. The slide's wording, 'always performs the right action', means the right action given what it knows."
+/>
+
+<QuickCheck
+  id="cp-peas-a"
+  question="In PEAS for a part-picking robot, 'jointed arm and hand' is the:"
+  options={["Performance measure", "Environment", "Actuators", "Sensors"]}
+  answer="Actuators"
+  explanation="From the lecture's table: P = percentage of parts in correct bins, E = conveyor belt with parts and bins, A = jointed arm and hand, S = camera and joint angle sensors."
+  feedback={{
+    "Performance measure": "The performance measure is the percentage of parts in the correct bins.",
+    "Environment": "The environment is the conveyor belt with parts, and the bins.",
+    "Sensors": "The sensors are the camera and the joint angle sensors. The arm moves things, so it is an actuator."
+  }}
+/>
+
+<QuickCheck
+  id="cp-reflex-condition"
+  question="A simple reflex agent acts rationally only when the environment is:"
+  options={["Fully observable", "Multi-agent", "Continuous", "Stochastic"]}
+  answer="Fully observable"
+  explanation="It decides on the current percept alone, so everything relevant must be visible in that percept. Otherwise it needs internal state: a model-based agent."
+  feedback={{
+    "Multi-agent": "Whether there are other agents is not the condition. A reflex agent can play against others if it can see everything it needs.",
+    "Continuous": "Continuous values make rule tables awkward, but the defining condition is observability.",
+    "Stochastic": "Randomness makes things harder for every agent type. The reflex agent's specific weakness is not seeing the whole state."
+  }}
+/>
+
+<QuickCheck
+  id="cp-critic"
+  question="In a learning agent, which component tells the learning element how well the agent is doing with respect to a fixed performance standard?"
+  options={["Performance element", "Critic", "Problem generator", "Actuator"]}
+  answer="Critic"
+  explanation="The critic compares behaviour with the external performance standard and feeds that back to the learning element, which changes the performance element."
+  feedback={{
+    "Performance element": "The performance element selects external actions. It is the part being improved, not the part that judges.",
+    "Problem generator": "The problem generator suggests exploratory actions that lead to new, informative experiences.",
+    "Actuator": "Actuators carry out actions. They play no part in evaluating the agent."
+  }}
+/>
+
+<QuickCheck
+  id="cp-limitation"
+  question="A self-driving system trained only on sunny California roads performs badly in Islamabad's monsoon rain. Which of the lecture's limitations of AI does this illustrate most directly?"
+  options={["Generalisation challenges", "Energy consumption", "Ethical and privacy concerns", "High development costs"]}
+  answer="Generalisation challenges"
+  explanation="The model works on data like its training data and fails on conditions it never saw. Data dependency is a close second: the real fix is more varied training data."
+  feedback={{
+    "Energy consumption": "Nothing here is about the power the system uses.",
+    "Ethical and privacy concerns": "Safety has ethical weight, but the failure itself is the model not transferring to new conditions.",
+    "High development costs": "Cost is not the failure described. The model breaks outside its training distribution."
+  }}
+/>
+
+<OrderCheck
+  id="cp-turing-steps"
+  prompt="Order the lecture's description of how the Turing test works."
+  items={["Setup: a judge converses by text through a terminal, not knowing who is on the other end", "Participants: one human respondent and one machine", "Goal: the machine tries to be indistinguishable from the human", "Evaluation: if the judge cannot reliably tell them apart, the machine passes"]}
+  explanation="Setup, participants, goal, evaluation: the order of the lecture's 'Turing Test Working' slide."
+  topLabel="First"
+  bottomLabel="Last"
+/>
+
+## Numerical
+
+<QuickCheck
+  id="cp-table-rows"
+  type="numeric"
+  unit="rows"
+  question="An agent has 3 possible percepts. How many rows does a table-driven agent need to cover every percept sequence of length 1 up to 4?"
+  answer={120}
+  explanation="3 + 9 + 27 + 81 = 120. The trap is counting only sequences of length 4 (81 rows): the table needs a row for every history at every step. That growth is why agents are written as programs, not tables."
+/>
+
+## Long answers
+
+Write what you would put on the paper, then reveal. Mark yourself against the model answer: each bolded term is roughly one mark.
+
+<Predict
+  id="cp-long-peas-drone"
+  prompt="Give a PEAS description for an autonomous drone that delivers medicines from a hospital to rural clinics. (4 marks)"
+  answer="P: medicine delivered to the correct clinic, on time, intact, at the right temperature; safety (no collisions); low battery and energy use; legal airspace. E: sky and weather, terrain, buildings, other aircraft and birds, hospital and clinic landing pads, clinic staff. A: rotors and motors, payload release, lights and speaker, radio link. S: GPS, cameras, altimeter, IMU (accelerometer, gyroscope), lidar or ultrasonic range sensors, battery sensor, payload temperature sensor, radio receiver."
+  placeholder="P: … E: … A: … S: …"
+>
+
+Full marks need three or more items under each heading and **no category errors**:
+
+- **P**erformance measure is a criterion, not a thing: "delivered on time and intact", "no collisions", "minimum energy".
+- **E**nvironment is the world it operates in: weather, terrain, other aircraft, the landing pads, the clinic staff who receive the package.
+- **A**ctuators are what it acts with: rotors and motors, payload release, lights and speaker.
+- **S**ensors are what it perceives with: GPS, cameras, altimeter, IMU, range sensors, battery and payload temperature sensors.
+
+The usual slip is listing "clinic staff" as a sensor, or "GPS" as the environment.
+
+</Predict>
+
+<Predict
+  id="cp-long-agent-type"
+  prompt="For each of the following, name the simplest suitable agent type and justify it in one line: (a) an automatic door that opens when its motion sensor fires; (b) a chess program that searches moves ahead to reach checkmate; (c) a ride-hailing dispatcher that assigns drivers by trading off pickup time, fare and driver rating; (d) a spam filter that improves as users mark messages as spam. (4 marks)"
+  answer="(a) Simple reflex: one condition–action rule on the current percept. (b) Goal-based: it predicts the results of move sequences and chooses moves that lead to the goal, checkmate. (c) Utility-based: many assignments work, and conflicting objectives must be traded off with a numeric utility. (d) Learning agent: user labels act as the critic's feedback and the filter changes its own classification rules."
+>
+
+- **(a) Simple reflex.** One rule, "motion detected → open", on the current percept only. No memory needed.
+- **(b) Goal-based.** It looks ahead ("what if I play this move?") to reach a goal state, checkmate. A strong engine also scores positions, which makes it utility-based; either answer earns the mark if justified.
+- **(c) Utility-based.** Every assignment "achieves the goal" of serving the rider. Choosing among them means trading off conflicting objectives, which needs a utility.
+- **(d) Learning.** The users' "mark as spam" clicks are the critic's feedback against a standard. The learning element updates the performance element, the classifier.
+
+</Predict>
+
+<Predict
+  id="cp-long-function-program"
+  prompt="Differentiate between the agent function and the agent program, using the vacuum-cleaner world as an example. (3 marks)"
+  answer="The agent function is an abstract mathematical mapping from every possible percept sequence to an action, F: P* → A; for the vacuum world it is a table such as [A, Clean] → Right, [A, Dirty] → Suck, [A, Clean], [A, Clean] → Right, which grows without bound. The agent program is concrete code that implements the function on the architecture, for example REFLEX-VACUUM-AGENT: if status = Dirty then Suck, else if location = A then Right, else Left. Four lines of program implement an infinite table."
+>
+
+**Agent function**: abstract, a mapping from percept sequences to actions (F : P* → A). It can be written as a table, usually an infinite one. Vacuum example: [A, Dirty] → Suck; [A, Clean] → Right; [A, Clean], [A, Clean] → Right; and so on, one row per history.
+
+**Agent program**: concrete code running on the architecture that implements the function with finite memory. Vacuum example: REFLEX-VACUUM-AGENT, which checks whether the square is dirty and otherwise moves to the other square.
+
+**The point**: a four-line program implements an unbounded table, and designing such programs is the job of AI.
+
+</Predict>
+
+<Predict
+  id="cp-long-human-ai"
+  prompt="'AI is not a substitute for human intelligence; it is a tool to assist and augment it.' Discuss, referring to the characteristics of human intelligence and the limitations of AI. (5 marks)"
+  answer="Humans: adaptability, creativity, emotional intelligence, common sense, contextual understanding, social interaction, moral judgement; limited by bias, errors and slow processing. AI: fast, accurate, tireless on repetitive work and large datasets; limited by lack of common sense and context, data dependency, bias, interpretability, ethics and privacy, security, energy and cost, and poor generalisation. Conclusion: the strengths are complementary, so the best systems pair them, with AI for scale and speed and humans for judgement, context and accountability."
+>
+
+A five-mark structure:
+
+1. **Human strengths** (1 mark): adaptability, creativity, emotional intelligence, common sense and context, social interaction, ethical judgement.
+2. **Human limits** (0.5): cognitive bias, errors of judgement, slow processing.
+3. **AI strengths** (1): speed and accuracy, repetitive tasks without fatigue, patterns in large datasets.
+4. **AI limitations** (1.5): name at least four from the four groups: knowing (common sense, generalisation), data (dependency, bias), trust (interpretability, ethics and privacy, security), cost (energy, development). Give one example, such as a biased loan model.
+5. **Conclusion** (1): the strengths complement each other, so AI augments rather than replaces. Human–machine collaboration is itself on the lecture's list. Quote Fei-Fei Li.
+
+</Predict>

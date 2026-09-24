@@ -1,0 +1,119 @@
+The last lesson said HTTP is stateless. Your shopping cart disagrees. This short lesson covers the two things Kurose adds on top of plain HTTP: **cookies**, which give a stateless protocol memory, and **web caches**, which stop the same bytes crossing the same slow link twice.
+
+<Callout type="exam" title="Scope check">
+Lecture 08 goes straight from persistent HTTP to FTP, so neither topic is on the slides. Both are in Kurose 2.2.4 and 2.2.5, and the outline just says 'http', so a short question is possible. The access-link numerical is also a good revision of week 2's traffic intensity.
+</Callout>
+
+<Predict
+  id="cart-state"
+  prompt="HTTP servers keep no memory of past requests. Yet an online shop remembers your cart across tabs and days without you logging in. Where exactly is that state stored, and what travels in every request to connect you to it?"
+  answer="The cart lives in the shop's back-end database, keyed by an ID number. The browser stores only that ID in a cookie file and sends it in a Cookie header with every request to the site. The protocol stays stateless; the state is in the endpoints."
+>
+
+**Split in two.** The shop's back-end database holds the cart, keyed by an ID number it made up on your first visit. Your browser holds only that ID, in its cookie file, and attaches it to every request to that site in a `Cookie:` header. HTTP itself stays stateless. The state lives at the two ends, and a small header ties them together.
+
+</Predict>
+
+## Cookies: four components
+
+1. A **Set-Cookie** header line in an HTTP **response**.
+2. A **Cookie** header line in later HTTP **requests**.
+3. A **cookie file** on the user's host, managed by the browser.
+4. A **back-end database** at the website.
+
+<Timeline
+  title="Susan's first and later visits to a shop"
+  events={[
+    { "label": "Visit 1", "description": "Susan's browser sends a plain GET to the shop. No Cookie header: the shop has never seen this browser.", "detail": "GET /index.html HTTP/1.1" },
+    { "label": "Create ID", "description": "The server makes up an ID, 1678, and creates a row for it in its back-end database.", "detail": "INSERT INTO sessions (id) VALUES (1678)" },
+    { "label": "Set-Cookie", "description": "The response carries the ID back. The browser appends the shop's host name and 1678 to its cookie file.", "detail": "HTTP/1.1 200 OK  ·  Set-Cookie: id=1678" },
+    { "label": "Every later request", "description": "Every request to that host now carries the ID, whether a minute or a week later.", "detail": "GET /cart HTTP/1.1  ·  Cookie: id=1678" },
+    { "label": "Cookie-specific action", "description": "The server looks 1678 up in the database and returns Susan's cart, recommendations, or logged-in page.", "detail": "SELECT * FROM carts WHERE session = 1678" }
+  ]}
+/>
+
+This is exactly the session middleware you have configured: a `Set-Cookie: sid=...; HttpOnly; Secure` on login and a Redis or Postgres table keyed by `sid`. Cookies are how sites keep login sessions, shopping carts and recommendations, and, with **third-party cookies** set by an ad network embedded on many sites, how you get tracked across sites.
+
+<QuickCheck
+  id="cookie-where"
+  question="In the cookie mechanism, where is Susan's shopping cart itself stored?"
+  options={["In the cookie file on Susan's computer", "In the Cookie header of each request", "In the website's back-end database, keyed by her cookie ID", "In the HTTP server's memory for the lifetime of the TCP connection"]}
+  answer="In the website's back-end database, keyed by her cookie ID"
+  explanation="The cookie is only an identifier. The data it identifies lives server-side. That is why clearing cookies logs you out: the browser forgets the ID, and the server's rows become unreachable."
+  feedback={{
+    "In the cookie file on Susan's computer": "The cookie file holds only the ID (1678). Storing the cart client-side would let Susan edit her own prices.",
+    "In the Cookie header of each request": "The header carries the ID, not the cart. It is a few bytes per request.",
+    "In the HTTP server's memory for the lifetime of the TCP connection": "Connections close and HTTP is stateless. Carts survive for days, across many connections."
+  }}
+/>
+
+## Web caches
+
+A **web cache** (or **proxy server**) answers HTTP requests on behalf of an origin server. The browser is configured to send every request to the cache. On a hit, the cache answers from its own copy; on a miss, it fetches the object from the origin, keeps a copy, and answers. The cache is a server to the browser and a client to the origin at the same time.
+
+Why bother? The cache usually sits inside the institution, so a hit is fast (LAN speed, not Internet round trips) and it takes load off the **access link**, the institution's paid-for pipe to its ISP.
+
+<WorkedExample title="Kurose's institutional cache, with week 2's traffic intensity">
+  <Step label="Set up">
+    An institution's LAN runs at 100 Mbps and its access link at 15 Mbps. Browsers request 15 objects per second, each 1 Mbit on average. Round trip from the access router to origin servers: 2 s.
+  </Step>
+  <Step label="Intensity on the access link, no cache" tryFirst="Traffic intensity is arrival rate of bits divided by link rate.">
+    15 requests/s × 1 Mbit = 15 Mbps of traffic onto a 15 Mbps link. Intensity = **1.0**. From week 2: as La/R approaches 1, queueing delay grows without bound. Response times climb to minutes.
+  </Step>
+  <Step label="Option A: buy a 100 Mbps access link">
+    Intensity drops to 0.15. Response time ≈ 2 s. Works, but the institution pays for a much bigger link every month.
+  </Step>
+  <Step label="Option B: install a cache with a 40% hit rate" tryFirst="What intensity does the access link see now?">
+    Only 60% of requests cross the access link: 0.6 × 15 Mbps = 9 Mbps, so intensity = **0.6**. Queueing delay on the link becomes small, tens of milliseconds. Average response ≈ 0.4 × (a few ms, from the LAN) + 0.6 × (about 2.01 s) ≈ **1.2 s**, faster than option A, on the old link.
+  </Step>
+</WorkedExample>
+
+<QuickCheck
+  id="cache-intensity"
+  type="numeric"
+  question="An access link runs at 20 Mbps. Browsers request 16 objects per second, each 1 Mbit on average. A cache with a hit rate of 0.5 is installed. What is the traffic intensity on the access link (a pure number)?"
+  answer={0.4}
+  explanation="Only misses cross the access link: 16 × 0.5 = 8 objects/s × 1 Mbit = 8 Mbps. 8 ÷ 20 = 0.4. Without the cache it would be 16 ÷ 20 = 0.8. Watch the unit: Mbit is megabits. If a question says MB (megabytes), multiply by 8 first."
+/>
+
+## Conditional GET: is my copy still fresh?
+
+A cache's copy may be stale. HTTP lets the cache check cheaply: it adds an **If-Modified-Since** header set to the Last-Modified date the origin gave it. If the object has not changed, the origin replies **304 Not Modified** with **no body**.
+
+<ConditionalGet />
+
+<QuickCheck
+  id="cond-get-304"
+  question="A cache sends a GET with If-Modified-Since, and the object has not changed. What does the origin server send back?"
+  options={["200 OK with the object", "304 Not Modified with an empty body", "404 Not Found", "Nothing; the cache times out and uses its copy"]}
+  answer="304 Not Modified with an empty body"
+  explanation="The whole saving is the missing body. The 304 carries only headers, so a large image costs a few hundred bytes to revalidate instead of its full size."
+  feedback={{
+    "200 OK with the object": "That is what happens when the object has changed since that date. Unchanged means no body.",
+    "404 Not Found": "404 means the object does not exist at all. Unchanged is not missing.",
+    "Nothing; the cache times out and uses its copy": "HTTP always answers a request. Silence would leave the cache waiting and learning nothing."
+  }}
+/>
+
+Your browser does the same thing with its own local cache, and today it usually uses `ETag` with `If-None-Match` instead of dates. Open the Network tab, reload a page, and the grey 304s are conditional GETs.
+
+<Deeper kind="beyond" title="CDNs: caches placed by the content provider">
+
+A **content distribution network** (CDN) is the same idea turned around. Instead of the institution installing a cache for its users, the content provider (Netflix, YouTube) or a CDN company (Cloudflare, Akamai) puts caches inside or near many ISPs, and DNS sends each user to a nearby one. When you put Cloudflare in front of your VPS, your VPS becomes the origin server in the figure above and Cloudflare's edge is the proxy cache. The `cf-cache-status: HIT` response header tells you which path a request took. Kurose covers CDNs in 2.6.3.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching",
+    "title": "MDN: HTTP caching",
+    "kind": "docs",
+    "why": "Freshness, revalidation, ETag and Cache-Control, i.e. what conditional GET became. Directly useful for your own Nginx config."
+  },
+  {
+    "href": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies",
+    "title": "MDN: Using HTTP cookies",
+    "kind": "docs",
+    "why": "Set-Cookie attributes (Secure, HttpOnly, SameSite) and third-party cookies, with request and response examples."
+  }
+]} />

@@ -1,0 +1,163 @@
+{
+  "slug": "ai-lab",
+  "code": "CSCL 4101",
+  "short": "AI Lab",
+  "title": "Artificial Intelligence Lab",
+  "description": "The AI course, in Python. Two weeks of Python for someone who already codes, then agents, uninformed and heuristic search, expert systems, and after the midterm the classic machine-learning models from linear regression to multi-layer networks. No lab manuals yet: each lab here is built from the outline and the tasks posted on Google Classroom, and adapted when manuals arrive.",
+  "textbook": "Russell & Norvig, Artificial Intelligence: A Modern Approach (4th ed). Reference: Hemalatha, Artificial Intelligence Laboratory Manual (Python-Based).",
+  "modules": [
+    {
+      "slug": "lab-01",
+      "week": 1,
+      "title": "Lab 01: Python for someone who already codes",
+      "outline": "Python introduction: basics, loops, functions. Built from the outline alone (no manual or task was posted); here it is the traps a JavaScript or Java developer hits in their first hour of Python.",
+      "lessons": [
+        {
+          "slug": "python-for-coders",
+          "title": "Python for someone who already codes",
+          "minutes": 35,
+          "objective": "predict the output of Python snippets that trip up JavaScript and Java developers: truthiness, half-open ranges, floor division, mutable defaults, for/else, and multiple return values."
+        }
+      ]
+    },
+    {
+      "slug": "lab-02",
+      "week": 2,
+      "title": "Lab 02: Tuples, sets, lists, dictionaries",
+      "outline": "Python data structures: tuples, sets, lists and dictionaries. Class Task 1 (in lab, due 21 Sep) and Lab Task 1 (home, due 22 Sep) both exercise them on student, course, book and shopping-cart records.",
+      "lessons": [
+        {
+          "slug": "choosing-a-collection",
+          "title": "Choosing a collection",
+          "minutes": 40,
+          "objective": "pick the right one of tuple, list, set and dict for a job, explain mutability and hashability, and use set algebra, comprehensions, dict.get and key functions without looking them up."
+        },
+        {
+          "slug": "task-1-worked",
+          "title": "Class Task 1 and Lab Task 1, worked",
+          "minutes": 30,
+          "kind": "checkpoint",
+          "objective": "write all ten task answers from scratch, then compare with idiomatic solutions and the edge cases each question hides."
+        }
+      ]
+    },
+    {
+      "slug": "lab-03",
+      "week": 3,
+      "title": "Lab 03: Simple-reflex and goal-based agents",
+      "outline": "Implementation of simple-reflex and goal-based agents. No manual yet; built on the Russell and Norvig vacuum world that AI lecture 2 uses, so the code mirrors the theory. Adapt when the manual is posted.",
+      "lessons": [
+        {
+          "slug": "reflex-vacuum-agent",
+          "title": "A reflex vacuum agent in Python",
+          "minutes": 35,
+          "objective": "write an environment class, a percept, and a condition-action agent, run the sense-act loop, and score it with a performance measure."
+        },
+        {
+          "slug": "goal-based-vacuum-agent",
+          "title": "Giving the agent memory and a goal",
+          "minutes": 35,
+          "objective": "turn the reflex agent into one that keeps a model of the world, tests a goal, and stops, and explain in code terms how the two agent types differ."
+        }
+      ]
+    },
+    {
+      "slug": "lab-04",
+      "week": 4,
+      "title": "Lab 04: Uninformed search, BFS and DFS",
+      "outline": "Uninformed search: breadth-first and depth-first search. No manual yet. Queue versus stack, the reached set, path reconstruction, and the hand-tracing questions exams ask.",
+      "lessons": [
+        {
+          "slug": "bfs-and-dfs",
+          "title": "BFS and DFS: a queue or a stack",
+          "minutes": 45,
+          "objective": "implement BFS and DFS in Python from one template, trace the frontier by hand, and say which one finds the shallowest path and why."
+        },
+        {
+          "slug": "search-tracing",
+          "title": "Search tracing checkpoint",
+          "minutes": 25,
+          "kind": "checkpoint",
+          "objective": "write the expansion order and returned path for BFS and DFS on unseen graphs, under the tie-breaking rule the question states."
+        }
+      ]
+    },
+    {
+      "slug": "lab-05",
+      "week": 5,
+      "title": "Lab 05: Greedy best-first search",
+      "outline": "Heuristic search: greedy best-first search.",
+      "lessons": []
+    },
+    {
+      "slug": "lab-06",
+      "week": 6,
+      "title": "Lab 06: A* search",
+      "outline": "A* search.",
+      "lessons": []
+    },
+    {
+      "slug": "lab-07",
+      "week": 7,
+      "title": "Lab 07: Expert systems, forward and backward chaining",
+      "outline": "Expert systems using Python, forward chaining, backward chaining.",
+      "lessons": []
+    },
+    {
+      "slug": "midterm",
+      "week": 8,
+      "title": "Midterm",
+      "outline": "Midterm examination.",
+      "lessons": []
+    },
+    {
+      "slug": "lab-09",
+      "week": 9,
+      "title": "Lab 09: Linear regression",
+      "outline": "Linear regression.",
+      "lessons": []
+    },
+    {
+      "slug": "lab-10",
+      "week": 10,
+      "title": "Lab 10: K nearest neighbours",
+      "outline": "K nearest neighbor.",
+      "lessons": []
+    },
+    {
+      "slug": "lab-11",
+      "week": 11,
+      "title": "Lab 11: Naive Bayes classification",
+      "outline": "Naïve Bayes classification.",
+      "lessons": []
+    },
+    {
+      "slug": "lab-12",
+      "week": 12,
+      "title": "Lab 12: Decision tree classification",
+      "outline": "Decision tree classification.",
+      "lessons": []
+    },
+    {
+      "slug": "lab-13",
+      "week": 13,
+      "title": "Lab 13: K-means clustering",
+      "outline": "K means clustering.",
+      "lessons": []
+    },
+    {
+      "slug": "lab-14",
+      "week": 14,
+      "title": "Lab 14: Single-layer neural networks",
+      "outline": "Classification using single-layer artificial neural networks.",
+      "lessons": []
+    },
+    {
+      "slug": "lab-15",
+      "week": 15,
+      "title": "Lab 15: Multi-layer neural networks",
+      "outline": "Classification using multi-layer artificial neural networks.",
+      "lessons": []
+    }
+  ]
+}

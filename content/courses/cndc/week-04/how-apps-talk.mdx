@@ -1,0 +1,231 @@
+You have written plenty of network applications: a frontend calling an API, an API calling Postgres, a worker pulling from Redis. This week gives names to what you were already doing, starting from the top of the stack, which is where Kurose starts too.
+
+<Predict
+  id="which-process"
+  prompt="Your VPS has one public IP. On it, Nginx listens for HTTPS, Postgres for database connections, and sshd for SSH. A packet arrives addressed to that IP. What does the kernel use to decide which of the three processes gets it, and why is the IP address alone not enough?"
+  answer="The destination port number (443, 5432, 22). The IP address only identifies the host, or more precisely one of its interfaces; many processes run on that one host, so a second number is needed to pick the process."
+>
+
+**The port.** The IP address gets the datagram to the right machine. The machine runs dozens of processes, so the transport header carries a 16-bit port number that picks one: 443 for Nginx, 5432 for Postgres, 22 for sshd. A process is addressed by **IP address + port number**, and the thing that address points at is a **socket**.
+
+</Predict>
+
+## Where application code runs
+
+Network applications run **only on end systems**. Routers and switches in the core go up to the network layer at most; they never run your code. That is why you can ship a new protocol by deploying to two machines, without asking any ISP for anything, and it is why the Web, BitTorrent and WhatsApp spread as fast as they did.
+
+<SocketDoor />
+
+<Callout type="key-idea" title="The socket is the API between the app and the network">
+A **socket** is the interface between the application layer and the transport layer inside one host. The slides call it a door: the process pushes a message out through the door and relies on the transport infrastructure on the other side to deliver it to the door of the receiving process. Above the door the developer controls everything; below it, the developer can only choose the transport protocol and a few parameters such as buffer sizes.
+</Callout>
+
+## Two architectures
+
+<AppArchitectures />
+
+| | Client-server | Peer-to-peer |
+|---|---|---|
+| Who serves | One always-on host (or a data center of them) | Intermittently connected end hosts serve each other |
+| Addressing | Server has a fixed, well-known IP address | Peers change IP addresses as they come and go |
+| Do clients talk to each other? | No, only to the server | Yes, directly |
+| Scaling | Buy more servers and bandwidth | Self-scalable: each new peer brings upload capacity |
+| Hard parts | Cost of infrastructure | Security, incentives, peers disappearing mid-transfer |
+| Examples | Web, email, your SaaS | BitTorrent, early Skype |
+
+<QuickCheck
+  id="p2p-scale"
+  question="Why is a P2P file-sharing system described as self-scalable?"
+  options={[
+    "Its peers are always on and have fixed IP addresses",
+    "Every peer that downloads also uploads, so each new peer adds service capacity as well as demand",
+    "A central server automatically adds more capacity as load grows",
+    "It uses UDP, which has no congestion control"
+  ]}
+  answer="Every peer that downloads also uploads, so each new peer adds service capacity as well as demand"
+  explanation="In client-server, a new client only adds demand on the server. In P2P, a new peer is also a new server. That is the whole economic argument for P2P."
+  feedback={{
+    "Its peers are always on and have fixed IP addresses": "That describes a server in the client-server model. Peers are the opposite: intermittent, with changing addresses.",
+    "A central server automatically adds more capacity as load grows": "There is no central server doing the serving in pure P2P. Autoscaling a server fleet is the client-server answer to load.",
+    "It uses UDP, which has no congestion control": "Transport protocol has nothing to do with it. BitTorrent actually runs over TCP (and a UDP variant, uTP)."
+  }}
+/>
+
+## Processes, clients and servers
+
+Programs do not talk; **processes** do. Two processes on the same host use inter-process communication provided by the OS (pipes, Unix sockets). Processes on different hosts exchange **messages** across the network. In every communication session one side is labelled:
+
+- **client process**: the one that **initiates** contact.
+- **server process**: the one that **waits** to be contacted.
+
+The labels are per session, not per machine. In P2P, the peer downloading a chunk is the client and the peer uploading it is the server, and a moment later they may swap.
+
+<QuickCheck
+  id="client-def"
+  type="true-false"
+  question="In a P2P file-sharing session, a peer can be a client process and a server process at different moments."
+  answer="True"
+  explanation="Client means the side that initiated this session; server means the side that waited. A peer downloading from you is your client, and when you download from it, you are its client."
+/>
+
+## Addressing a process
+
+| Service | Port | Transport |
+|---|---|---|
+| HTTP | 80 | TCP |
+| HTTPS | 443 | TCP (HTTP/3: UDP) |
+| SMTP | 25 | TCP |
+| DNS | 53 | UDP (TCP for large answers) |
+| FTP control | 21 | TCP |
+| SSH | 22 | TCP |
+
+You see this every day: `ss -ltnp` on your VPS lists every listening socket as `address:port` with its process, and `docker run -p 8080:80` maps port 8080 on the host to port 80 on a socket inside the container.
+
+<QuickCheck
+  id="process-id"
+  question="To send a message to the web server process on gaia.cs.umass.edu, the sender must know:"
+  options={[
+    "The server's MAC address and the process ID",
+    "The server's IP address and port number",
+    "The server's host name only",
+    "The server's IP address only"
+  ]}
+  answer="The server's IP address and port number"
+  explanation="IP address picks the host (128.119.245.12), port number picks the process on it (80). Together they address the socket."
+  feedback={{
+    "The server's MAC address and the process ID": "MAC addresses are only meaningful on one link, and process IDs are private to the server's OS. Neither crosses the Internet.",
+    "The server's host name only": "The name has to be turned into an IP address by DNS first, and even then you still need the port.",
+    "The server's IP address only": "This is exactly the question the slide asks. Many processes run on one host, so the IP address is not enough."
+  }}
+/>
+
+<Callout type="exam" title="The slide says: 'host device has unique 32-bit IP address'">
+Write this if asked, but know it is imprecise. An IP address belongs to an **interface**, not a host, so a VPS with two network cards has two. Behind NAT, thousands of home devices share one public address and reuse the same private addresses (192.168.1.7 exists in millions of homes). IPv6 addresses are 128 bits. Weeks 6 and 7 cover this.
+</Callout>
+
+## What an application-layer protocol defines
+
+1. **Types of messages** exchanged: request and response.
+2. **Syntax**: which fields a message has and how they are delimited.
+3. **Semantics**: what the information in each field means.
+4. **Rules** for when and how a process sends messages and responds to them.
+
+Some protocols are **open**, defined in RFCs so anyone can interoperate (HTTP, SMTP, DNS). Others are **proprietary** (Zoom, the original Skype). A web application such as Gmail is not a protocol; it uses one (HTTP) as a single piece of a larger system.
+
+<QuickCheck
+  id="protocol-defines"
+  question="Which of these is NOT something an application-layer protocol defines?"
+  options={["The types of messages exchanged", "The meaning of the fields in each message", "The route packets take through the network", "The rules for when a process sends and responds"]}
+  answer="The route packets take through the network"
+  explanation="Routing is the network layer's job, done by routers the application never controls. The application protocol defines message types, syntax, semantics and the rules for sending and responding."
+  feedback={{
+    "The types of messages exchanged": "This is item 1 on the slide: request and response messages, for example.",
+    "The meaning of the fields in each message": "This is semantics, item 3.",
+    "The rules for when a process sends and responds": "This is item 4, the rules."
+  }}
+/>
+
+## What transport service does an app need?
+
+An app picks its transport by weighing four things:
+
+| Application | Data loss | Throughput | Time-sensitive |
+|---|---|---|---|
+| File transfer, email, web documents | No loss | Elastic | No |
+| Real-time audio and video | Loss-tolerant | Audio 5 kbps to 1 Mbps, video 10 kbps to 5 Mbps | Yes, 100s of ms |
+| Streaming stored video | Loss-tolerant | Same as above | Yes, a few seconds |
+| Interactive games | Loss-tolerant | Few kbps and up | Yes, 100s of ms |
+| Text messaging | No loss | Elastic | Yes and no |
+
+The fourth dimension is **security**: encryption, data integrity, end-point authentication. **Elastic** means the app uses whatever throughput it gets; a file download is just slower on a slow link.
+
+<QuickCheck
+  id="needs-voip"
+  question="An Internet phone call is best described as:"
+  options={[
+    "Loss-intolerant, elastic, not time-sensitive",
+    "Loss-tolerant, needs a minimum throughput, time-sensitive",
+    "Loss-intolerant, needs a minimum throughput, not time-sensitive",
+    "Loss-tolerant, elastic, not time-sensitive"
+  ]}
+  answer="Loss-tolerant, needs a minimum throughput, time-sensitive"
+  explanation="A few lost audio samples are a tiny glitch, so the call is loss-tolerant. Below a minimum rate the codec cannot carry speech, and a reply arriving 2 seconds late ruins the conversation."
+  feedback={{
+    "Loss-intolerant, elastic, not time-sensitive": "That is file transfer. A phone call would rather drop a sample than wait for its retransmission.",
+    "Loss-intolerant, needs a minimum throughput, not time-sensitive": "A call is the textbook example of time-sensitive, and it tolerates loss.",
+    "Loss-tolerant, elastic, not time-sensitive": "Voice is not elastic: below the codec's rate you get no call, not a slower one."
+  }}
+/>
+
+## What the Internet actually offers: TCP and UDP
+
+| | TCP | UDP |
+|---|---|---|
+| Connection | Connection-oriented: handshake before data | Connectionless: just send |
+| Reliability | Reliable, in-order byte stream | Unreliable: loss and reordering possible |
+| Flow control | Yes: sender will not overwhelm the receiver | No |
+| Congestion control | Yes: throttles the sender when the network is overloaded | No |
+| Timing, throughput guarantee | No | No |
+| Security | No, unless TLS is added on top | No |
+
+Neither protocol offers timing or throughput guarantees; applications cope by design (buffering, adaptive bitrate). So why use UDP at all? It has no handshake delay, no congestion control deciding your sending rate, a smaller header, and it lets the application build exactly the reliability it wants on top. QUIC, which carries HTTP/3, is exactly that: TCP-like reliability plus TLS, rebuilt in user space over UDP.
+
+| Application | App-layer protocol | Transport |
+|---|---|---|
+| Email | SMTP (RFC 5321) | TCP |
+| Remote terminal | Telnet, today SSH | TCP |
+| Web | HTTP/1.1 and HTTP/2, HTTP/3 (RFC 9110 to 9114) | TCP; UDP for HTTP/3 |
+| File transfer | FTP (RFC 959) | TCP |
+| Streaming | HTTP (DASH) | TCP |
+| Internet telephony | SIP, RTP, proprietary | Usually UDP |
+
+<QuickCheck
+  id="tcp-no-timing"
+  question="Which service does TCP provide?"
+  options={["A guaranteed minimum throughput", "A bound on end-to-end delay", "Congestion control", "Encryption of the byte stream"]}
+  answer="Congestion control"
+  explanation="TCP provides reliable in-order delivery, flow control and congestion control, and is connection-oriented. It provides no timing or throughput guarantees and no security."
+  feedback={{
+    "A guaranteed minimum throughput": "No Internet transport protocol offers this. The network core is packet-switched and makes no reservations.",
+    "A bound on end-to-end delay": "TCP will retransmit until data arrives, which can take arbitrarily long. No delay bound.",
+    "Encryption of the byte stream": "Plain TCP sends cleartext. Encryption comes from TLS layered on top."
+  }}
+/>
+
+<Callout type="exam" title="The slides say 'SSL'">
+The slides call it **SSL** (Secure Sockets Layer) and say it gives an encrypted TCP connection, data integrity and end-point authentication, implemented as a library at the application layer. All true of its successor. SSL itself was retired years ago (SSL 3.0 was formally deprecated in 2015); what your Nginx speaks is **TLS** 1.2 or 1.3. On the exam, write "SSL/TLS" and you match the slide while being correct. The slide's RFC numbers are also old: HTTP is RFC 9110 now (not 2616), SMTP is RFC 5321 (not 2821).
+</Callout>
+
+<Deeper kind="beyond" title="The P2P numbers: why BitTorrent beats a server for big files">
+
+Kurose gives a distribution-time bound. A file of F bits goes to N peers. The server uploads at `u_s`, each peer uploads at `u`, and the slowest peer downloads at `d_min`.
+
+- **Client-server**: the server must push N copies, so `D_cs ≥ max(N·F / u_s, F / d_min)`. It grows **linearly** in N.
+- **P2P**: the server pushes at least one copy, and total upload capacity grows with N: `D_p2p ≥ max(F / u_s, F / d_min, N·F / (u_s + N·u))`. As N grows, the last term levels off at F / u, so the time **flattens**.
+
+With F = 1 GB (8 × 10⁹ bits), `u_s` = 100 Mbps, `u` = 5 Mbps, fast downloaders and 1000 peers: client-server needs at least 80,000 s (22 hours); P2P needs about 8 × 10¹² ÷ 5.1 × 10⁹ ≈ 1,570 s (26 minutes). This is why Linux ISOs are distributed by torrent.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: compare client-server and P2P architectures (5 marks)">
+
+Define both in one sentence each. **Client-server**: an always-on server host with a fixed, well-known IP address serves requests from clients, which do not communicate with each other directly; large services use data centers to scale. **P2P**: minimal or no reliance on always-on servers; intermittently connected peers with changing IP addresses communicate directly, each both requesting and providing service.
+
+Then contrast three points: scalability (P2P is self-scalable, client-server needs more infrastructure); management (P2P is harder: peers leave, addresses change, security and incentives are hard); cost (client-server pays for servers and bandwidth, P2P spreads cost to peers). Examples: the Web and email for client-server, BitTorrent for P2P.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=uwoD5YsGACg",
+    "title": "PowerCert: TCP vs UDP comparison",
+    "kind": "video",
+    "why": "An animated side-by-side of the two transport services in the table above, pitched at exactly this level."
+  },
+  {
+    "href": "https://gaia.cs.umass.edu/kurose_ross/interactive/",
+    "title": "Kurose interactive problems, chapter 2",
+    "kind": "tool",
+    "why": "Randomised versions of the HTTP timing and P2P distribution numericals, with answers. Use them after the next lesson."
+  }
+]} />

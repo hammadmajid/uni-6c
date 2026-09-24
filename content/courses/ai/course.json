@@ -1,0 +1,51 @@
+{
+  "slug": "ai",
+  "code": "CSC 4101",
+  "short": "AI",
+  "title": "Artificial Intelligence",
+  "description": "AI as the design of rational agents: what an agent perceives, what it does, and how its program decides. Starts from the definitions and the Turing test, then builds up from reflex agents to search, knowledge, uncertainty and learning. Built week by week from Awais Nawaz's slides; no theory outline yet, so the roadmap grows as lectures arrive. Marks: 4 quizzes × 4.5, 4 assignments × 3, midterm 30, final 40.",
+  "textbook": "Russell & Norvig, Artificial Intelligence: A Modern Approach (4th ed., 2020). The slides follow chapters 1 and 2 closely, including the book's figures.",
+  "modules": [
+    {
+      "slug": "week-01",
+      "week": 1,
+      "title": "What AI is, and where it came from",
+      "outline": "Lecture 1. Definitions of AI and intelligence, why AI matters, the Turing test, a history from Turing (1950) to AlphaGo, the AI winters, human versus artificial intelligence, and the limitations of AI.",
+      "lessons": [
+        {
+          "slug": "what-is-ai",
+          "title": "What AI is, the Turing test, and a short history",
+          "minutes": 45,
+          "objective": "place any definition of AI on the thinking/acting × human/rational grid, explain how the Turing test works and why it matters, date the milestones correctly, and name AI's limitations with an example of each."
+        }
+      ]
+    },
+    {
+      "slug": "week-02",
+      "week": 2,
+      "title": "Intelligent agents",
+      "outline": "Lecture 2. Agents, sensors and actuators, percepts and percept sequences, the agent function and agent program, the vacuum-cleaner world, rationality, PEAS, and the five agent types: simple reflex, model-based reflex, goal-based, utility-based, learning.",
+      "lessons": [
+        {
+          "slug": "agents-and-rationality",
+          "title": "Agents, the vacuum world, rationality and PEAS",
+          "minutes": 50,
+          "objective": "define an agent and its vocabulary precisely, tell the agent function from the agent program, say what makes an action rational (and what does not), and write a PEAS description for any agent."
+        },
+        {
+          "slug": "five-agent-types",
+          "title": "The five agent types",
+          "minutes": 45,
+          "objective": "draw and explain the simple reflex, model-based, goal-based, utility-based and learning agent architectures, and pick the right one for a scenario with a reason."
+        },
+        {
+          "slug": "week-2-checkpoint",
+          "title": "Lectures 1 and 2 checkpoint",
+          "minutes": 30,
+          "kind": "checkpoint",
+          "objective": "answer quiz-style questions on lectures 1 and 2 without notes, including PEAS and agent-type long answers."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+Lab 03 ended with the point that a real goal-based agent has to find a sequence of actions that reaches its goal. Search is how it finds one. Both algorithms in this lesson run the same loop: take a node off the frontier, expand it, and put its neighbours on the frontier. The only difference is whether the frontier is a queue or a stack, and that one choice decides which path comes back.
+
+<Predict
+  id="bfs-dfs-paths"
+  prompt="In the graph below, search from A to G. Neighbours are always considered in alphabetical order. Which path does BFS return, and which does DFS return? (Edges: A–B, A–C, B–D, B–E, C–F, C–G, D–H, E–H, G–H.)"
+  answer="BFS returns A → C → G (2 edges). DFS returns A → B → D → H → G (4 edges)."
+>
+
+**BFS: A → C → G.** It expands everything one edge from A (B, C), then everything two edges away. G is two edges away, so it is found on that layer, and the path is as short as possible in edges.
+
+**DFS: A → B → D → H → G.** It goes as deep as it can down the alphabetically first branch: A, B, D, H. From H it tries E (a dead end) and then G. It found a path, but not the shortest one.
+
+Step through both below with the strategy switch. Watch the amber frontier: at the front of the queue for BFS, on top of the stack for DFS.
+
+</Predict>
+
+<PySearchLab />
+
+## The frontier decides everything
+
+| | BFS | DFS |
+|---|---|---|
+| Frontier | queue, FIFO: `deque.popleft()` | stack, LIFO: `list.pop()` |
+| Expands | shallowest node first, layer by layer | deepest node first, one branch at a time |
+| Path returned | fewest edges | whichever branch reaches the goal first |
+| Complete (finds a path if one exists)? | yes, on a finite graph | yes on a finite graph, if it tracks explored nodes |
+| Optimal? | yes, when every step costs the same | no |
+| Memory | O(b^d): a whole layer is on the frontier | O(b·m): one branch plus its siblings |
+
+Here b is the branching factor, d the depth of the shallowest goal, and m the maximum depth. The memory row is why DFS still matters: in a wide tree, BFS's frontier grows exponentially before it finds anything.
+
+<QuickCheck
+  id="bfs-queue"
+  question="BFS on the lab graph from A, alphabetical order, goal G. After A and B have been expanded, what is in the queue, front first?"
+  options={["C, D, E", "D, E, C", "C", "E, D, C"]}
+  answer="C, D, E"
+  explanation="Expanding A enqueues B then C. Expanding B dequeues B and appends D then E behind C. A queue serves in arrival order, so C (from layer 1) comes out before D and E (layer 2)."
+  feedback={{
+    "D, E, C": "That is what a stack would give you, with the newest items first. BFS appends new nodes to the back.",
+    "C": "Expanding B adds its unreached neighbours D and E. A is already reached, so only A is skipped.",
+    "E, D, C": "That is the stack order with a reverse push, which is DFS's frontier, not BFS's."
+  }}
+/>
+
+## BFS in Python
+
+```python
+from collections import deque
+
+graph = {
+    "A": ["B", "C"],
+    "B": ["A", "D", "E"],
+    "C": ["A", "F", "G"],
+    "D": ["B", "H"],
+    "E": ["B", "H"],
+    "F": ["C"],
+    "G": ["C", "H"],
+    "H": ["D", "E", "G"],
+}
+
+def path_to(parent, node):
+    path = []
+    while node is not None:
+        path.append(node)
+        node = parent[node]
+    return path[::-1]
+
+def bfs(graph, start, goal):
+    frontier = deque([start])         # FIFO queue
+    parent = {start: None}            # also the "reached" set
+    order = []
+    while frontier:
+        node = frontier.popleft()
+        order.append(node)
+        if node == goal:
+            return path_to(parent, goal), order
+        for nbr in sorted(graph[node]):
+            if nbr not in parent:
+                parent[nbr] = node
+                frontier.append(nbr)
+    return None, order
+
+print(bfs(graph, "A", "G"))
+# (['A', 'C', 'G'], ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+```
+
+The `parent` dict does two jobs. It records how each node was first reached, so `path_to` can walk back from the goal. It is also the set of nodes already reached, so a node is never enqueued twice. Drop that check and an undirected graph loops forever: A enqueues B, B enqueues A, and so on.
+
+<QuickCheck
+  id="deque-why"
+  question="Why deque.popleft() and not list.pop(0) for the BFS queue?"
+  options={["list.pop(0) shifts every remaining element, so it is O(n); popleft is O(1)", "list.pop(0) removes the last element, not the first", "Lists cannot hold strings", "deque keeps the queue sorted"]}
+  answer="list.pop(0) shifts every remaining element, so it is O(n); popleft is O(1)"
+  explanation="A Python list is an array. Removing index 0 moves every other element down one slot. On a frontier with thousands of nodes that turns BFS quadratic. deque is a linked block structure with O(1) operations at both ends."
+  feedback={{
+    "list.pop(0) removes the last element, not the first": "pop(0) does remove the first. pop() with no argument removes the last, which is what DFS uses.",
+    "Lists cannot hold strings": "They can hold anything.",
+    "deque keeps the queue sorted": "deque keeps insertion order, no sorting. A sorted frontier is a priority queue, heapq, which you need for A* in week 6."
+  }}
+/>
+
+## DFS in Python
+
+```python
+def dfs(graph, start, goal):
+    frontier = [start]                # a list used as a stack
+    parent = {start: None}
+    explored = set()
+    order = []
+    while frontier:
+        node = frontier.pop()         # LIFO
+        if node in explored:
+            continue
+        explored.add(node)
+        order.append(node)
+        if node == goal:
+            return path_to(parent, goal), order
+        for nbr in sorted(graph[node], reverse=True):
+            if nbr not in explored:
+                parent[nbr] = node
+                frontier.append(nbr)
+    return None, order
+
+print(dfs(graph, "A", "G"))
+# (['A', 'B', 'D', 'H', 'G'], ['A', 'B', 'D', 'H', 'E', 'G'])
+```
+
+Two details differ from BFS, and both exist to make the trace match what you would draw by hand. Neighbours are pushed in **reverse** alphabetical order so the alphabetically first one ends up on top and is expanded first. And a node can be on the stack twice (pushed once by each neighbour), so a popped node that is already explored is skipped. This version expands nodes in exactly the order a recursive DFS visits them.
+
+<QuickCheck
+  id="dfs-order"
+  type="short-answer"
+  question="DFS on the binary tree preset: root A with children B and C, B's children D and E, C's children F and G. Alphabetical order, goal F. Write the expansion order, letters separated by spaces."
+  answer={["A B D E C F", "ABDECF", "A-B-D-E-C-F", "A, B, D, E, C, F"]}
+  explanation="A, then the whole left subtree (B, D, E), then back up to C and down to F. That is a pre-order traversal. BFS on the same tree expands A B C D E F: level order."
+/>
+
+<Callout type="exam" title="State your conventions, because the answer depends on them">
+Tracing questions have one right answer only once three things are fixed: **tie-breaking** (alphabetical is the usual default), **when the goal test runs** (when a node is taken off the frontier, as here, or when it is generated, as AIMA 4th edition's BFS does), and **whether repeated nodes are allowed** (graph search, as here, or tree search). Write the convention in one line at the top of your answer. Toggle the goal-test switch in the lab: on the lab graph, BFS then stops after expanding A, B, C instead of A to F, with the same path.
+</Callout>
+
+<QuickCheck
+  id="bfs-not-cheapest"
+  type="numeric"
+  question="Switch the lab to the Romania map and run BFS from Arad to Bucharest. How long, in km, is the path it returns? (The cheapest route is 418 km.)"
+  answer={450}
+  tolerance={0}
+  explanation="BFS returns Arad → Sibiu → Fagaras → Bucharest: 140 + 99 + 211 = 450 km. It has the fewest edges (3), but the cheapest route, via Rimnicu Vilcea and Pitesti, is 418 km in 4 edges. BFS is optimal only when every step costs the same. Using the costs is what uniform-cost search and A* add in week 6."
+/>
+
+<Deeper kind="beyond" title="Iterative deepening: DFS memory with BFS answers">
+
+Run DFS with a depth limit of 0, then 1, then 2, and so on until the goal turns up. Each round repeats the shallow work, but in a tree with branching factor b the last layer dominates, so the total costs only about b/(b − 1) times one full search. You get BFS's shortest path and completeness with DFS's O(b·d) memory. Russell and Norvig call it the preferred uninformed method when the search space is large and the goal depth is unknown.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.redblobgames.com/pathfinding/a-star/introduction.html",
+    "title": "Red Blob Games: Introduction to A*",
+    "kind": "blog",
+    "why": "Animated grid demos that start with BFS's expanding frontier and build to Dijkstra and A*. It covers weeks 4 to 6 of this lab in one page."
+  },
+  {
+    "href": "https://visualgo.net/en/dfsbfs",
+    "title": "VisuAlgo: DFS and BFS",
+    "kind": "tool",
+    "why": "Draw your own graph and step through either traversal. Use it to make extra tracing practice for the checkpoint."
+  },
+  {
+    "href": "https://github.com/aimacode/aima-python/blob/master/aima/search.py",
+    "title": "aima-python: search.py",
+    "kind": "docs",
+    "why": "The textbook's implementations of breadth_first_graph_search and depth_first_graph_search, plus the Romania map, whose heuristic is the straight-line distance between its map coordinates."
+  }
+]} />

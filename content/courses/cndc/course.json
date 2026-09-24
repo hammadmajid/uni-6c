@@ -77,14 +77,84 @@
       "week": 3,
       "title": "Network types and transmission media",
       "outline": "LAN, MAN, WAN and low-power WAN. IoT and the future of networks. Wired and wireless communication media.",
-      "lessons": []
+      "lessons": [
+        {
+          "slug": "network-types",
+          "title": "PAN to WAN, peer-to-peer to client-server",
+          "minutes": 40,
+          "objective": "classify a network by the area it spans and by the role its machines play, and reproduce the lecture's LAN, MAN, WAN comparison while knowing which of its rows are wrong."
+        },
+        {
+          "slug": "topologies",
+          "title": "Topologies: bus, star, ring, mesh",
+          "minutes": 35,
+          "objective": "predict what each topology loses when one cable or device fails, count the cables and ports a mesh needs, and say which topology today's Ethernet actually uses."
+        },
+        {
+          "slug": "media-and-lpwan",
+          "title": "Transmission media, impairments, and LPWAN",
+          "minutes": 50,
+          "objective": "classify guided and unguided media, explain attenuation, distortion and noise with decibels, and place LPWAN and IoT on the range and data-rate map."
+        },
+        {
+          "slug": "week-3-checkpoint",
+          "title": "Week 3 checkpoint",
+          "minutes": 25,
+          "kind": "checkpoint",
+          "objective": "answer exam-style questions on network classification, topologies, media and LPWAN without notes."
+        }
+      ]
     },
     {
       "slug": "week-04",
       "week": 4,
       "title": "The application layer",
-      "outline": "Principles and protocols: HTTP, FTP, SMTP, DNS, peer-to-peer applications. Socket programming concepts.",
-      "lessons": []
+      "outline": "Principles and protocols: HTTP, FTP, SMTP, DNS, peer-to-peer applications. Socket programming concepts. Lectures 08 to 10.",
+      "lessons": [
+        {
+          "slug": "how-apps-talk",
+          "title": "How applications talk: architectures, sockets, transport services",
+          "minutes": 45,
+          "objective": "compare client-server and P2P, explain how a socket and IP:port address a process, and choose TCP or UDP from an app's needs."
+        },
+        {
+          "slug": "http",
+          "title": "HTTP and the 2RTT rule",
+          "minutes": 55,
+          "objective": "read HTTP requests and responses, and compute page load time for non-persistent, parallel, persistent and pipelined connections."
+        },
+        {
+          "slug": "cookies-and-caches",
+          "title": "Cookies, web caches, and conditional GET",
+          "minutes": 30,
+          "objective": "explain how a stateless protocol keeps state, compute what a cache does to access-link load, and trace a 304 Not Modified."
+        },
+        {
+          "slug": "ftp-and-email",
+          "title": "FTP and email: SMTP, POP3, IMAP",
+          "minutes": 40,
+          "objective": "describe FTP's two connections, trace an email from sender to reader, and say which protocol pushes and which pulls."
+        },
+        {
+          "slug": "dns",
+          "title": "DNS: a distributed, hierarchical database",
+          "minutes": 45,
+          "objective": "draw the DNS hierarchy, walk an iterative resolution message by message, and read the four common record types."
+        },
+        {
+          "slug": "socket-programming",
+          "title": "Socket programming with UDP and TCP",
+          "minutes": 35,
+          "objective": "write the slides' uppercase client and server over UDP and over TCP, and explain the welcoming socket and the 4-tuple."
+        },
+        {
+          "slug": "week-4-checkpoint",
+          "title": "Week 4 checkpoint",
+          "minutes": 30,
+          "kind": "checkpoint",
+          "objective": "answer exam-style questions on the application layer without notes."
+        }
+      ]
     },
     {
       "slug": "week-05",

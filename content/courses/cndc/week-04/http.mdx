@@ -1,0 +1,222 @@
+HTTP is the protocol you know best, from `curl -v` and the browser's Network tab. This lesson is about the part that gets examined: **how many round trips a page costs**, and how each version of HTTP cut that number down.
+
+<Predict
+  id="page-rtts"
+  prompt="A page is one HTML file that references 10 small images. RTT to the server is 100 ms and transmission times are negligible. With non-persistent HTTP and one connection at a time, how long until the whole page is loaded? What if the browser keeps one connection open and sends all 10 image requests back to back without waiting?"
+  answer="Non-persistent, serial: 11 objects × 2 RTT = 22 RTT = 2200 ms. Persistent with pipelining: 2 RTT for the HTML (handshake + request) plus 1 RTT for all ten images = 3 RTT = 300 ms."
+>
+
+**Non-persistent, serial: 2200 ms.** Every object needs its own TCP connection: one RTT for the handshake, one RTT for the request and response. 11 objects × 2 RTT × 100 ms.
+
+**Persistent with pipelining: 300 ms.** One handshake, one RTT for the HTML, then all ten requests go out together and all ten responses come back in one more RTT. Same page, seven times faster, by changing nothing but connection handling. The lab below lets you watch both.
+
+</Predict>
+
+## The web in three sentences
+
+A **web page** is a base HTML file plus the **objects** it references: images, scripts, stylesheets, video. Each object is addressable by a **URL**: `www.someschool.edu/someDept/pic.gif` is a **host name** (`www.someschool.edu`) plus a **path name** (`/someDept/pic.gif`). HTTP is the protocol a browser (client) and a web server use to request and send those objects.
+
+<Callout type="key-idea" title="HTTP runs over TCP and is stateless">
+The client opens a TCP connection to the server on port 80 (443 for HTTPS), the two exchange HTTP messages, and the connection closes. The server keeps **no information about past requests**: ask for the same object twice and it sends it twice. That is a design decision, not an oversight. A stateless server is simpler and survives crashes: nothing to recover, nothing to get out of sync. It is also why your API behind a load balancer can scale out horizontally.
+</Callout>
+
+## Measure an RTT from a real capture
+
+This is the Lab 01 capture, filtered to the web fetch. Frames arrive at their real times. Look at the Time column.
+
+<WiresharkWindow
+  initialFilter="tcp.port == 80"
+  panes={{ list: true, details: false, bytes: false }}
+  listRows={9}
+  caption="SYN leaves at 2.150644 s, SYN-ACK arrives at 2.371488 s. The GET leaves at 2.372105 s, the 200 OK arrives at 2.594893 s. Two exchanges, each one round trip to Massachusetts."
+/>
+
+<QuickCheck
+  id="measure-rtt"
+  type="numeric"
+  unit="ms"
+  tolerance={0.03}
+  question="From the SYN and SYN-ACK timestamps above, what is the RTT to gaia.cs.umass.edu, in milliseconds?"
+  answer={221}
+  explanation="2.371488 − 2.150644 = 0.220844 s = 221 ms. Wireshark shows seconds; multiply by 1000 for ms. The GET-to-200 gap (0.222788 s) is almost the same, which is the point: each costs one RTT. From SYN to 200 OK is 444 ms, i.e. 2 RTT for one object."
+/>
+
+## Non-persistent HTTP, step by step
+
+The slides' example: the URL `www.someSchool.edu/someDepartment/home.index` points at an HTML file that references 10 JPEG images.
+
+<Timeline
+  title="Non-persistent HTTP: one object per TCP connection"
+  events={[
+    { "label": "1a", "description": "The HTTP client initiates a TCP connection to the server process at www.someSchool.edu, port 80.", "detail": "One RTT: SYN out, SYN-ACK back." },
+    { "label": "1b", "description": "The server, waiting on port 80, accepts the connection and notifies the client." },
+    { "label": "2", "description": "The client sends an HTTP request message containing the URL path into its TCP socket.", "detail": "GET /someDepartment/home.index HTTP/1.1" },
+    { "label": "3", "description": "The server receives the request, forms a response message containing the requested object, and sends it into its socket.", "detail": "Second RTT: request out, first bytes of response back, then the file's transmission time." },
+    { "label": "4", "description": "The server tells TCP to close the connection.", "detail": "It closes only once the client has actually received the response intact." },
+    { "label": "5", "description": "The client receives the HTML, displays it, parses it, and finds 10 referenced JPEG objects." },
+    { "label": "6", "description": "Steps 1 to 5 repeat for each of the 10 JPEGs: ten more connections, ten more handshakes.", "detail": "11 connections in total for one page." }
+  ]}
+/>
+
+<Callout type="exam" title="The formula">
+**Response time for one object, non-persistent = 2 RTT + file transmission time.** One RTT to set up the TCP connection, one RTT for the request and the first bytes of the response, plus L/R to push the file out. For a page with M referenced objects fetched serially: (M + 1) × (2 RTT + t).
+</Callout>
+
+<HttpTimingLab />
+
+<WorkedExample title="Response time with a real transmission time">
+  <Step label="Set up">
+    One 100 kB HTML file, no referenced objects. RTT 80 ms. The server's access link runs at 10 Mbps. Non-persistent HTTP.
+  </Step>
+  <Step label="Transmission time" tryFirst="Convert the file size to bits first.">
+    100 kB = 100 × 1000 × 8 = 800,000 bits. 800,000 ÷ 10,000,000 bits/s = 0.08 s = **80 ms**.
+  </Step>
+  <Step label="Add the two RTTs" tryFirst="How many RTTs before the first byte of the file arrives?">
+    2 × 80 ms = 160 ms. Total = 160 + 80 = **240 ms**.
+  </Step>
+  <Step label="The trap">
+    The most common mistake is dividing 100 by 10 and writing 10 ms: bytes, not bits, and kilo against mega. Write the conversion as your first line.
+  </Step>
+</WorkedExample>
+
+<QuickCheck
+  id="np-serial"
+  type="numeric"
+  unit="ms"
+  question="Non-persistent HTTP, one connection at a time. A page has a base HTML file and 8 referenced images. RTT = 50 ms, transmission times negligible. Total time to load the page, in milliseconds?"
+  answer={900}
+  explanation="9 objects × 2 RTT = 18 RTT = 18 × 50 = 900 ms. Do not forget the base file: M + 1 objects, not M."
+/>
+
+## Persistent HTTP
+
+Non-persistent HTTP has three costs: **2 RTTs per object**, **OS overhead** for every TCP connection (buffers and variables allocated in client and server), and so browsers open **parallel connections** to hide the first cost, which multiplies the second.
+
+**Persistent HTTP** (the default since HTTP/1.1): the server leaves the connection open after sending a response, and later requests between the same client and server use it.
+
+- **Without pipelining**: the client sends the next request only after the previous response arrives. One RTT per referenced object, but no more handshakes: 2 RTT + M × RTT.
+- **With pipelining**: the client sends requests as soon as it finds references, back to back. As little as **one RTT for all the referenced objects**: 3 RTT in total.
+
+<QuickCheck
+  id="np-parallel"
+  type="numeric"
+  unit="ms"
+  question="Non-persistent HTTP with up to 5 parallel connections. A base HTML file references 10 small images. RTT = 100 ms, transmission negligible. Total load time in milliseconds?"
+  answer={600}
+  explanation="Base file: 2 RTT = 200 ms. The 10 images go in 2 batches of 5 parallel connections, each batch 2 RTT = 200 ms. Total 200 + 2 × 200 = 600 ms. Set the lab to 'Non-persistent, N parallel' with N = 5 to check."
+/>
+
+<QuickCheck
+  id="persistent-pipe"
+  question="With persistent HTTP and pipelining, how many RTTs does it take to fetch a base HTML file and 10 referenced objects, ignoring transmission time?"
+  options={["2", "3", "12", "22"]}
+  answer="3"
+  explanation="1 RTT for the TCP handshake, 1 RTT for the HTML, 1 RTT for all ten pipelined requests and their responses."
+  feedback={{
+    "2": "That only fetches the base file. The images still need their requests to go out and come back: one more RTT.",
+    "12": "That is persistent without pipelining: 2 RTT + 10 × 1 RTT. Pipelining sends all ten requests at once.",
+    "22": "That is non-persistent: 11 objects × 2 RTT each."
+  }}
+/>
+
+<Callout type="exam" title="What the slide leaves out">
+The slide's persistent-HTTP bullet says 'as little as one RTT for all the referenced objects'. That is only true **with pipelining**. Without pipelining, persistent HTTP still pays one RTT per object. If a question says 'persistent HTTP' without saying which, state your assumption. The slide also says HTTP uses TCP on port 80. That is right for plain HTTP/1.1 and HTTP/2, but HTTPS uses port 443, and HTTP/3 runs over QUIC, which runs over UDP.
+</Callout>
+
+## What the messages look like
+
+HTTP/1.1 messages are ASCII text. Here is the Lab 01 exchange, printed the way `curl -v` prints it: lines starting `>` were sent by Firefox, lines starting `<` came back from gaia.
+
+```
+* Connected to gaia.cs.umass.edu (128.119.245.12) port 80
+> GET /wireshark-labs/INTRO-wireshark-file1.html HTTP/1.1
+> Host: gaia.cs.umass.edu
+> User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0
+> Accept-Encoding: gzip, deflate
+> Connection: keep-alive
+>
+< HTTP/1.1 200 OK
+< Date: Thu, 17 Sep 2026 07:56:46 GMT
+< Server: Apache/2.4.62 (AlmaLinux) OpenSSL/3.5.5
+< Last-Modified: Tue, 28 Oct 2025 05:59:01 GMT
+< ETag: "51-64231b6715777"
+< Content-Length: 81
+< Keep-Alive: timeout=5, max=100
+< Connection: Keep-Alive
+< Content-Type: text/html; charset=UTF-8
+<
+<html>
+Congratulations!  You've downloaded the first Wireshark lab file!
+</html>
+```
+
+Two headers are this lesson in miniature. `Connection: keep-alive` asks for a **persistent** connection, and `Keep-Alive: timeout=5` is Apache agreeing to hold it open for 5 idle seconds. That is why the capture shows the server's FIN at 7.60 s, exactly 5 s after the 200 OK.
+
+A **request** is a request line (method, path, version), header lines, a blank line, and an optional body (used by POST). A **response** is a status line (version, status code, phrase), header lines, a blank line, and the object.
+
+| Code | Phrase | Meaning |
+|---|---|---|
+| 200 | OK | Success; the object is in the body |
+| 301 | Moved Permanently | Object moved; new URL in the Location header |
+| 304 | Not Modified | Your cached copy is still good (next lesson) |
+| 400 | Bad Request | The server could not parse the request |
+| 404 | Not Found | No such object on this server |
+| 505 | HTTP Version Not Supported | The server does not speak that version |
+
+Methods: **GET** (fetch; form input can ride in the URL after `?`), **POST** (input in the body), **HEAD** (headers only, no body; useful for debugging and link checkers), **PUT** (upload or replace the object at the URL), **DELETE**.
+
+<QuickCheck
+  id="status-head"
+  question="A link checker wants to know whether a URL still exists without downloading the object. Which request method fits best?"
+  options={["GET", "HEAD", "POST", "PUT"]}
+  answer="HEAD"
+  explanation="HEAD returns exactly the headers a GET would, with no body. The status code (200 or 404) answers the question without downloading the object."
+  feedback={{
+    "GET": "It works, but downloads the whole object just to throw it away.",
+    "POST": "POST sends data to the server for processing. It does not ask whether an object exists.",
+    "PUT": "PUT uploads an object to the URL. You would be overwriting what you meant to check."
+  }}
+/>
+
+<Deeper kind="beyond" title="HTTP/2 and HTTP/3: pipelining done properly">
+
+Browsers never shipped HTTP/1.1 pipelining, because one slow response blocked everything behind it (**head-of-line blocking**). They opened 6 parallel connections per host instead. **HTTP/2** (2015) sends many requests and responses interleaved as frames over one TCP connection, which is what pipelining was trying to be. It still suffers head-of-line blocking inside TCP: one lost segment stalls every stream. **HTTP/3** moves to **QUIC** over UDP, where each stream is recovered independently and the TCP and TLS handshakes are merged into one RTT. Check what your own site speaks with `curl -sI --http3 https://yoursite` (needs a curl built with HTTP/3), or look at the Protocol column in the browser's Network tab.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: non-persistent vs persistent HTTP (5 marks)">
+
+**Non-persistent**: each TCP connection carries at most one object and is then closed. Response time per object = 2 RTT + transmission time (1 RTT for the handshake, 1 RTT for the request and the start of the response). Drawbacks: 2 RTT per object, OS overhead per connection; browsers compensate with parallel connections.
+
+**Persistent**: the server leaves the connection open after responding; subsequent requests between the same client and server use it. Without pipelining, one RTT per referenced object; with pipelining, requests are sent back to back, so as little as one RTT for all referenced objects. Default in HTTP/1.1.
+
+Close with a number: base file + 10 objects, RTT 100 ms, negligible transmission: non-persistent serial 2200 ms, persistent with pipelining 300 ms.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://hpbn.co/http1x/",
+    "title": "High Performance Browser Networking: HTTP/1.X",
+    "kind": "book",
+    "why": "Ilya Grigorik's free chapter, with timeline diagrams of keep-alive, pipelining and parallel connections that match the lab above."
+  },
+  {
+    "href": "https://www.youtube.com/watch?v=a-sBfyiXysI",
+    "title": "ByteByteGo: HTTP/1 to HTTP/2 to HTTP/3",
+    "kind": "video",
+    "why": "Animated walk through head-of-line blocking and why each version exists. Picks up exactly where the slides stop."
+  },
+  {
+    "href": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview",
+    "title": "MDN: An overview of HTTP",
+    "kind": "docs",
+    "why": "Clear reference for message format, methods and status codes."
+  },
+  {
+    "href": "https://www.rfc-editor.org/rfc/rfc9112",
+    "title": "RFC 9112: HTTP/1.1",
+    "kind": "rfc",
+    "why": "The current HTTP/1.1 spec (the slides cite the obsolete RFC 2616). Section 9 is about connection persistence."
+  }
+]} />

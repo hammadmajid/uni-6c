@@ -1,0 +1,161 @@
+Every servlet you write this semester sits at the end of the same pipe: a TCP connection carrying HTTP text. You know HTTP from other stacks, so this lesson moves fast and slows down only where the slides test something specific or get it wrong.
+
+<Predict
+  id="socket-pair"
+  prompt="Chrome and Firefox on your laptop both open http://localhost:8080/demo/ at the same moment. Both connect to the same IP and the same port 8080. How does the operating system keep the two conversations apart?"
+  answer="By the client side. Each browser's connection gets a different source port chosen by the OS (for example 51834 and 51840), so the four numbers (source IP, source port, destination IP, destination port) differ, and each distinct four-tuple is a separate TCP connection with its own socket."
+>
+
+A TCP connection is not identified by the server's port. It is identified by all **four** numbers: source IP, source port, destination IP, destination port. The server listens on one port, 8080, but every accepted connection gets its own socket keyed by the full four-tuple. The client's port is **ephemeral**: the OS picks a free one from a high range for each new connection. The two browsers differ in that number, so there are two connections, two sockets, and Tomcat reads each independently.
+
+</Predict>
+
+<HttpExchange />
+
+## Sockets, IP addresses, ports
+
+Slides 4 to 6 give the high-level view: client and server each have an `ip-address:port`, and a **socket** is the endpoint the program reads and writes. An **IP address** identifies a host on the network. A **port** identifies which program on that host gets the data. Tomcat asks the OS for a listening socket on port 8080 when it starts, and from then on the OS hands every incoming connection on 8080 to Tomcat.
+
+| Range | Name | Who uses it |
+|---|---|---|
+| 0 to 1023 | well-known (system) ports | 22 SSH, 25 SMTP, 53 DNS, 80 HTTP, 443 HTTPS. Binding needs root on Linux. |
+| 1024 to 49151 | registered ports | 5432 PostgreSQL, 8080 HTTP alternate (Tomcat's default), 3306 MySQL |
+| 49152 to 65535 | dynamic or ephemeral | the client side of your connections (Linux actually uses 32768 to 60999) |
+
+<QuickCheck
+  id="port-smtp"
+  question="Which port is registered for SMTP, the protocol mail servers use to send email?"
+  options={["23", "25", "80", "110"]}
+  answer="25"
+  explanation="SMTP is 25 (RFC 5321, IANA registry). Port 23 is Telnet. The slides list '23 for SMTP', which is a slip; see the exam note below."
+  feedback={{
+    "23": "That is what slide 6 says, but 23 is Telnet. SMTP is 25.",
+    "80": "80 is HTTP.",
+    "110": "110 is POP3, which mail clients use to download mail, not to send it."
+  }}
+/>
+
+<Callout type="exam" title="Two port facts on slide 6">
+The slide says: *"A computer system can have up to 65,535 virtual network ports"* and *"80 for HTTP, 23 for SMTP etc."*
+
+- Port numbers are 16-bit, so 0 to 65535 exist: 65,536 values, with 0 reserved. They also exist **per transport protocol**, so TCP 53 and UDP 53 are different ports. If a quiz asks "how many ports", write 65,535 as the slide does and add "(numbered 0 to 65535, per protocol)".
+- **SMTP is 25. Telnet is 23.** Never write "23 for SMTP", even if you have seen it on the slide.
+</Callout>
+
+## TCP/IP, the four-layer version
+
+Slide 8 draws TCP/IP as **Application, Transport, Internet, Network Access**. That is the four-layer model from RFC 1122. In CNDC you use Kurose's five layers, which split Network Access into Link and Physical. Same stack, different granularity: HTTP lives in Application, TCP in Transport, IP in Internet, Ethernet or Wi-Fi in Network Access.
+
+<QuickCheck
+  id="layer-of-http"
+  question="On slide 8's four-layer TCP/IP model, which layer does HTTP belong to, and which carries it?"
+  options={["Application; carried by TCP in the Transport layer", "Transport; carried by IP", "Internet; carried by Ethernet", "Application; carried directly by IP"]}
+  answer="Application; carried by TCP in the Transport layer"
+  explanation="HTTP/1.1 and HTTP/2 are application protocols that ride on a TCP connection. (HTTP/3 rides on QUIC over UDP, but the course uses Tomcat's HTTP/1.1 connector.)"
+  feedback={{
+    "Transport; carried by IP": "Transport is TCP and UDP. HTTP sits above them.",
+    "Internet; carried by Ethernet": "The Internet layer is IP. HTTP is two layers higher.",
+    "Application; carried directly by IP": "Right layer, but HTTP never talks to IP directly. It needs TCP's reliable, ordered byte stream."
+  }}
+/>
+
+## What HTTP adds
+
+The figure above is the whole protocol at the level this course needs. It has four properties:
+
+1. **Text on a byte stream.** HTTP/1.1 is lines of ASCII over the TCP connection. You can type a request by hand with `nc localhost 8080`.
+2. **Request, then response.** The client always speaks first. The server never sends anything that was not asked for.
+3. **Stateless.** Each request carries everything the server needs. Remembering a logged-in user takes a cookie and a session, which comes later in the course.
+4. **Status codes by class.** 2xx success, 3xx redirect, 4xx the client got something wrong (404 no such resource, 405 wrong method), 5xx the server broke (500 is an exception escaped your servlet).
+
+<QuickCheck
+  id="blank-line"
+  question="In a raw HTTP/1.1 message, what tells the receiver that the headers have ended and the body begins?"
+  options={["An empty line (a CRLF on its own)", "The Content-Length header", "A closing tag", "The TCP connection closing"]}
+  answer="An empty line (a CRLF on its own)"
+  explanation="Headers run until a line with nothing on it. Content-Length then says how many body bytes follow that empty line, which is how the receiver knows where the body ends, not where it starts."
+  feedback={{
+    "The Content-Length header": "Content-Length tells you where the body ends. The empty line tells you where it starts.",
+    "A closing tag": "HTML tags are inside the body. HTTP knows nothing about HTML.",
+    "The TCP connection closing": "HTTP/1.1 keeps connections open by default, so closing cannot be the signal."
+  }}
+/>
+
+## Where your servlet sits
+
+Slides 13 to 16 add the database and then the servlet. Here is what happens between the bytes and your code:
+
+<OrderCheck
+  id="request-journey"
+  prompt="Order the steps from typing a URL to seeing the page."
+  items={[
+    "Browser resolves the host name to an IP address",
+    "Browser opens a TCP connection to that IP on port 8080",
+    "Browser writes the HTTP request text into the connection",
+    "Tomcat parses the text into an HttpServletRequest and picks the webapp and servlet",
+    "Your doGet runs and writes HTML into the HttpServletResponse",
+    "Tomcat serialises the response into HTTP text on the same connection",
+    "Browser parses the HTML and renders it"
+  ]}
+  explanation="Everything above step 4 is the network; everything from 6 on is the network again. Your code only ever sees objects, never bytes: Tomcat does the parsing and the writing."
+  topLabel="first"
+  bottomLabel="last"
+/>
+
+<Callout type="key-idea" title="The container is the part you did not write">
+In Node or Go your code owns the listening socket. Here Tomcat owns the socket, the thread pool, HTTP parsing and response writing. You write a class; Tomcat creates it and calls its methods. Tomcat is the **servlet container**, and the next three lessons are about the contract between it and your class.
+</Callout>
+
+<Deeper kind="beyond" title="See it yourself with curl and nc">
+
+Once Tomcat is running (lesson "Set up, deploy, and log in"):
+
+```bash
+curl -v http://localhost:8080/
+```
+
+Lines starting with `>` are the request curl sent, lines with `<` are Tomcat's response headers. Or type the request yourself:
+
+```bash
+printf 'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' | nc localhost 8080
+```
+
+Then `ss -tnp | grep 8080` while a browser tab is loading shows the four-tuples from the Predict above.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: explain client-server communication on the web (5 marks)">
+
+"The client (browser) and the server (for example Tomcat) communicate over TCP/IP. The server listens on a known IP address and port, 8080 for Tomcat or 80 for HTTP in general. The client resolves the server's domain name to an IP address through DNS, then opens a TCP connection, which is identified by the client's IP and port together with the server's IP and port (a socket pair). Over this connection the client sends an HTTP request made of a request line (method, path, version), headers, an empty line and an optional body. The server processes it, for example by running a servlet that may query a database, and returns an HTTP response made of a status line, headers, an empty line and the body, usually HTML. HTTP is stateless: each request is independent."
+
+Draw the client, the server and the arrow labelled with both ip:port pairs, as on slide 4. It earns the diagram marks.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=iYM2zFP3Zn0",
+    "title": "Traversy Media: HTTP crash course and exploration",
+    "kind": "video",
+    "why": "Walks real requests in Chrome DevTools' Network tab. Same parts as the figure above, on live traffic."
+  },
+  {
+    "href": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview",
+    "title": "MDN: An overview of HTTP",
+    "kind": "docs",
+    "time": "15 min",
+    "why": "The clearest short reference for message structure, statelessness and connections."
+  },
+  {
+    "href": "https://www.youtube.com/watch?v=a-sBfyiXysI",
+    "title": "ByteByteGo: HTTP/1 to HTTP/2 to HTTP/3",
+    "kind": "video",
+    "why": "Animated. Shows why HTTP/1.1 text on one TCP connection was replaced, and what Tomcat's connector still speaks."
+  },
+  {
+    "href": "https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml",
+    "title": "IANA service name and port number registry",
+    "kind": "docs",
+    "why": "The authority for 'which port is SMTP'. Search it once so you trust it over any slide."
+  }
+]} />

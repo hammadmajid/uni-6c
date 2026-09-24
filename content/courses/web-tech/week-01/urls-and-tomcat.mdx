@@ -1,0 +1,161 @@
+A URL looks like an address for a file. On Tomcat it is really a set of instructions: which machine, which listening socket, which application, which servlet or file inside it. This lesson makes you read each part the way Tomcat reads it.
+
+<Predict
+  id="webinf-request"
+  prompt="The file webapps/zabdesk/WEB-INF/web.xml exists on the server and Tomcat is running. You open http://localhost:8080/zabdesk/WEB-INF/web.xml in a browser. What do you get?"
+  answer="404 Not Found. WEB-INF is the private area of a webapp: the container reads it (web.xml, classes, lib) but refuses to serve anything under it to a client, even though the file exists."
+>
+
+A **404**. The file is there, but everything under `WEB-INF` (and `META-INF`) is **private**: the container reads it to run the app and never sends it to a client. That is why your compiled classes and your database password in a config file are safe there, and why slide 31 splits a webapp into a "public area" and a "private area". Pick the WEB-INF preset below and read step by step what Tomcat does.
+
+</Predict>
+
+## Reading a URL like Tomcat does
+
+Slide 19 reads `http://www.7sport.net/7sport/index.htm` as protocol, domain name, "App name", and resource within the app. Tomcat splits it more finely, and each piece has a getter on `HttpServletRequest`:
+
+<UrlAnatomy />
+
+Try, in order: **slide 51**, then **path info**, then **no trailing slash**, then **slide 19**. The last one is the point of the exam note below. `/7sport` is only an application if a context with that name is deployed. On the pretend server here it is not, so ROOT gets the request and answers 404.
+
+<Callout type="exam" title="The &quot;App name&quot; label on slide 19">
+The slide labels the first path segment **"App name"**. That is Tomcat's **context path** convention, not a property of URLs: to the URL standard (RFC 3986) the whole of `/7sport/index.htm` is just the path. On Tomcat, the first segment picks the webapp only when a webapp of that name is deployed. An app deployed as ROOT has an empty context path, so its URLs have no "app name" segment at all (`http://localhost:8080/index.jsp`).
+
+On a quiz that uses the slide's diagram, label it "App name (context path)" so you match the slide and are still correct.
+</Callout>
+
+<QuickCheck
+  id="fragment-sent"
+  type="true-false"
+  question="For http://localhost:8080/demo/index.html#top, the browser sends the fragment #top to Tomcat inside the request line."
+  answer="False"
+  explanation="The fragment never leaves the browser. It tells the browser where to scroll once the page arrives. Try the fragment preset in the lab: the request target stops before the #."
+/>
+
+## Resolving the machine
+
+Slide 21 lists three ways to name the machine. They differ in who translates the name:
+
+| You type | Translated by | Leaves your laptop? |
+|---|---|---|
+| `www.7sport.net` | DNS: the resolver your network gives you (often your ISP's) | Yes, the DNS query and then the request |
+| `localhost` | the hosts file (`/etc/hosts`, or `C:\Windows\System32\drivers\etc\hosts`) maps it to 127.0.0.1 | No |
+| `127.0.0.1` | nothing; it is already an address, the **loopback** address | No, the OS loops it back to itself |
+
+<QuickCheck
+  id="needs-dns"
+  question="Which of these makes your laptop send a DNS query before it can connect?"
+  options={["http://www.7sport.net/7sport/index.htm", "http://localhost:8080/demo/", "http://127.0.0.1:8080/demo/", "All three"]}
+  answer="http://www.7sport.net/7sport/index.htm"
+  explanation="Only a real domain name needs DNS. localhost is answered locally by the hosts file (and modern resolvers refuse to send it out at all). 127.0.0.1 is already an IP address."
+  feedback={{
+    "http://localhost:8080/demo/": "localhost is a name, but the hosts file answers it before DNS is ever asked.",
+    "http://127.0.0.1:8080/demo/": "This is already an IP address, so there is nothing to resolve.",
+    "All three": "Only one of them is a public domain name."
+  }}
+/>
+
+## Tomcat on disk
+
+Slide 24 draws Tomcat-Base with conf, logs, webapps, server, work and bin. Here is Tomcat 11 as you will unzip it:
+
+<TomcatTree />
+
+<Callout type="exam" title="The &quot;server&quot; folder on slide 24">
+Slide 24 shows a `server` directory beside webapps. That existed up to Tomcat 5.5. Since Tomcat 6 the old `common`, `server` and `shared` folders were merged into one **`lib/`**, which is what Tomcat 11 has, along with `temp/`. If a quiz asks you to draw the slide's tree, draw the slide's boxes. If it asks what each folder does, describe the real ones: bin starts and stops, conf configures (server.xml, web.xml), lib holds shared jars, logs holds the logs, webapps holds the applications, work holds compiled JSPs.
+</Callout>
+
+<QuickCheck
+  id="where-port"
+  question="You want Tomcat to listen on port 9090 instead of 8080. Which file do you edit?"
+  options={["conf/server.xml", "conf/web.xml", "webapps/demo/WEB-INF/web.xml", "bin/startup.sh"]}
+  answer="conf/server.xml"
+  explanation="Ports belong to Connectors, and Connectors are declared in conf/server.xml. The web.xml files describe applications, not sockets."
+  feedback={{
+    "conf/web.xml": "conf/web.xml sets defaults for every webapp (default servlet, JSP servlet, welcome files). It knows nothing about ports.",
+    "webapps/demo/WEB-INF/web.xml": "One app's descriptor cannot choose the port: several apps share the same connector.",
+    "bin/startup.sh": "The scripts start the JVM. The port comes from configuration they read."
+  }}
+/>
+
+## The development view and the WAR
+
+Slides 25 to 28: IntelliJ shows you a Maven project, which looks nothing like the tree Tomcat wants. The build turns it into a **WAR** (Web ARchive), a zip with the webapp layout inside.
+
+<WarBuild />
+
+<Callout type="exam" title="Slide 28: &quot;its the web-apps directory on the server&quot;">
+A WAR is **one** application. It is deployed **into** `webapps/`, where Tomcat expands `demo.war` into `webapps/demo/`, and the file name becomes the context path `/demo`. The `webapps` directory holds many applications. If asked "what is a WAR file", write: "a zip archive of one web application in the standard webapp layout (public files at the root, WEB-INF with web.xml, classes and lib), deployed by copying it into Tomcat's webapps directory."
+</Callout>
+
+## Public and private: write the paths
+
+Slide 31's webapp: `index.html`, `index.jsp`, `tomcat.gif` are public and reachable at `/sample_webapp/index.html` and so on. `WEB-INF/classes/ServletX.class` is private: you reach the servlet through its **mapping** (`/hello-servlet`), never through its file path.
+
+Now slide 33's exercise. The webapp is `zabdesk/`, Tomcat on localhost with its default port. Write each full URL.
+
+<QuickCheck
+  id="zabdesk-index"
+  type="short-answer"
+  question="zabdesk/docs/index.html: full URL?"
+  answer={["http://localhost:8080/zabdesk/docs/index.html", "localhost:8080/zabdesk/docs/index.html", "http://localhost/zabdesk/docs/index.html", "/zabdesk/docs/index.html"]}
+  explanation="Context path /zabdesk, then the file's path relative to the webapp root: /docs/index.html. The port is 8080 on a default Tomcat; the slides write http://localhost/... which only works if Tomcat listens on 80."
+/>
+
+<QuickCheck
+  id="zabdesk-logo"
+  type="short-answer"
+  question="zabdesk/images/logo.png: full URL?"
+  answer={["http://localhost:8080/zabdesk/images/logo.png", "localhost:8080/zabdesk/images/logo.png", "http://localhost/zabdesk/images/logo.png", "/zabdesk/images/logo.png"]}
+  explanation="Same rule: /zabdesk plus /images/logo.png. The default servlet sends the file as-is."
+/>
+
+<QuickCheck
+  id="zabdesk-servlet"
+  type="short-answer"
+  question="ServletX.class in WEB-INF/classes, annotated @WebServlet(name = &quot;courseRegister&quot;, value = &quot;/course-register&quot;): full URL?"
+  answer={["http://localhost:8080/zabdesk/course-register", "localhost:8080/zabdesk/course-register", "http://localhost/zabdesk/course-register", "/zabdesk/course-register"]}
+  explanation="The class file's location is irrelevant: it is in the private area. The URL is the context path plus the mapping's value: /zabdesk/course-register. The name attribute (courseRegister) never appears in a URL."
+  misconception="Writing /zabdesk/WEB-INF/classes/ServletX or /zabdesk/courseRegister. The first is private and would 404; the second uses the servlet's name, which is only an internal label."
+/>
+
+<Callout type="pitfall" title="localhost with no port">
+Slides 32 and 51 write `http://localhost/sample_webapp/...` with no port, which means port 80. A freshly unzipped Tomcat listens on **8080**, so those exact URLs fail on your laptop. In your own work, use `http://localhost:8080/...`. On a quiz, follow whatever form the question uses.
+</Callout>
+
+<Deeper kind="edge" title="Where the context path actually comes from">
+
+- `webapps/demo.war` or `webapps/demo/` gives `/demo`. The name is the context path.
+- `webapps/ROOT/` or `ROOT.war` gives the empty context path: URLs start straight after the port.
+- A `#` in the name becomes a `/`: `api#v2.war` is deployed at `/api/v2`.
+- IntelliJ does not copy into webapps. It tells Tomcat to deploy from `target/` with the context path in the run configuration, which defaults to something like `/demo_war_exploded`. You will fix that in the setup lesson.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: describe the directory structure of a Java web application (5 marks)">
+
+Draw slide 31's tree, then: "A web application has a root folder whose name is the context path. Files directly under the root (HTML, JSP, images, CSS) are the public area and are reachable by URL, for example /app/index.html. The WEB-INF folder is the private area and is never served to clients. It contains web.xml, the deployment descriptor that maps URLs to servlets; classes/, which holds the compiled servlet and helper classes; and lib/, which holds the jar libraries the application needs, such as a JDBC driver. For deployment the application is packaged as a WAR file and placed in Tomcat's webapps directory."
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://tomcat.apache.org/tomcat-11.0-doc/appdev/deployment.html",
+    "title": "Tomcat 11: Application developer's guide, deployment",
+    "kind": "docs",
+    "time": "10 min",
+    "why": "The official version of slide 31: what goes in the webapp root, WEB-INF, classes and lib, and why."
+  },
+  {
+    "href": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Web_mechanics/What_is_a_URL",
+    "title": "MDN: What is a URL?",
+    "kind": "docs",
+    "why": "Colour-coded anatomy like the lab above, from the standard's point of view, with no Tomcat conventions mixed in."
+  },
+  {
+    "href": "https://tomcat.apache.org/tomcat-11.0-doc/class-loader-howto.html",
+    "title": "Tomcat 11: Class loader how-to",
+    "kind": "docs",
+    "why": "Why a jar in WEB-INF/lib is visible to one app and a jar in Tomcat's lib/ to all of them. Read it the first time you get a ClassNotFoundException."
+  }
+]} />

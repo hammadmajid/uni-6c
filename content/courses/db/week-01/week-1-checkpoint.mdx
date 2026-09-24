@@ -1,0 +1,194 @@
+No notes. The long answers come straight from the lecture's scenario slides, and that is the format to expect on the quiz: a short situation, then "why a DBMS?" or "would a DBMS be suitable?". Write your answer in the box before revealing the model one.
+
+<Callout type="exam" title="The summary deck numbers its scenarios wrongly">
+In the 21-slide summary deck, the shopkeeper and the hospital are both labelled "Scenario 4", and the slides headed "Scenario 5" and "Solution 5" answer them the other way round: the cost-and-complexity problem belongs to the shopkeeper, the multiple-views solution to the hospital. Match answers to scenarios by content, not by number.
+</Callout>
+
+## Scenario questions
+
+<Predict
+  id="cp1-excel"
+  prompt="A university wants to store student records, course enrolments and grades. Why is a DBMS better than keeping them in Excel files? (5 marks)"
+  answer="Shared single copy (no redundancy or inconsistency across departments), concurrent multi-user access with transactions, integrity constraints and relationships (an enrolment must reference a real student and course), access control and views per role, backup and recovery, and querying at scale."
+>
+
+**Model answer.** Excel files are file processing: each department keeps its own copy, so the same student's phone or address is stored several times and the copies drift apart (**redundancy and inconsistency**). A DBMS stores each fact once in a shared database that every department's application uses.
+
+It also gives what spreadsheets cannot: **concurrent access** by many staff with **transactions** so simultaneous updates do not corrupt data; **integrity constraints** and **relationships** (an enrolment must reference an existing student and course, a grade must be in range); **security and multiple views** (a student sees their grades, finance sees fees); **backup and recovery** after a crash; and **efficient querying** with indexes as records grow to thousands of students over many years.
+
+Five distinct points with one university example each is full marks.
+
+</Predict>
+
+<Predict
+  id="cp1-shop"
+  prompt="A small shopkeeper sells 15 to 20 items a day and records sales in a notebook. Would a DBMS be suitable? Why or why not? (3 marks)"
+  answer="No. Single user, small and simple data that is not expected to change, and the cost and complexity of a DBMS (hardware, licences, training, overhead) outweigh the benefit. A notebook or a spreadsheet is enough."
+>
+
+**Model answer.** A DBMS is **not** suitable. The data is small and simple, there is **one user and no concurrent access**, and the structure is not expected to change. The **cost and complexity** of a DBMS (setup, hardware or licences, training, the overhead of security, concurrency control and recovery) would outweigh any benefit. A notebook or a spreadsheet is enough.
+
+Worth one extra sentence: if the shop grows to several branches sharing stock, the answer flips.
+
+</Predict>
+
+<Predict
+  id="cp1-hospital"
+  prompt="A hospital stores patient records, doctor schedules and billing. Doctors, receptionists and the finance office all need access, but each should see only what they need. Which feature of the database approach solves this, and how? (3 marks)"
+  answer="Multiple views with role-based access control: define a view per user group (medical history for doctors, appointments for reception, billing for finance) and grant each role access only to its view."
+>
+
+**Model answer.** **Support for multiple views of the data**, combined with **restricting unauthorized access** (role-based access control). The DBA defines a view for each user group over the one shared database: doctors see patients' medical history, receptionists see appointments, finance sees billing only. Each role is granted privileges on its own view and nothing else, so the data is shared but each user sees only what their job needs.
+
+</Predict>
+
+<Predict
+  id="cp1-atm"
+  prompt="Ali withdraws money at an ATM while his father transfers money into the same account from mobile banking. What can go wrong, and how does the DBMS prevent it? (3 marks)"
+  answer="Both read the same balance and each writes its own result, so one update is lost. DBMS transaction management with concurrency control (locking) makes them run as if one after the other, preserving isolation; ACID guarantees the result."
+>
+
+**Model answer.** Both transactions read the same balance; each computes a new value and writes it, so the second write **overwrites** the first and one update is **lost** (10,000 − 3,000 and 10,000 + 5,000 can end at 15,000 instead of 12,000). The DBMS's **transaction management and concurrency control** prevent this: the first transaction locks the account row, the second waits, then reads the updated balance. The result is as if they ran one after the other (**isolation**, one of the **ACID** properties).
+
+</Predict>
+
+<Predict
+  id="cp1-phone"
+  prompt="Sara orders a phone online while another customer orders the last piece of the same model. What could the system do wrong, and what DBMS mechanism stops it? (2 marks)"
+  answer="Sell the same phone twice, because both read stock = 1 before either wrote. Concurrency control locks the inventory row until the first transaction completes; the second then sees stock = 0."
+>
+
+**Model answer.** Without control, both transactions read stock = 1, both succeed, and the **same phone is sold twice**. **Concurrency control** (locking the inventory row until the transaction commits) makes the second transaction wait; it then reads stock = 0 and reports "sold out".
+
+</Predict>
+
+## Definitions and distinctions
+
+<QuickCheck
+  id="cp1-miniworld"
+  question="The part of the real world a database represents is called:"
+  options={["The miniworld, or universe of discourse", "The conceptual schema", "The catalog", "The external view"]}
+  answer="The miniworld, or universe of discourse"
+  explanation="Elmasri's first implicit property of a database: it represents some aspect of the real world, the miniworld or UoD."
+  feedback={{
+    "The conceptual schema": "The conceptual schema is the DBMS's description of the whole database. It models the miniworld, but it is not the miniworld.",
+    "The catalog": "The catalog stores metadata about the database, not the real-world situation.",
+    "The external view": "A view is one user group's part of the database."
+  }}
+/>
+
+<QuickCheck
+  id="cp1-dependence"
+  question="In a file processing system, adding a field to the student file forces changes to every program that reads it. This problem is called:"
+  options={["Program–data dependence", "Data redundancy", "Data inconsistency", "Lack of multiple views"]}
+  answer="Program–data dependence"
+  explanation="The file's structure is embedded in each program. The database approach removes this with program–data independence, via the catalog and the three-schema architecture."
+  feedback={{
+    "Data redundancy": "Redundancy is the same data stored in several places. This is about structure being coded into programs.",
+    "Data inconsistency": "Inconsistency is copies of data disagreeing.",
+    "Lack of multiple views": "Views are about what users see, not about programs breaking when a file changes."
+  }}
+/>
+
+<QuickCheck
+  id="cp1-phys"
+  question="Which change is an example of PHYSICAL data independence?"
+  options={[
+    "Moving the enrollment table to a new disk and adding an index, with no change to tables or programs",
+    "Adding a date_of_birth column to student without changing any application",
+    "Creating a view for the finance office",
+    "Adding a foreign key from enrollment to course"
+  ]}
+  answer="Moving the enrollment table to a new disk and adding an index, with no change to tables or programs"
+  explanation="Physical independence: the internal schema (storage, indexes) changes and the conceptual schema does not have to."
+  feedback={{
+    "Adding a date_of_birth column to student without changing any application": "A new column changes the conceptual schema. Applications surviving it is logical data independence.",
+    "Creating a view for the finance office": "That is adding an external schema: multiple views, not data independence.",
+    "Adding a foreign key from enrollment to course": "A constraint is part of the conceptual schema. That is a design change, not an example of independence."
+  }}
+/>
+
+<QuickCheck
+  id="cp1-durable"
+  question="A payment app shows 'Payment successful'. One second later the database server loses power. After restart the payment is still recorded. Which ACID property is this?"
+  options={["Durability", "Atomicity", "Isolation", "Consistency"]}
+  answer="Durability"
+  explanation="Once a transaction commits, its changes survive any later failure. Postgres guarantees it by forcing the commit record in the write-ahead log to disk before reporting success."
+  feedback={{
+    "Atomicity": "Atomicity is about a failure during a transaction: all or nothing. Here the transaction had already committed.",
+    "Isolation": "No second transaction is involved.",
+    "Consistency": "Consistency is about constraints holding before and after. The question is about surviving a crash."
+  }}
+/>
+
+<QuickCheck
+  id="cp1-acid-count"
+  type="short-answer"
+  question="Name the ACID property that guarantees a transaction is either fully completed or fully rolled back. (One word.)"
+  answer={["Atomicity", "atomic"]}
+  explanation="Atomicity: all of the transaction or none of it. A crash halfway through a transfer rolls back the debit."
+/>
+
+<QuickCheck
+  id="cp1-teller"
+  question="Bank tellers who process deposits through the same few screens all day are which kind of user?"
+  options={["Naive (parametric) end users", "Casual end users", "Sophisticated end users", "Application programmers"]}
+  answer="Naive (parametric) end users"
+  explanation="They constantly run canned transactions written by someone else."
+  feedback={{
+    "Casual end users": "Casual users access the database occasionally with different questions each time. Tellers are constant and repetitive.",
+    "Sophisticated end users": "Sophisticated users write their own complex requests. Tellers never write queries.",
+    "Application programmers": "Programmers wrote the teller's screens; the teller only uses them."
+  }}
+/>
+
+<QuickCheck
+  id="cp1-standalone"
+  question="Which category of end user do the lecture slides leave out, but Elmasri includes?"
+  options={["Standalone users", "Casual users", "Naive users", "Sophisticated users"]}
+  answer="Standalone users"
+  explanation="Standalone users maintain personal databases with ready-made packages, for example a personal finance app. The slides list application programmers as the fourth end-user type instead."
+  feedback={{
+    "Casual users": "The slides include casual users (occasional ad hoc queries).",
+    "Naive users": "The slides include naive users (ATM, teller).",
+    "Sophisticated users": "The slides include sophisticated users (data scientists, analysts)."
+  }}
+/>
+
+<QuickCheck
+  id="cp1-notdbms"
+  question="Which of these is one of Elmasri's reasons to avoid a general-purpose DBMS?"
+  options={[
+    "Stringent real-time requirements that the DBMS overhead cannot meet",
+    "The data must be shared by several departments",
+    "Several users need to update the same records",
+    "The data needs different views for different users"
+  ]}
+  answer="Stringent real-time requirements that the DBMS overhead cannot meet"
+  explanation="Elmasri's four: simple, well-defined applications not expected to change; stringent real-time requirements; embedded systems with limited storage; no multi-user access. The other options are reasons to use a DBMS."
+  feedback={{
+    "The data must be shared by several departments": "Sharing across departments is the core reason for the database approach.",
+    "Several users need to update the same records": "Concurrent updates are exactly what concurrency control handles.",
+    "The data needs different views for different users": "Multiple views is a characteristic of the database approach."
+  }}
+/>
+
+<QuickCheck
+  id="cp1-redundancy"
+  type="true-false"
+  question="According to Elmasri, a well-designed database never stores any item of data more than once."
+  answer="False"
+  explanation="Elmasri says the DBMS controls redundancy: sometimes controlled redundancy is used to improve query performance, and the DBMS keeps the copies consistent. Foreign keys also repeat key values by design. The slide's 'no duplicate data' overstates it."
+/>
+
+<Predict
+  id="cp1-three-schema"
+  prompt="Draw or describe the three-schema architecture and use it to define logical and physical data independence. (5 marks)"
+  answer="Three levels: external (user views), conceptual (whole database: entities, relationships, constraints), internal (physical storage and access paths), with mappings between them. Logical independence: change the conceptual schema without changing external schemas or application programs. Physical independence: change the internal schema without changing the conceptual schema."
+>
+
+**Model answer.** Draw three stacked boxes: the **external level**, several user views, at the top; the **conceptual level**, the structure of the whole database (entities, data types, relationships, constraints) hiding storage details, in the middle; the **internal level**, the physical storage structures and access paths, at the bottom, above the stored database. Mark the **external/conceptual mapping** and the **conceptual/internal mapping** between them.
+
+**Logical data independence** is the capacity to change the conceptual schema (add a column or a table) without changing external schemas or application programs; only the external/conceptual mapping changes. **Physical data independence** is the capacity to change the internal schema (add an index, reorganise files, move to another disk) without changing the conceptual schema; only the conceptual/internal mapping changes. Physical independence is easier to achieve, because programs never see storage details.
+
+</Predict>

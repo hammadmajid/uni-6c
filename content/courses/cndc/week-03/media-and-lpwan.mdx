@@ -1,0 +1,165 @@
+The last two classifications from lectures 6 and 7: what a signal travels through, and what happens to it along the way. Then the lecture closes with IoT and the gap in the wireless map that low-power WANs were built to fill.
+
+<Predict
+  id="half-power"
+  prompt="A signal loses half its power along a cable. How many decibels is that loss? And if you put an amplifier at the far end to restore the original strength, is the signal as good as new?"
+  answer="About 3 dB, since 10 log10(0.5) ≈ −3. No: the amplifier boosts the noise the cable picked up along with the signal, so the signal-to-noise ratio stays the same."
+>
+
+**3 dB.** Attenuation in decibels is 10 log₁₀(P_out ÷ P_in) = 10 log₁₀(0.5) ≈ **−3 dB**. The minus sign means loss. Halving the power is always −3 dB, whatever the absolute power.
+
+**No, not as good as new.** The cable added noise along the way, and an amplifier cannot tell noise from signal. It scales both, so the picture gets bigger but the **signal-to-noise ratio** does not improve. The fix for digital signals is a **repeater**, which decides each bit and sends a fresh clean copy. Try it in the lab below with the "Just amplify it" and "Add a repeater" presets.
+
+</Predict>
+
+## Guided and unguided
+
+<MediaTree />
+
+**Guided** media carry the signal inside a physical path: copper wire or glass. **Unguided** media broadcast it through air, water or space, so anyone with an antenna in range can receive it. The lecture concentrates on guided media.
+
+<MediaCutaway />
+
+- **Twisted pair.** Two insulated copper wires twisted together. Interference hits both wires of a pair almost equally, and the receiver reads the *difference* between them, so the noise cancels. The tighter the twist, the better (Cat 6 twists more than Cat 5e). **UTP** is unshielded: cheap, flexible, and in nearly every LAN. **STP** adds a foil or braided shield: better against electromagnetic interference (EMI), but stiffer, dearer, and it has to be grounded.
+- **Coaxial.** A central copper core, an insulator, a braided metal shield and a jacket. The shield keeps EMI out, so coax carries more bandwidth further than twisted pair. **Baseband** coax carries one digital signal (old 10BASE2 Ethernet). **Broadband** coax carries many FDM channels (cable TV and HFC Internet).
+- **Fibre optic.** Light in a glass core, held there by **total internal reflection** at the boundary with the cladding. It is immune to EMI, hard to tap, and loses only about 0.2 dB per km, so spans reach tens of kilometres. **Multimode** fibre has a thick core (50 or 62.5 µm): cheap optics, but light takes paths of different lengths, which smears pulses, so it is limited to a few hundred metres inside buildings. **Single-mode** fibre has a 9 µm core and a laser: one path, tens of kilometres, the backbone.
+
+<QuickCheck
+  id="stp-vs-utp"
+  question="What does STP have that UTP does not?"
+  options={["More twists per metre", "A metallic foil or braided shield around the pairs", "A glass core", "A central solid copper conductor"]}
+  answer="A metallic foil or braided shield around the pairs"
+  explanation="Shielded twisted pair wraps the pairs (or each pair) in foil or braid that blocks external EMI. Both types rely on twisting too."
+  feedback={{
+    "More twists per metre": "Twist rate distinguishes categories (Cat 5e vs Cat 6), not shielded from unshielded.",
+    "A glass core": "That is fibre. Both kinds of twisted pair are copper.",
+    "A central solid copper conductor": "That describes coax: a single core inside a shield. Twisted pair has pairs of wires."
+  }}
+/>
+
+**Unguided media**, by frequency band (Forouzan's split):
+
+| | Radio waves | Microwaves | Infrared |
+|---|---|---|---|
+| Band | 3 kHz to 1 GHz | 1 to 300 GHz | 300 GHz to 400 THz |
+| Direction | Omnidirectional | Unidirectional, line of sight | Line of sight, short range |
+| Through walls | Yes | Partly, worse at higher frequency | No |
+| Used for | AM and FM radio, TV, paging | Cellular, satellite, Wi-Fi, point-to-point links | TV remotes, IrDA |
+
+<QuickCheck
+  id="guided-or-not"
+  question="Which of these is a guided medium?"
+  options={["Satellite microwave link", "Wi-Fi", "Single-mode fibre", "An infrared remote"]}
+  answer="Single-mode fibre"
+  explanation="Guided means the signal is confined to a physical conductor: copper or glass. The other three radiate through free space."
+  feedback={{
+    "Satellite microwave link": "The dish focuses the beam, but the beam still travels through free space. Directional is not the same as guided.",
+    "Wi-Fi": "Wi-Fi is radio in the 2.4, 5 and 6 GHz bands: unguided.",
+    "An infrared remote": "Infrared is unguided light, which is why a person standing in front of the TV blocks it."
+  }}
+/>
+
+## What happens on the way: impairments
+
+The lecture names three factors to weigh when choosing a medium. **Bandwidth**: the wider it is, the higher the data rate it can carry. **Transmission impairment**: the received signal is not identical to the one sent. **Interference**: unwanted signals added from outside. Impairment has three causes: **attenuation**, **distortion** and **noise**. Watch all three before reading the definitions:
+
+<ImpairmentLab />
+
+- **Attenuation**: the signal loses energy with distance, heating the wire or scattering in the glass. It is measured in decibels, and amplifiers (analog) or repeaters (digital) compensate for it.
+- **Distortion**: the signal changes shape. A signal is made of many frequency components, and each travels at a slightly different speed, so they arrive at different times and the edges smear. This is **delay distortion**. In multimode fibre the same effect comes from different light paths.
+- **Noise**: unwanted energy added on the way. Types: **thermal** (random electron motion, always present), **induced** (motors and appliances), **crosstalk** (one wire picking up its neighbour, which is what twisting fights), and **impulse** (spikes from lightning and power lines).
+
+<Callout type="key-idea" title="Decibels add">
+Because a decibel is a logarithm, gains and losses along a path simply **add**. dB = 10 log₁₀(P₂ ÷ P₁). Halving the power is −3 dB, a tenth is −10 dB, a hundredth is −20 dB. A 3 dB loss, then a 7 dB amplifier, then another 3 dB loss comes to −3 + 7 − 3 = **+1 dB** overall.
+</Callout>
+
+<QuickCheck
+  id="db-loss"
+  type="numeric"
+  unit="dB"
+  question="A signal enters a cable at 10 mW and leaves at 1 mW. What is the loss in dB? (Give it as a positive number.)"
+  answer={10}
+  explanation="10 log₁₀(1 ÷ 10) = 10 × (−1) = −10 dB, a 10 dB loss. The unit trap: if the powers were in different units (say 10 mW in, 0.001 W out), convert them first. Here both are mW, so the ratio is unitless."
+/>
+
+<QuickCheck
+  id="db-cable"
+  type="numeric"
+  unit="dB"
+  question="Fibre attenuates 0.25 dB per km. What is the total loss over an 80 km span, in dB?"
+  answer={20}
+  explanation="0.25 × 80 = 20 dB, so a hundredth of the power arrives. The trap is the per-unit length: if the spec had been per 100 m, 80 km is 800 units."
+/>
+
+<Deeper kind="formal" title="Signal-to-noise ratio and why it caps the data rate">
+
+SNR = average signal power ÷ average noise power, usually quoted as SNR_dB = 10 log₁₀ SNR. Shannon's capacity theorem says the most a channel of bandwidth B can carry is **C = B log₂(1 + SNR)** bits per second, however clever the encoding. A 3 kHz telephone channel with 30 dB SNR (SNR = 1000) tops out near 3000 × log₂(1001) ≈ 30 kbps, which is why dial-up modems stalled at 33.6 kbps. It also explains the lab: an amplifier multiplies signal and noise by the same factor, so SNR, and with it the capacity, is unchanged.
+
+</Deeper>
+
+## IoT and LPWAN
+
+The **Internet of Things** is the network of physical objects (sensors, meters, vehicles, buildings) with embedded electronics and connectivity, so they can collect and exchange data and be sensed and controlled remotely. The lecture's "Internet of Everything" picture adds people, process and data, and names the links: people to people (P2P), people to machine (P2M), and **machine to machine (M2M)**.
+
+Most IoT devices want an odd combination: **long range, a tiny data rate, and a battery that lasts years**. A water meter sends a few bytes a day, from a basement, 5 km from the nearest gateway. Map existing wireless technologies by range and rate and that corner is empty:
+
+<RangeBandwidthMap />
+
+**LPWAN** (low-power wide-area network) fills it. It trades data rate for range and battery life: kilometres of range, tens of bits to tens of kilobits per second, years on a coin cell.
+
+| | LoRaWAN | Sigfox | NB-IoT | LTE-M |
+|---|---|---|---|---|
+| Spectrum | Unlicensed sub-GHz | Unlicensed sub-GHz | Licensed (LTE bands) | Licensed (LTE bands) |
+| Who runs it | Anyone: buy a gateway | Sigfox operator | Mobile operator | Mobile operator |
+| Rate | 0.3 to 50 kbps | 100 bps; 12-byte messages, 140 a day | Tens of kbps | Up to about 1 Mbps, supports mobility |
+| Range | 2 to 5 km urban, 15 km rural | 10 to 40 km rural | Like LTE, deeper indoors | Like LTE |
+
+<QuickCheck
+  id="lpwan-fit"
+  question="Which application is the best fit for an LPWAN such as LoRaWAN?"
+  options={["Streaming CCTV video from a car park", "Soil-moisture sensors across a 20 km² farm, reporting every hour on battery", "A wireless keyboard", "Backhaul for a 5G cell tower"]}
+  answer="Soil-moisture sensors across a 20 km² farm, reporting every hour on battery"
+  explanation="Long range, a few bytes per report, and no mains power: exactly the corner LPWAN was designed for."
+  feedback={{
+    "Streaming CCTV video from a car park": "Video needs megabits per second. LPWAN offers kilobits at best: use Wi-Fi, 4G or cable.",
+    "A wireless keyboard": "Metres of range, low latency needed: that is Bluetooth, a PAN technology.",
+    "Backhaul for a 5G cell tower": "Backhaul carries gigabits, so it is fibre or a microwave point-to-point link: the opposite corner of the map."
+  }}
+/>
+
+<Callout type="exam" title="What to reproduce about LPWAN">
+Expand the acronym, say which gap it fills (long range, low bandwidth, low power, for IoT and M2M), and name two technologies (LoRaWAN and NB-IoT are the safest). If asked to draw the range and bandwidth chart, three columns and three rows with LPWAN bottom-right earns the marks. The slide's IoT definition is Wikipedia's almost word for word: objects "embedded with electronics, software, sensors and connectivity" that "collect and exchange data".
+</Callout>
+
+<Deeper kind="beyond" title="Why LoRa reaches 15 km on milliwatts">
+
+LoRa uses **chirp spread spectrum**: each symbol is a frequency sweep across the channel, and a receiver can pull a chirp out from *below* the noise floor, at roughly −20 dB SNR. The cost is time. At the slowest setting a 12-byte message takes over a second on air, and regional duty-cycle rules (1% in Europe's 868 MHz band) cap each device at a few such messages a minute. Range, rate and airtime trade against each other directly: this is Shannon's C = B log₂(1 + SNR) at the very low-SNR end.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: explain the causes of transmission impairment (5 marks)">
+
+Define impairment in one line: the received signal differs from the transmitted one. Then three causes, each with a definition, a cause and a remedy. **Attenuation**: loss of energy with distance, measured in dB; remedy: amplifiers or repeaters. **Distortion**: change of shape, because frequency components travel at different speeds and arrive at different times (delay distortion); remedy: equalisation, shorter spans, single-mode fibre. **Noise**: unwanted signal added in transit (thermal, induced, crosstalk, impulse); remedy: shielding, twisting, higher SNR. Include one dB example: half the power is −3 dB.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=ke1XqCnN7K0",
+    "title": "Chorus: How fibre optics work to connect you to the internet",
+    "kind": "video",
+    "why": "From New Zealand's national fibre operator: light in the core, the cladding, and the path from exchange to your wall. See the cutaway above in real hardware."
+  },
+  {
+    "href": "https://lora-alliance.org/about-lorawan/",
+    "title": "LoRa Alliance: What is LoRaWAN?",
+    "kind": "docs",
+    "why": "The spec body's overview of LPWAN architecture: end devices, gateways, network server. Short, with diagrams."
+  },
+  {
+    "href": "https://www.youtube.com/watch?v=RVzM-b3okH0",
+    "title": "Techi Tube: Why are cables twisted? Twisted pair wires explained",
+    "kind": "video",
+    "why": "Animates how the twist makes induced noise cancel at the receiver, the reason UTP works without a shield."
+  }
+]} />

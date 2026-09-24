@@ -1,0 +1,132 @@
+Lectures 6 and 7 classify networks four ways: by **area**, by the **role** the machines play, by **topology** and by **transmission medium**. This lesson covers the first two. Topology and media each get a lesson of their own.
+
+<Predict
+  id="campus-link"
+  prompt="SZABIST's H-8 and I-8 campuses are about 4 km apart. Suppose the university leases a fibre link between them and runs its own switches at each end. Is the result a LAN, a CAN, a MAN or a WAN? And your home Wi-Fi with three laptops sharing a printer: peer-to-peer or client-server?"
+  answer="The campus link is best called a CAN (or a small MAN): it joins LANs across a limited area, and the owner runs the equipment, even though the fibre is leased. Home Wi-Fi with a shared printer is peer-to-peer: no machine is a dedicated server, and each one shares its own resources."
+>
+
+**The campus link is a CAN, arguably a small MAN.** It interconnects LANs over a few kilometres, and the university owns the equipment at both ends. The categories are named by typical reach and owner, not by hard limits, so an examiner accepts either answer if you justify it. The one wrong answer is "LAN": the link leaves a single site.
+
+**Home Wi-Fi is peer-to-peer.** Each laptop shares its own files, and the one sharing the printer sets that share up itself. Nothing is centrally administered, which is the definition.
+
+</Predict>
+
+## By area: PAN, LAN, CAN, MAN, WAN
+
+<NetworkScales />
+
+- **PAN** (personal area network): the devices around one person, such as a phone, earbuds and a smartwatch, over Bluetooth or USB.
+- **LAN** (local area network): one site, such as an office, a lab or a building. It is privately owned and easy to design and troubleshoot. Machines share files and printers.
+- **CAN** (campus area network): several LANs linked across a limited area. The campus owner owns almost all the switches, routers and fibre.
+- **MAN** (metropolitan area network): a city. The lecture's example is a cable TV network. Today it would be an ISP's metro fibre ring.
+- **WAN** (wide area network): countries and continents, built on links you lease from carriers: leased lines, MPLS circuits, satellite, subsea fibre. The Internet is the largest WAN, a network of networks.
+
+<QuickCheck
+  id="classify-bank"
+  question="A bank connects its Karachi head office to 300 branches across Pakistan over leased lines. Which network type is this?"
+  options={["LAN", "CAN", "MAN", "WAN"]}
+  answer="WAN"
+  explanation="It spans the country and rides on links leased from a carrier. Both are WAN signatures. Each branch has its own LAN, and the WAN interconnects them."
+  feedback={{
+    "LAN": "Each branch has a LAN, but the network joining 300 cities spans far more than one site.",
+    "CAN": "A campus is a limited area that one owner controls end to end. Branches in other cities are neither.",
+    "MAN": "A MAN covers one city. This network crosses the country."
+  }}
+/>
+
+### The comparison table, and where the slide goes wrong
+
+This is the lecture's table with two rows corrected:
+
+| Parameter | LAN | MAN | WAN |
+|---|---|---|---|
+| Ownership | Private | Private or public | Private or public (usually leased) |
+| Area covered | Small: a building or site | Moderate: a city | Very large: country, continent |
+| Design and maintenance | Easy | Not easy | Not easy |
+| Typical medium | Twisted pair, Wi-Fi (the slide says coax) | Fibre, coax, wireless | Leased fibre, PSTN lines, satellite |
+| Data rate per link | High: 1 to 10 Gbps to your desk | Moderate | Lower per connection, and costs more per Mbps |
+| Delay and errors | Low | Moderate | Higher: long propagation, more hops |
+
+<Callout type="exam" title="The slide's version of the table">
+The slide has two rows that contradict each other: **"Bandwidth: LAN Low, WAN High, MAN moderate"** and **"Data rates (speed): LAN High, WAN Low, MAN moderate"**. Bandwidth and data rate move together, so both rows cannot be right. The data-rate row is the one that matches reality: a LAN gives you gigabits, while the WAN link your office rents is slower and dearer per Mbps. A WAN backbone does carry huge aggregate capacity, which may be what the "High" was reaching for. If you are asked to reproduce the table, copy the slide's rows. If you are asked to *compare*, write "LAN: high data rate, low delay, low error rate; WAN: lower data rate per connection, higher delay", and add a one-line note about the slide's bandwidth row if you like. The slide's "LAN medium: coaxial cable" dates from 1980s bus Ethernet; today it is twisted pair and Wi-Fi.
+</Callout>
+
+<Callout type="pitfall" title="“In a LAN all machines are connected to a single cable”">
+The slide says this. It was true for 10BASE5 and 10BASE2 Ethernet, which used a coax bus, until about 1990. A modern LAN is a **star**: every machine has its own cable to a switch. The next lesson shows why the industry switched.
+</Callout>
+
+## By role: peer-to-peer or client-server
+
+<NetworkRoles />
+
+In a **peer-to-peer** network every computer makes its own resources available and runs its own security. There is no server and no central control. That makes it cheap and quick to set up, and the lecture puts it at "fewer than 10 computers on a single LAN". It is not very secure, backups have no central home, and a PC that shares a busy printer slows down for its owner.
+
+In a **client-server** network some machines are servers, which host and centrally manage resources and security. The rest are clients that request them. It is secure, reliable and has central backup, but it needs dedicated hardware and software and someone who knows how to administer them.
+
+<QuickCheck
+  id="p2p-disadvantage"
+  question="Which of these is a disadvantage of a peer-to-peer network, according to the lecture?"
+  options={["Requires professional administration", "No central point of storage or file archiving", "Needs expensive dedicated server software", "Single point of failure at the server"]}
+  answer="No central point of storage or file archiving"
+  explanation="Every peer keeps its own files, so there is nowhere to back up centrally. The other three options are client-server costs."
+  feedback={{
+    "Requires professional administration": "That is the lecture's first client-server disadvantage. A workgroup needs no administrator, which is its appeal.",
+    "Needs expensive dedicated server software": "Peer-to-peer has no server, so no server software. This is a client-server cost.",
+    "Single point of failure at the server": "No server, no single point of failure. When one peer dies, only its own shares disappear."
+  }}
+/>
+
+Types of server, as the lecture lists them:
+
+| Server | Job |
+|---|---|
+| File server | Store, retrieve and move files for users |
+| Print server | Queue and manage printing (and, on the slide, fax) |
+| Application server | Share expensive software and computing power |
+| Message server | Coordinate communication between users and applications: mail, chat |
+| Database server | A kind of application server that gives users access to a central database |
+
+<QuickCheck
+  id="server-type"
+  question="You deploy PostgreSQL on a VPS, and three web apps connect to it. In the lecture's classification, the VPS is acting as:"
+  options={["A file server", "A database server", "A message server", "A peer"]}
+  answer="A database server"
+  explanation="It serves a central database to clients, which is exactly the lecture's definition. The lecture calls a database server a kind of application server."
+  feedback={{
+    "A file server": "A file server hands out whole files. PostgreSQL answers queries over a protocol; clients never see its data files.",
+    "A message server": "Message servers coordinate communication between users, such as mail or chat. A message queue like RabbitMQ would be closer.",
+    "A peer": "The web apps only request and the VPS only serves. That asymmetry is client-server."
+  }}
+/>
+
+<Callout type="exam" title="“Local area network (LAN) is based on client server network relationship”">
+The slide says this, but a LAN can be either. Role and area are independent axes: a home LAN is usually peer-to-peer, and an office LAN with a domain controller is client-server. If the question quotes the slide, agree with it. If it asks you to classify, give both axes separately. The slide's "peer networks are amplified into home group" refers to Windows HomeGroup, which Microsoft removed in 2018.
+</Callout>
+
+<Deeper kind="beyond" title="Peer-to-peer means something bigger in week 4">
+
+The lecture's peer-to-peer is a *LAN workgroup*: a few PCs sharing folders. In week 4 the same words mean an *application architecture*: BitTorrent, where millions of peers each upload what they download. There the "fewer than 10 computers" limit is backwards. Peer-to-peer scales *better* than client-server for file distribution, because every new peer brings its own upload capacity. The idea is the same (no dedicated server, every node both serves and requests), but the scale and the conclusion are opposite. Watch the context of the question.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: differentiate LAN, MAN and WAN (5 marks)">
+
+Define each in one line with an example (LAN: a university lab; MAN: a city's cable TV or metro fibre network; WAN: a bank's nationwide branch network, or the Internet). Then give the table with at least five parameters: ownership, area, design and maintenance, medium, data rate. Close with one sentence: "As the area grows, ownership shifts from private to leased or public, the data rate per connection falls, and delay and error rate rise." Add PAN and CAN in a line each if the question says "types of networks".
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=4_zSIXb7tLQ",
+    "title": "PowerCert: LAN, WAN, MAN, PAN and more",
+    "kind": "video",
+    "why": "Animated tour of the area classes with real equipment in each. Matches the lecture's list almost exactly."
+  },
+  {
+    "href": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/get-started/virtual-dc/active-directory-domain-services-overview",
+    "title": "Microsoft: Active Directory Domain Services overview",
+    "kind": "docs",
+    "why": "What client-server LAN administration means in practice: the domain controller that most office LANs use for central security."
+  }
+]} />

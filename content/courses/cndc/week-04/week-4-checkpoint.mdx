@@ -1,0 +1,262 @@
+Calculator allowed, notes not. The HTTP timing numericals are the most reliable marks on this part of the paper: write the formula you are using as your first line, then the unit conversion.
+
+## Numericals
+
+<QuickCheck
+  id="cp4-np"
+  type="numeric"
+  unit="ms"
+  question="Non-persistent HTTP, one connection at a time. A base HTML file references 5 small images. RTT = 40 ms, transmission times negligible. Total time to load the page, in milliseconds?"
+  answer={480}
+  explanation="6 objects × 2 RTT = 12 × 40 = 480 ms. Count the base file: M + 1 objects."
+/>
+
+<QuickCheck
+  id="cp4-nopipe"
+  type="numeric"
+  unit="ms"
+  question="Same page (base file + 5 images, RTT = 40 ms, negligible transmission), persistent HTTP without pipelining. Total time in milliseconds?"
+  answer={280}
+  explanation="2 RTT for the handshake and the base file, then 1 RTT per image: 2 × 40 + 5 × 40 = 280 ms."
+/>
+
+<QuickCheck
+  id="cp4-pipe"
+  type="numeric"
+  unit="ms"
+  question="Same page, persistent HTTP with pipelining. Total time in milliseconds?"
+  answer={120}
+  explanation="Handshake, base file, then all five requests at once: 3 RTT = 120 ms."
+/>
+
+<QuickCheck
+  id="cp4-parallel"
+  type="numeric"
+  unit="ms"
+  question="Non-persistent HTTP with up to 4 parallel connections. A base HTML file references 10 small objects. RTT = 50 ms, negligible transmission. Total time in milliseconds?"
+  answer={400}
+  explanation="Base file: 2 RTT = 100 ms. 10 objects in batches of 4 is ⌈10 ÷ 4⌉ = 3 batches, each 2 RTT = 100 ms. Total 100 + 300 = 400 ms. Rounding 10 ÷ 4 down to 2 batches is the usual slip."
+/>
+
+<QuickCheck
+  id="cp4-tx"
+  type="numeric"
+  unit="ms"
+  question="Non-persistent HTTP fetches a single 500 kB file with no referenced objects over a 20 Mbps link. RTT = 30 ms. Response time in milliseconds?"
+  answer={260}
+  explanation="Transmission: 500 × 1000 × 8 = 4,000,000 bits ÷ 20,000,000 bits/s = 0.2 s = 200 ms. Plus 2 RTT = 60 ms. Total 260 ms. Forgetting the ×8 from bytes to bits gives 85 ms."
+/>
+
+<QuickCheck
+  id="cp4-cache"
+  type="numeric"
+  question="An institution's access link runs at 10 Mbps. Its browsers make 12 requests per second for objects averaging 0.5 Mbit. A web cache with a 25% hit rate is installed. Traffic intensity on the access link (a pure number)?"
+  answer={0.45}
+  explanation="Misses: 12 × 0.75 = 9 requests/s × 0.5 Mbit = 4.5 Mbps. 4.5 ÷ 10 = 0.45. Without the cache: 6 ÷ 10 = 0.6."
+/>
+
+<QuickCheck
+  id="cp4-dns-cached"
+  type="numeric"
+  question="Iterative DNS resolution where the local DNS server already has the .edu TLD servers cached, but nothing else. How many DNS messages in total, counting the host's query and its answer?"
+  answer={6}
+  explanation="Host to local and back (2), local to .edu and back (2), local to the authoritative server and back (2). The root is skipped, which is the normal case in practice."
+/>
+
+## Concepts
+
+<QuickCheck
+  id="cp4-stateful"
+  question="Which of these application-layer protocols keeps state about the client for the whole session?"
+  options={["HTTP", "FTP", "DNS", "SMTP's message format"]}
+  answer="FTP"
+  explanation="The FTP server tracks the logged-in user and current directory across the control connection. HTTP is stateless by design; DNS queries are independent."
+  feedback={{
+    "HTTP": "HTTP is the textbook stateless protocol. Cookies add state at the endpoints, not in the protocol.",
+    "DNS": "Each DNS query is answered on its own. Caches hold records, not per-client sessions.",
+    "SMTP's message format": "A message format is a syntax, not a protocol session. It holds no client state."
+  }}
+/>
+
+<QuickCheck
+  id="cp4-push-pull"
+  question="Which pair is correct?"
+  options={["HTTP is push, SMTP is pull", "HTTP is pull, SMTP is push", "Both are pull", "Both are push"]}
+  answer="HTTP is pull, SMTP is push"
+  explanation="An HTTP client asks for the object it wants (pull). An SMTP client, the sending mail server, pushes the message to the receiving server. That is why mail retrieval needs POP3 or IMAP."
+  feedback={{
+    "HTTP is push, SMTP is pull": "Reversed. A browser requests what it wants; a mail server delivers what it has.",
+    "Both are pull": "SMTP never requests mail. Every SMTP command moves mail toward the server.",
+    "Both are push": "Web servers do not send pages nobody asked for. HTTP is request-driven."
+  }}
+/>
+
+<QuickCheck
+  id="cp4-tld"
+  question="A TLD server receives an iterative query for gaia.cs.umass.edu. What does it return?"
+  options={["The A record for gaia.cs.umass.edu", "The address of a root server", "A referral: the authoritative server for umass.edu", "An error, because TLD servers only accept recursive queries"]}
+  answer="A referral: the authoritative server for umass.edu"
+  explanation="Each level only knows the next level down. The .edu server knows which servers are authoritative for umass.edu and refers the local server to them."
+  feedback={{
+    "The A record for gaia.cs.umass.edu": "Only the authoritative server for umass.edu holds that record.",
+    "The address of a root server": "That would send the resolver backwards up the tree. Every resolver already knows the root addresses.",
+    "An error, because TLD servers only accept recursive queries": "The opposite: TLD servers are far too busy to do recursive work. They answer iteratively."
+  }}
+/>
+
+<QuickCheck
+  id="cp4-cache-role"
+  type="true-false"
+  question="A web cache acts as both a server and a client."
+  answer="True"
+  explanation="It is a server to the browsers that send it requests, and a client to the origin servers it fetches misses from."
+/>
+
+<QuickCheck
+  id="cp4-ports"
+  question="Which pairing of protocol and default server port is wrong?"
+  options={["HTTP: TCP 80", "SMTP: TCP 25", "FTP control: TCP 21", "DNS: TCP 443"]}
+  answer="DNS: TCP 443"
+  explanation="DNS uses port 53, usually over UDP. 443 is HTTPS (and DNS over HTTPS rides on it, but that is HTTPS, not plain DNS)."
+  feedback={{
+    "HTTP: TCP 80": "Correct pairing.",
+    "SMTP: TCP 25": "Correct pairing for server-to-server mail.",
+    "FTP control: TCP 21": "Correct. The data connection uses 20 in active mode."
+  }}
+/>
+
+<QuickCheck
+  id="cp4-imap"
+  question="Which statement about POP3 and IMAP is correct?"
+  options={[
+    "POP3 keeps folders on the server; IMAP downloads and deletes",
+    "IMAP keeps messages and folders on the server; POP3 typically downloads and deletes",
+    "Both are used by mail servers to send mail to each other",
+    "Both replace SMTP entirely"
+  ]}
+  answer="IMAP keeps messages and folders on the server; POP3 typically downloads and deletes"
+  explanation="IMAP keeps state on the server, so several devices see the same mailbox. POP3's download-and-delete suits one device."
+  feedback={{
+    "POP3 keeps folders on the server; IMAP downloads and deletes": "Reversed.",
+    "Both are used by mail servers to send mail to each other": "Server to server is SMTP. POP3 and IMAP are for a user agent retrieving from its own server.",
+    "Both replace SMTP entirely": "They cover only the last hop. SMTP still carries mail from the sender to the receiver's server."
+  }}
+/>
+
+<QuickCheck
+  id="cp4-udp-choice"
+  question="An online multiplayer game sends player positions 30 times a second. Why might it choose UDP over TCP?"
+  options={[
+    "UDP guarantees delivery faster than TCP",
+    "A late position update is worthless, and TCP would stall newer updates to retransmit old ones",
+    "UDP provides encryption",
+    "TCP cannot carry small messages"
+  ]}
+  answer="A late position update is worthless, and TCP would stall newer updates to retransmit old ones"
+  explanation="The game is loss-tolerant and time-sensitive. TCP's in-order reliability delays fresh data behind lost old data, and its congestion control may throttle the sender. UDP lets the game skip the lost update and send the next."
+  feedback={{
+    "UDP guarantees delivery faster than TCP": "UDP guarantees no delivery at all.",
+    "UDP provides encryption": "Neither UDP nor TCP encrypts. Security comes from TLS or DTLS on top.",
+    "TCP cannot carry small messages": "TCP carries any number of bytes. The problem is timing, not size."
+  }}
+/>
+
+<OrderCheck
+  id="cp4-dns-order"
+  prompt="Order the messages of an iterative DNS resolution with cold caches, from first to last."
+  items={[
+    "Host → local DNS server: query",
+    "Local → root: query",
+    "Root → local: referral to .edu TLD",
+    "Local → .edu TLD: query",
+    ".edu TLD → local: referral to umass.edu's authoritative server",
+    "Local → authoritative: query",
+    "Authoritative → local: A record",
+    "Local → host: answer"
+  ]}
+  explanation="One recursive query from the host, then three iterative query and referral pairs walked by the local server, then the answer back to the host. Eight messages."
+  topLabel="First"
+  bottomLabel="Last"
+/>
+
+## Long answers
+
+<Predict
+  id="cp4-http-compare"
+  prompt="Differentiate non-persistent and persistent HTTP. Give the response time for each when a base file references 10 objects and transmission time is negligible. (5 marks)"
+  answer="Non-persistent: one object per TCP connection, 2 RTT per object, OS overhead per connection; 22 RTT serially. Persistent: server leaves the connection open; without pipelining 2 + 10 = 12 RTT, with pipelining 3 RTT."
+>
+
+**Non-persistent HTTP**: at most one object is sent over a TCP connection, which is then closed. Each object costs one RTT to set up the connection and one RTT for the request and the start of the response, plus its transmission time: **2 RTT + t**. The OS allocates buffers for every connection. Base file + 10 objects serially: 11 × 2 RTT = **22 RTT**. Browsers open parallel connections to reduce this.
+
+**Persistent HTTP** (the HTTP/1.1 default): the server leaves the connection open after responding, and later requests and responses between the same client and server use it. Without pipelining: 2 RTT for the base file, then 1 RTT per object = **12 RTT**. With pipelining, the client sends requests back to back as it finds references: **3 RTT** in total.
+
+</Predict>
+
+<Predict
+  id="cp4-dns-long"
+  prompt="Why is DNS distributed? Describe its hierarchy and show how a host resolves a name, distinguishing iterative from recursive queries. (6 marks)"
+  answer="Centralized DNS fails on single point of failure, traffic volume, distance, maintenance. Root, TLD and authoritative servers plus a local DNS server. Host sends a recursive query to the local server; the local server iterates through root, TLD and authoritative; 8 messages; caching with TTL."
+>
+
+**Why distributed**: a single server would be a single point of failure, could not handle the traffic volume, would be distant from most clients, and would be impossible to maintain. It does not scale.
+
+**Hierarchy**: **root** servers know the TLD servers; **TLD** servers (com, org, edu, pk) know the authoritative servers for domains under them; **authoritative** servers hold an organisation's records. Each host also uses a **local DNS server** (its ISP's or a public one) that acts as a proxy into the hierarchy.
+
+**Resolution** (draw it and number the arrows): 1 host → local (**recursive**: 'find me the answer'); 2–3 local → root → referral to the TLD; 4–5 local → TLD → referral to the authoritative server; 6–7 local → authoritative → A record; 8 local → host. Messages 2 to 7 are **iterative**: each server returns a referral and the local server does the next step. In fully recursive resolution, each server would query the next itself and hold the request until the answer came back. **Caching**: every server caches replies for the record's TTL, so most lookups skip the root.
+
+</Predict>
+
+<Predict
+  id="cp4-email-long"
+  prompt="Describe the three major components of Internet email and trace a message from Alice to Bob. Why is SMTP not used by Bob to read his mail? (5 marks)"
+  answer="User agents, mail servers (mailboxes and message queue), SMTP. Alice's UA to her server's queue; SMTP client on her server opens TCP to Bob's server on port 25, pushes the message; Bob's server puts it in his mailbox; Bob's UA retrieves it with POP3, IMAP or HTTP. SMTP is push-only."
+>
+
+**Components**: **user agents** (compose, edit and read messages: Outlook, Thunderbird); **mail servers** (a mailbox per user for incoming mail, and a message queue of outgoing mail); **SMTP** (the protocol between mail servers; TCP port 25; handshaking, transfer, closure; ASCII commands, status-code replies; 7-bit ASCII messages).
+
+**Trace**: (1) Alice composes a message to Bob in her UA; (2) the UA sends it to her mail server, which queues it; (3) the SMTP client side of her server opens a TCP connection to Bob's mail server; (4) it sends the message after the handshake; (5) Bob's server places it in his mailbox; (6) Bob reads it with his UA.
+
+**Why not SMTP for reading**: SMTP is a **push** protocol; it transfers mail toward a server and has no command to fetch a mailbox. Bob's UA uses a mail access protocol to pull: POP3 (download, often delete), IMAP (manage mail on the server), or HTTP (webmail).
+
+</Predict>
+
+<Predict
+  id="cp4-transport-long"
+  prompt="What transport services can an application need? Compare the services TCP and UDP provide, and give one reason an application would choose UDP. (5 marks)"
+  answer="Data integrity (reliability), throughput, timing, security. TCP: reliable, flow control, congestion control, connection-oriented; no timing, throughput or security guarantees. UDP: unreliable, none of those. Choose UDP to avoid handshake delay and congestion-control throttling for loss-tolerant, time-sensitive apps."
+>
+
+**Needs**: **data integrity** (file transfer and web need 100% reliable transfer; audio tolerates loss); **throughput** (multimedia needs a minimum rate; elastic apps use whatever they get); **timing** (telephony and games need low delay); **security** (encryption, integrity, authentication).
+
+**TCP**: connection-oriented (handshake before data), reliable in-order transport, flow control, congestion control. **UDP**: unreliable connectionless data transfer; no reliability, flow control, congestion control or connection setup. **Neither** guarantees timing, minimum throughput or security; security is added with SSL/TLS at the application layer.
+
+**Why UDP**: no connection setup delay, no congestion control deciding the sending rate, and a smaller header, so a loss-tolerant, time-sensitive application (voice, games, DNS) can send immediately and handle loss itself.
+
+</Predict>
+
+<Predict
+  id="cp4-ftp-long"
+  prompt="Explain FTP's use of two connections. What does 'out-of-band' mean here, and how does FTP differ from HTTP in state? (4 marks)"
+  answer="Control connection on TCP 21 for the whole session carries USER, PASS, LIST, RETR, STOR; a new data connection (port 20) per file, closed after it. Control is separate from data, hence out-of-band; HTTP is in-band. FTP server keeps user and directory state; HTTP is stateless."
+>
+
+The client opens a **control connection** to the server on **TCP port 21**, logs in (USER, PASS) and sends commands (LIST, RETR, STOR) in ASCII over it; it stays open for the session. For each file transfer, the server opens a separate **data connection** (from port 20), sends one file and closes it. Because control information travels on a different connection from the data, FTP is **out-of-band**; HTTP sends headers and data on one connection, **in-band**. The FTP server maintains **state** (the user's identity and current directory) for the session; HTTP servers are **stateless**.
+
+</Predict>
+
+<Predict
+  id="cp4-sockets-long"
+  prompt="Explain the difference between UDP and TCP socket programming, using the uppercase client-server example. (4 marks)"
+  answer="UDP: no connection, the client attaches the server address to every sendto, the server gets the client's address from each recvfrom, one server socket for all clients, data may be lost. TCP: server creates a welcoming socket, the client connects (handshake), accept returns a new connection socket per client, reliable byte stream, no address on send."
+>
+
+**UDP**: no handshake. The client creates a `SOCK_DGRAM` socket and attaches the server's IP and port to **every** `sendto`; the server, bound to port 12000, gets each datagram with the sender's address from `recvfrom` and replies to that address. One server socket serves all clients. Datagrams may be lost or reordered.
+
+**TCP**: the server must be running first, with a **welcoming socket** (`bind`, `listen`). The client creates a `SOCK_STREAM` socket and calls `connect`, which runs the handshake. The server's `accept` returns a **new connection socket** dedicated to that client, and the two exchange data with `send` and `recv`, no addresses needed. Reliable, in-order byte stream. Many clients are handled with one connection socket each, told apart by the 4-tuple.
+
+</Predict>
+
+<Callout type="done" title="The top of the stack, done">
+You can now explain every application-layer protocol on the outline and compute what connection handling costs. Week 5 goes one layer down: the ports and sockets from this week are exactly what transport-layer multiplexing and demultiplexing are about, and the handshake you counted as '1 RTT' gets taken apart.
+</Callout>

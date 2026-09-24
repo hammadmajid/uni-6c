@@ -1,0 +1,256 @@
+Lecture 2 makes AI concrete: everything the course builds from now on is an **agent**. Before the definitions, run one in your head.
+
+<Predict
+  id="vacuum-loop"
+  prompt="A robot vacuum lives in two squares, A and B. Both are dirty and it starts in A. Its only rules: if the square is dirty, Suck; otherwise, if in A move Right, if in B move Left. What does it do once both squares are clean? Is that rational?"
+  answer="It shuttles Right, Left, Right, Left forever. Whether that is rational depends on the performance measure. If moving is free and dirt can come back, patrolling is sensible. If every move costs energy, a rational agent would stop, but this one cannot: it has no memory, so in A it cannot know B is already clean."
+>
+
+After two sucks and one move, both squares are clean, and the agent keeps moving: Left, Right, Left. Its rules only look at the **current** square. It never remembers that the other square was clean a second ago.
+
+Whether that is bad depends on how we **score** it, which is the core idea of this lecture. Run it below and change the scoring.
+
+</Predict>
+
+<VacuumWorld />
+
+Press **run 50 steps** on the slides' setup: both agents score about the same, because moving is free. Now pick **"Moves cost a point"**. The reflex agent loses a point on every move forever, while the model-based agent, which remembers, parks and stops. Then **"Dirt returns, moves free"**: the model-based agent still believes that clean stays clean, dirt piles up behind it, and the rules-only agent's endless patrol wins by a wide margin. Last, **"Dirt returns, moves cost"**: the model-based agent re-checks every 6 steps and beats the reflex agent again.
+
+The re-check slider is a **cache TTL** on the agent's knowledge of the other room. The best value depends on how fast the world changes and what a trip costs, and there is no answer that is right in every world. That is rationality, the subject of this lecture.
+
+## Agents: the vocabulary
+
+> An **agent** is anything that can be viewed as perceiving its environment through **sensors** and acting upon that environment through **actuators**.
+
+<AiAgentLoop />
+
+| Agent | Sensors | Actuators |
+|---|---|---|
+| Human | Eyes, ears, other organs | Hands, legs, mouth, other body parts |
+| Robot | Cameras, infrared range finders | Various motors |
+| Software | Keystrokes, file contents, network packets (encoded bit strings) | Displaying output, writing files, sending packets |
+
+The terms quizzes ask you to define, word for word:
+
+| Term | Meaning |
+|---|---|
+| **Percept** | The agent's perceptual input at one instant. |
+| **Percept sequence** | The complete history of everything the agent has perceived so far. |
+| **Agent function** | A mathematical map from percept sequences to actions: F : P* → A. |
+| **Agent program** | The code that implements the agent function on a physical system. |
+| **Architecture** | The device with sensors and actuators that the program runs on. |
+| **Performance measure** | The criterion that decides how successful the agent is. |
+| **Behaviour** | The action the agent performs after a given sequence of percepts. |
+
+The slide writes the function twice. First a = F(p): the action depends only on the **current percept**. Then aₖ = F(p₀ p₁ … pₖ): in general the action can depend on **everything perceived so far**, so F maps **percept sequences** to actions. The star in P* means "sequences of any length".
+
+**Agent = architecture + program.** A backend analogy: the agent function is the **spec**, a possibly infinite table saying what to return for every possible request history. The agent program is the **service** that implements it in finite code. The architecture is the machine it is deployed on.
+
+<QuickCheck
+  id="fn-vs-program"
+  question="What is the difference between the agent function and the agent program?"
+  options={[
+    "They are two names for the same thing",
+    "The function is an abstract map from percept sequences to actions; the program is a concrete implementation that runs on the architecture",
+    "The function runs on the sensors and the program runs on the actuators",
+    "The program is a table and the function is code"
+  ]}
+  answer="The function is an abstract map from percept sequences to actions; the program is a concrete implementation that runs on the architecture"
+  explanation="The function is a mathematical description, the program is code. Many different programs can implement the same function, the way two services can meet one API spec."
+  feedback={{
+    "They are two names for the same thing": "This is the most common mistake on this topic. One is a mathematical object, the other is code with finite memory running on real hardware.",
+    "The function runs on the sensors and the program runs on the actuators": "Neither runs on the sensors or actuators. The program runs on the architecture as a whole; the function does not run at all, it is a description.",
+    "The program is a table and the function is code": "Reversed. The function can be written as a (usually infinite) table; the program is the finite code."
+  }}
+/>
+
+## The vacuum-cleaner world
+
+The lecture's running example (R&N figure 2.2). Two squares, A and B. **Percept**: which square am I in, and is it dirty? **Actions**: Left, Right, Suck, NoOp. The start of its agent function as a table:
+
+| Percept sequence | Action |
+|---|---|
+| [A, Clean] | Right |
+| [A, Dirty] | Suck |
+| [B, Clean] | Left |
+| [B, Dirty] | Suck |
+| [A, Clean], [A, Clean] | Right |
+| [A, Clean], [A, Dirty] | Suck |
+| … | … |
+
+And a program that implements it in four lines, instead of an infinite table:
+
+```text
+function REFLEX-VACUUM-AGENT([location, status]) returns an action
+    if status = Dirty then return Suck
+    else if location = A then return Right
+    else if location = B then return Left
+```
+
+The table grows without end, one row per possible history. The program ignores history entirely and still produces the same actions. That gap is why AI is about writing **programs**, not tables.
+
+<QuickCheck
+  id="table-size"
+  type="numeric"
+  unit="rows"
+  question="The vacuum world has 4 possible percepts (2 locations × 2 statuses). How many rows does the agent-function table need to cover every percept sequence of length 1, 2 and 3 (that is, an agent that lives for 3 steps)?"
+  answer={84}
+  explanation="Sequences of length t: 4ᵗ. Total = 4 + 16 + 64 = 84. The trap is counting only length 3 (64): the table needs a row for every history the agent could have at every step, not just the last one. For a lifetime of T steps it is the sum of 4ᵗ for t from 1 to T, which passes 10¹⁸ at T = 30. That is why no real agent stores its function as a table."
+/>
+
+## Rationality
+
+The lecture's list: a **rational agent** does the expected action that maximises its **performance measure**, based on its **percept sequence** and its **built-in knowledge**. What is rational at any moment depends on four things:
+
+1. The **performance measure** that defines success.
+2. The agent's **percept sequence** to date.
+3. The agent's **prior knowledge** of the environment.
+4. The **actions** the agent can perform.
+
+The textbook's definition, the one to quote:
+
+> For each possible percept sequence, a rational agent should select an action that is **expected** to maximise its performance measure, given the evidence provided by the percept sequence and whatever built-in knowledge the agent has.
+
+The key word is **expected**. Rational is not the same as **omniscient** (knowing the actual outcome) or **perfect**. Russell and Norvig's example: you look both ways, the road is clear, you cross, and a cargo door falls off a passing airliner and flattens you. Crossing was still rational. You chose the best action given what you could perceive.
+
+The systems version: a load balancer sends a request to the backend whose last health check was green. The backend dies a millisecond later and the request fails. The routing decision was still correct. It was the best choice on the evidence, and nobody calls the load balancer irrational for not predicting the crash.
+
+<Callout type="exam" title="The slide’s wording: “Rational agent always performs right action”">
+The slide says **"Rational agent always performs right action"**, where the right action is "the action that causes the agent to be most successful". Reproduce that sentence if a quiz asks for the lecture's definition.
+
+It is imprecise because it confuses rationality with **omniscience**. An agent cannot always know which action *will* turn out best. It picks the action with the best **expected** outcome given its percepts and knowledge. For the full mark, add "expected" and the cargo-door example.
+</Callout>
+
+<QuickCheck
+  id="rational-omniscient"
+  type="true-false"
+  question="If an agent's action turns out badly because of something it could not possibly have perceived, the agent was not rational."
+  answer="False"
+  explanation="Rationality is judged against the evidence available at decision time. It maximises expected performance and is not clairvoyance. Rational agents should still gather information (look both ways) and learn from outcomes."
+/>
+
+<QuickCheck
+  id="rational-depends"
+  question="Which of these does NOT determine what is rational for an agent at a given time?"
+  options={[
+    "The performance measure",
+    "The agent's percept sequence to date",
+    "What actually happens after the action",
+    "The actions the agent can perform"
+  ]}
+  answer="What actually happens after the action"
+  explanation="The four factors are the performance measure, the percept sequence, prior knowledge and the available actions. The actual outcome is unknown at decision time, so it cannot define rationality."
+  feedback={{
+    "The performance measure": "This is the first of the four factors: the measure defines what success means.",
+    "The agent's percept sequence to date": "This is the evidence the agent decides on. It is one of the four.",
+    "The actions the agent can perform": "An agent cannot be blamed for not doing something it is unable to do. The available actions are one of the four factors."
+  }}
+/>
+
+<Deeper kind="edge" title="Design the performance measure around the outcome, not the behaviour">
+
+Russell and Norvig's warning: reward the vacuum for "amount of dirt sucked up" and a rational agent will suck up dirt, dump it back on the floor, and suck it up again. Measure **what you want in the environment** (clean floor, over time), not how you think the agent should behave. Any engineer who has watched a team game a metric ("tickets closed", "lines of code") has met this.
+
+</Deeper>
+
+## PEAS: specifying the task
+
+Before designing an agent you specify its **task environment** with four headings: **P**erformance measure, **E**nvironment, **A**ctuators, **S**ensors. The lecture shows the textbook's table (R&N figure 2.5):
+
+| Agent | Performance measure | Environment | Actuators | Sensors |
+|---|---|---|---|---|
+| Medical diagnosis system | Healthy patient, reduced costs | Patient, hospital, staff | Display of questions, tests, diagnoses, treatments, referrals | Keyboard entry of symptoms, findings, patient's answers |
+| Satellite image analysis | Correct image categorisation | Downlink from orbiting satellite | Display of scene categorisation | Colour pixel arrays |
+| Part-picking robot | Percentage of parts in correct bins | Conveyor belt with parts; bins | Jointed arm and hand | Camera, joint angle sensors |
+| Refinery controller | Purity, yield, safety | Refinery, operators | Valves, pumps, heaters, displays | Temperature, pressure, chemical sensors |
+| Interactive English tutor | Student's score on test | Set of students, testing agency | Display of exercises, suggestions, corrections | Keyboard entry |
+
+<Predict
+  id="peas-taxi"
+  prompt="Write a PEAS description for an automated taxi (a self-driving car that carries paying passengers). At least three items under each heading."
+  answer="P: safe, fast, legal, comfortable trip; maximise profit; minimise impact on other road users. E: roads, other traffic, police, pedestrians, customers, weather. A: steering, accelerator, brake, signal, horn, display, speech. S: cameras, radar or lidar, speedometer, GPS, engine sensors, accelerometer, microphones, touchscreen."
+>
+
+This is R&N's own worked example (figure 2.4), and the most likely PEAS question on a paper.
+
+- **Performance measure**: safe, fast, legal, comfortable trip; maximise profits; minimise impact on other road users. Note the conflicts (fast vs safe), which matter in the next lesson.
+- **Environment**: roads of various kinds, other traffic, police, pedestrians, customers, potholes, weather.
+- **Actuators**: steering, accelerator, brake, signal, horn, display, speech.
+- **Sensors**: cameras, radar, lidar, speedometer, GPS, engine sensors, accelerometer, microphones, touchscreen.
+
+Common slip: putting the **passenger** under sensors or actuators. The passenger is part of the environment; the touchscreen they press is the sensor.
+
+</Predict>
+
+<QuickCheck
+  id="peas-spam"
+  question="In the PEAS description of an email spam filter, where does 'the user's mailbox and the stream of incoming messages' belong?"
+  options={["Performance measure", "Environment", "Actuators", "Sensors"]}
+  answer="Environment"
+  explanation="The mailbox and incoming mail are what the agent perceives and acts on. Sensors would be 'incoming message headers and body'; actuators 'mark as spam, move to folder'; performance 'minimise spam in inbox and legitimate mail lost'."
+  feedback={{
+    "Performance measure": "The performance measure is a criterion of success, such as 'few false positives'. A mailbox is not a criterion.",
+    "Actuators": "Actuators are what the agent does: move to the spam folder, flag, delete.",
+    "Sensors": "Sensors are how the agent reads the mail (message text, headers, sender reputation). The mailbox itself is the world it lives in."
+  }}
+/>
+
+<Callout type="exam" title="The slide titled “PEAS · Properties of Task Environment”">
+The slide carries that title but only shows the PEAS table above. The **properties** of task environments (observable, deterministic, episodic, static, discrete, single-agent) were not on the slides. They are in R&N section 2.3 and they turn up constantly in AI exams, so the short version is below. If a quiz asks about "properties of the task environment" according to the lecture, the answer it expects is probably PEAS.
+</Callout>
+
+<Deeper kind="beyond" title="Properties of task environments (R&N 2.3, not on the slides)">
+
+Six yes-or-no questions classify any environment. The harder side of each pair is listed second.
+
+| Property | Easy | Hard | The test |
+|---|---|---|---|
+| Observability | Fully observable | Partially observable | Can the sensors see everything relevant to the decision? |
+| Agents | Single-agent | Multi-agent | Are other agents maximising their own measure, possibly against you? |
+| Determinism | Deterministic | Stochastic / nondeterministic | Is the next state fully fixed by the current state and action? |
+| Memory of episodes | Episodic | Sequential | Does the current decision affect future ones? |
+| Change | Static | Dynamic (semi-dynamic if only the score changes with time) | Does the world change while the agent is deciding? |
+| Values | Discrete | Continuous | Finite distinct states, percepts, actions? |
+
+R&N's figure 2.6 examples:
+
+| Environment | Observable | Agents | Deterministic | Episodic | Static | Discrete |
+|---|---|---|---|---|---|---|
+| Crossword puzzle | Fully | Single | Deterministic | Sequential | Static | Discrete |
+| Chess with a clock | Fully | Multi | Deterministic | Sequential | Semi | Discrete |
+| Poker | Partially | Multi | Stochastic | Sequential | Static | Discrete |
+| Taxi driving | Partially | Multi | Stochastic | Sequential | Dynamic | Continuous |
+| Medical diagnosis | Partially | Single | Stochastic | Sequential | Dynamic | Continuous |
+| Image analysis | Fully | Single | Deterministic | Episodic | Semi | Continuous |
+| Part-picking robot | Partially | Single | Stochastic | Episodic | Dynamic | Continuous |
+
+The hardest case is the taxi: partially observable, multi-agent, stochastic, sequential, dynamic, continuous. That is why self-driving took decades.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: define agent, percept sequence, agent function and rational agent (5 marks)">
+
+**Agent**: anything that perceives its environment through sensors and acts on it through actuators, for example a robot with cameras and motors. **Percept**: the agent's input at one instant. **Percept sequence**: the complete history of everything it has perceived. **Agent function**: a mapping from percept sequences to actions, F : P* → A. It is implemented by the **agent program**, which runs on the **architecture**; agent = architecture + program. **Rational agent**: for every percept sequence it selects the action expected to maximise its performance measure, given the percept sequence and its built-in knowledge. Rationality depends on the performance measure, the percept sequence, prior knowledge and the available actions. It is not omniscience: a rational agent maximises expected, not actual, performance.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=NG3MHjcvk2A",
+    "title": "Berkeley CS188 lecture 1: Intro to AI, rational agents",
+    "kind": "video",
+    "why": "Berkeley's version of this exact lecture. The rational-agent section explains 'maximise expected utility' better than any slide."
+  },
+  {
+    "href": "https://github.com/aimacode/aima-python/blob/master/notebooks/vacuum_world.ipynb",
+    "title": "aima-python: the vacuum world notebook",
+    "kind": "tool",
+    "why": "The textbook's own Python code for this lecture's agents. Useful for AI Lab week 3, which implements reflex agents."
+  },
+  {
+    "href": "https://aima.cs.berkeley.edu/",
+    "title": "AIMA, the textbook's site",
+    "kind": "book",
+    "why": "Chapter 2 is this lecture. The site has the figures, code in several languages and exercises."
+  }
+]} />

@@ -1,0 +1,63 @@
+{
+  "slug": "web-tech",
+  "code": "CSC 4717",
+  "short": "Web Tech",
+  "title": "Web Technologies I",
+  "description": "Server-side Java the way the course teaches it: Servlets on Apache Tomcat 11 (Jakarta EE 11, Servlet 6.1), JDK 26, PostgreSQL through JDBC, built in IntelliJ with DBeaver beside it. You already know HTTP from other stacks, so the depth goes where Java differs: the container model, how a URL reaches a servlet, the WAR layout, and threads. No outline yet; weeks appear here as the instructor's slides arrive.",
+  "textbook": "Instructor slides (Zubair Ahmed Chatta). Jakarta Servlet 6.1 specification and the Apache Tomcat 11 documentation for anything the slides leave out.",
+  "modules": [
+    {
+      "slug": "week-01",
+      "week": 1,
+      "title": "From socket to webapp: HTTP, URLs, and Tomcat",
+      "outline": "Lecture 01 slides 1 to 33. TCP/IP, IP addresses and ports, the HTTP request/response exchange, URL anatomy and how a machine is resolved, Apache Tomcat's directory layout, the development view versus the WAR, and the public and private areas of a webapp.",
+      "lessons": [
+        {
+          "slug": "sockets-ports-http",
+          "title": "Sockets, ports, and one HTTP exchange",
+          "minutes": 35,
+          "objective": "name the socket pair behind a browser request, read a raw HTTP request and response line by line, and correct the two port facts the slides get wrong."
+        },
+        {
+          "slug": "urls-and-tomcat",
+          "title": "From URL to file: Tomcat and the webapp layout",
+          "minutes": 45,
+          "objective": "split any URL into the parts Tomcat uses, walk Tomcat's directories, and write the URL for any file or servlet in a webapp, including why WEB-INF is unreachable."
+        }
+      ]
+    },
+    {
+      "slug": "week-02",
+      "week": 2,
+      "title": "Servlets: mapping, lifecycle, GET and POST",
+      "outline": "Lecture 01 slides 34 to 63. What a servlet is, mapping by @WebServlet or web.xml, the lifecycle and the one-instance-many-threads model, query strings and getParameter, HTML forms, the 405 you get from posting to a doGet-only servlet, and the login assignment. Plus the home-task dev setup (IntelliJ, JDK 26, Tomcat 11, PostgreSQL, DBeaver).",
+      "lessons": [
+        {
+          "slug": "servlet-lifecycle",
+          "title": "One servlet, many threads",
+          "minutes": 40,
+          "objective": "map a URL to a servlet by annotation and by web.xml, trace init, service and destroy, and explain why request data must never live in a servlet field."
+        },
+        {
+          "slug": "get-post-forms",
+          "title": "Parameters, forms, GET and POST",
+          "minutes": 45,
+          "objective": "read parameters with getParameter, predict null and 405 outcomes before running the code, and choose GET or POST by HTTP semantics rather than by habit."
+        },
+        {
+          "slug": "first-servlet-on-tomcat",
+          "title": "Set up, deploy, and log in",
+          "minutes": 50,
+          "objective": "install the five tools from the home task, deploy a servlet to Tomcat 11 from IntelliJ, and build the login assignment's first version."
+        },
+        {
+          "slug": "weeks-1-2-checkpoint",
+          "title": "Weeks 1 and 2 checkpoint",
+          "minutes": 25,
+          "kind": "checkpoint",
+          "objective": "answer lecture 01's material in the instructor's style without notes."
+        }
+      ]
+    }
+  ]
+}

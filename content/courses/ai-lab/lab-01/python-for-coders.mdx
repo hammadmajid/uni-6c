@@ -1,0 +1,242 @@
+You have written JavaScript and Java for years, so this lesson skips what a variable is and goes straight to the places where Python behaves differently from what your fingers expect. Every section opens with a snippet. Predict the output before you scroll.
+
+<Predict
+  id="first-surprise"
+  prompt="What do these three lines print? print(bool('0')), then print(-7 // 2), then print(list(range(2, 10, 3)))."
+  answer="True, then -4, then [2, 5, 8]."
+>
+
+**`True`.** A non-empty string is truthy, whatever it contains. Only the empty string is falsy.
+
+**`-4`.** `//` is floor division: it rounds towards negative infinity, not towards zero. Java's `-7 / 2` gives −3.
+
+**`[2, 5, 8]`.** `range` includes start and excludes stop. 11 would be the next value, and it is past 10.
+
+</Predict>
+
+The AI lab uses Python for everything from week 3 onward: agents, search, then the machine-learning labs with numpy and scikit-learn. Nothing here is advanced. These are the eight things that cost JavaScript and Java developers an hour of debugging in their first week.
+
+## Blocks are indentation
+
+There are no braces. A colon opens a block, and the block is every following line indented deeper than the line with the colon. Four spaces is the convention; mixing tabs and spaces is a `TabError`.
+
+```python
+for mark in [72, 45, 38]:
+    if mark >= 50:
+        print(mark, "pass")
+    else:
+        print(mark, "fail")
+print("done")   # column 0: runs once, after the loop
+```
+
+Variables are not block-scoped. A name assigned inside an `if` or a `for` is visible after it, and a loop variable keeps its last value:
+
+```python
+for i in range(3):
+    pass
+print(i)             # 2
+```
+
+## Truthiness
+
+Python's falsy values: `False`, `None`, zero of any numeric type, and every **empty** container (the empty string, list, tuple, set and dict). Everything else is truthy. JavaScript has a similar rule, with two differences that bite: an empty list is falsy in Python and truthy in JavaScript, and Python has no `undefined`.
+
+| Value | `bool(value)` | JavaScript agrees? |
+|---|---|---|
+| `0`, `0.0` | False | yes |
+| `""` | False | yes |
+| `"0"`, `"False"` | True | yes |
+| `[]` | False | **no**, `[]` is truthy in JS |
+| `[0]` | True | yes |
+| `None` | False | like `null` |
+
+<QuickCheck
+  id="truthy-list"
+  question="A function returns a list of search results. Which test runs the body only when at least one result came back?"
+  options={["if results:", "if results != None:", "if len(results) > 0 == True:", "if results is not []:"]}
+  answer="if results:"
+  explanation="An empty list is falsy, so `if results:` is the idiomatic non-empty test. It also treats None as no results, which is usually what you want."
+  feedback={{
+    "if results != None:": "An empty list is not None, so this body runs with zero results. Also, compare with None using `is`, not `!=`.",
+    "if len(results) > 0 == True:": "Comparisons chain in Python: this means len(results) > 0 and 0 == True, which is always False.",
+    "if results is not []:": "`[]` builds a new list every time, so `is not` compares identities and is always True."
+  }}
+/>
+
+## `range` is half-open
+
+`range(start, stop, step)` produces start, start + step, and so on, and stops **before** reaching stop. Two consequences: `range(n)` is exactly n values, 0 to n − 1, and a range whose stop is already behind its start is simply empty, with no error.
+
+<PyRangeLab />
+
+<QuickCheck
+  id="range-backwards"
+  question="What does list(range(10, 0, -3)) produce?"
+  options={["[10, 7, 4, 1]", "[10, 7, 4, 1, -2]", "[]", "[1, 4, 7, 10]"]}
+  answer="[10, 7, 4, 1]"
+  explanation="With a negative step, range keeps going while the value is greater than stop. After 1 comes −2, which is not greater than 0, so it stops."
+  feedback={{
+    "[10, 7, 4, 1, -2]": "Stop is never produced, and nothing past it either. −2 has already gone past 0.",
+    "[]": "That is what you get from range(10, 0) with the default step of +1. The −3 makes it count down.",
+    "[1, 4, 7, 10]": "range never reorders. It starts at start and walks in the direction of step."
+  }}
+/>
+
+## `/` and `//` are different operators
+
+`/` always gives a float, even for `6 / 2` (which is `3.0`). `//` is floor division and `%` is the matching remainder. Both round towards negative infinity. In Java, integer `/` truncates towards zero, and C and JavaScript agree with Java.
+
+```python
+print(7 / 2, 7 // 2)      # 3.5 3
+print(-7 // 2, -7 % 2)    # -4 1
+print(int(-7 / 2))        # -3   (truncates toward zero)
+```
+
+<QuickCheck
+  id="floor-neg"
+  type="numeric"
+  question="What does print(-7 // 2) output? (An integer, no unit.)"
+  answer={-4}
+  tolerance={0}
+  explanation="−3.5 floored is −4. The trap is Java and C's truncation, which gives −3. The remainder follows the same rule: −7 % 2 is 1, so that (−7 // 2) × 2 + (−7 % 2) = −7 still holds."
+/>
+
+## Default arguments are evaluated once
+
+This is the most famous Python bug. Click the button a few times.
+
+<DefaultArgDemo />
+
+```python
+# the [] is built once, when def runs
+def add_item(item, basket=[]):
+    basket.append(item)
+    return basket
+
+print(add_item("apple"))   # ['apple']
+print(add_item("mango"))   # ['apple', 'mango']   <- surprise
+
+def add_item(item, basket=None):     # the fix: a sentinel
+    if basket is None:
+        basket = []
+    basket.append(item)
+    return basket
+```
+
+<QuickCheck
+  id="mutable-default"
+  question="Why does the second call to the first add_item return two items?"
+  options={["The default list is created once and shared by every call that omits basket", "append returns a new list each time", "Python caches function results", "basket is a global variable"]}
+  answer="The default list is created once and shared by every call that omits basket"
+  explanation="`def` is a statement that runs once. It evaluates `[]`, stores that list in `add_item.__defaults__`, and every later call that omits the argument binds `basket` to that same object. Use `None` as the default and build the list inside the body."
+  feedback={{
+    "append returns a new list each time": "append mutates in place and returns None. That in-place mutation is exactly why the shared list grows.",
+    "Python caches function results": "It does not, unless you add functools.cache yourself. The body runs on every call.",
+    "basket is a global variable": "It is a local name. The local name is bound to an object that outlives the call."
+  }}
+/>
+
+## f-strings
+
+Prefix a string with `f`, then put an expression and an optional format spec inside the braces. You will use `.2f` constantly in the machine-learning labs.
+
+```python
+name, gpa = "Hammad", 3.456
+print(f"{name} has GPA {gpa:.2f}")   # Hammad has GPA 3.46
+print(f"{gpa=}")                     # gpa=3.456  (3.8+)
+```
+
+## `for ... else`
+
+A loop can have an `else` block, and it runs only if the loop finished **without** hitting `break`. Read it as "no break". It replaces the found-flag pattern:
+
+```python
+def find_first_failing(marks):
+    for name, m in marks.items():
+        if m < 50:
+            print("first failing:", name)
+            break
+    else:
+        print("everyone passed")
+
+find_first_failing({"Ali": 72, "Sara": 45, "Omar": 38})
+# first failing: Sara
+find_first_failing({"Ali": 72, "Sara": 65})
+# everyone passed
+```
+
+<QuickCheck
+  id="for-else"
+  question="When does the else block of a for loop run?"
+  options={["When the loop ends without executing break", "When the loop body never runs", "When an exception is raised in the loop", "After every iteration"]}
+  answer="When the loop ends without executing break"
+  explanation="`else` on a loop means the loop was not broken out of. An empty loop also finishes without break, so its else runs too, but that is a special case of the rule, not the rule."
+  feedback={{
+    "When the loop body never runs": "It does run then, but it also runs after a full loop. The rule is about break, not about emptiness.",
+    "When an exception is raised in the loop": "An exception skips the else entirely and propagates.",
+    "After every iteration": "That would be the body. else runs at most once, after the loop."
+  }}
+/>
+
+## Functions return tuples, and take keywords
+
+There is no overloading. A function can return several values, which is really one tuple that you unpack. Callers can pass arguments by name, and a bare `*` in the signature forces everything after it to be passed by name.
+
+```python
+def min_max(xs):
+    return min(xs), max(xs)          # one tuple
+
+lo, hi = min_max([4, 9, 1])          # lo = 1, hi = 9
+
+def greet(name, greeting="Hello", *, punct="!"):
+    return f"{greeting}, {name}{punct}"
+
+greet("Sara")                        # 'Hello, Sara!'
+greet("Sara", "Salam")               # 'Salam, Sara!'
+greet("Sara", punct=".")             # 'Hello, Sara.'
+```
+
+<QuickCheck
+  id="identity"
+  question="a = [1, 2] and b = [1, 2]. What does print(a == b, a is b) show?"
+  options={["True False", "True True", "False False", "False True"]}
+  answer="True False"
+  explanation="`==` compares values, like Java's .equals. `is` compares identity, like Java's == on objects. Two separately built lists are equal but not the same object. Use `is` only for None, True and False."
+  feedback={{
+    "True True": "Two list literals build two objects. is asks whether they are the same object.",
+    "False False": "The contents are equal, and == on lists compares element by element.",
+    "False True": "If two names are the same object, they are always equal too, so this combination is impossible for lists."
+  }}
+/>
+
+<Callout type="pitfall" title="Comparisons chain">
+`x == y == True` means `x == y and y == True`, not "is x == y true". The same chaining is why a range check can be written in one expression, the way it reads in maths, and why it bites when you did not mean it.
+</Callout>
+
+<Deeper kind="why" title="Why names, not variables, explain every trap above">
+
+A Python variable is a name bound to an object, not a box that holds a value. Assignment rebinds a name and never copies. That one rule explains the mutable default (the name `basket` is bound to the same list on every call), `a is b` (two names, two objects), and why `b = a; b.append(3)` changes `a`. Ned Batchelder's talk below is the clearest 25 minutes on it.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://pythontutor.com/visualize.html#mode=edit",
+    "title": "Python Tutor",
+    "kind": "tool",
+    "why": "Paste any snippet from this lesson and step through it with every name and object drawn as boxes and arrows. The mutable default makes sense in one run."
+  },
+  {
+    "href": "https://www.youtube.com/watch?v=_AEJHKGk9ns",
+    "title": "Ned Batchelder: Facts and myths about Python names and values (PyCon 2015)",
+    "kind": "video",
+    "time": "25 min",
+    "why": "The mental model behind aliasing and mutation, drawn slide by slide. Worth it before the data-structures lab."
+  },
+  {
+    "href": "https://docs.python.org/3/tutorial/controlflow.html",
+    "title": "Python tutorial: More control flow tools",
+    "kind": "docs",
+    "why": "The official chapter on for/else, range, default arguments (with the same warning) and keyword-only parameters. Short, and written for programmers."
+  }
+]} />

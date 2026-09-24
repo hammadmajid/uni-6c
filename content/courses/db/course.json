@@ -1,0 +1,43 @@
+{
+  "slug": "db",
+  "code": "CSC 2203",
+  "short": "DB",
+  "title": "Database Systems",
+  "description": "Databases as the heart of business applications. The course objectives: what a DBMS is and why it beats files; the relational vocabulary (tables, records, fields, primary and foreign keys, relations); designing a logical model and mapping it to a physical database; normalization to 1NF, 2NF and 3NF; SQL; and building a desktop application on top of a database. Taught by Saira Shaheen with section BS(CS)-4A. No week-by-week outline yet, so only the weeks with lectures in hand are listed. Marks: 4 quizzes × 3.5, 4 assignments × 4, midterm 30, final 40.",
+  "textbook": "Elmasri & Navathe, Fundamentals of Database Systems (the lecture follows its chapter 1 closely). Connolly & Begg, Database Systems, and Hoffer, Modern Database Management, as secondary books.",
+  "modules": [
+    {
+      "slug": "week-01",
+      "week": 1,
+      "title": "Why databases: the DBMS, the database approach, and who uses it",
+      "outline": "Lecture 1. Data, database, DBMS and database system. File processing versus the database approach. The characteristics of the database approach: self-description, data independence, multiple views, concurrency and ACID transactions, integrity, backup and recovery. When not to use a DBMS. Actors on the scene and the advantages of the DBMS approach.",
+      "lessons": [
+        {
+          "slug": "why-a-database",
+          "title": "From department files to one database",
+          "minutes": 40,
+          "objective": "define data, database, DBMS and database system in the textbook's words, and explain with an example why file processing leads to redundancy and inconsistency."
+        },
+        {
+          "slug": "database-approach",
+          "title": "What makes the database approach different",
+          "minutes": 55,
+          "objective": "explain self-description, logical and physical data independence, multiple views and ACID transactions, classify a change as logical or physical, and say when a DBMS is the wrong tool."
+        },
+        {
+          "slug": "actors-and-advantages",
+          "title": "Who uses a database, and what the DBMS buys you",
+          "minutes": 35,
+          "objective": "classify any person who touches a database into Elmasri's categories and list the advantages of the DBMS approach with a concrete feature for each."
+        },
+        {
+          "slug": "week-1-checkpoint",
+          "title": "Week 1 checkpoint",
+          "minutes": 30,
+          "kind": "checkpoint",
+          "objective": "answer the lecture's scenario questions and the week's definitions without notes."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+The home task (announcement of 15 Sept) lists five installs. This lesson turns them into a working loop: edit a servlet, press Run, see it in the browser, then build the login assignment from slides 60 to 63. Do it once, slowly, and the rest of the semester is just new classes.
+
+<Predict
+  id="war-exploded"
+  prompt="You create a Jakarta EE project called demo in IntelliJ and press Run. The browser opens, but at http://localhost:8080/demo_war_exploded/ instead of /demo/. Where did demo_war_exploded come from, and what does that tell you about how IntelliJ deploys?"
+  answer="It is the default application context in IntelliJ's Tomcat run configuration, named after the artifact 'demo:war exploded'. IntelliJ does not build a .war and copy it into webapps; it deploys the unzipped (exploded) WAR from target/ with whatever context path the run configuration says. Change it on the Deployment tab to /demo."
+>
+
+It is the **artifact name**. IntelliJ's run configuration deploys an artifact called `demo:war exploded`: the WAR's contents unzipped in `target/`. The context path defaults to a slug of that name. Nothing is copied into Tomcat's `webapps/`. IntelliJ starts Tomcat with a private base directory and tells it to serve `target/demo-1.0-SNAPSHOT/` at that context path. Change **Application context** on the Deployment tab to `/demo` and your URLs match the slides.
+
+</Predict>
+
+## The five installs, with a check for each
+
+| Step | Install | Check it worked |
+|---|---|---|
+| 1 | IntelliJ IDEA **Ultimate** through the JetBrains student pack (use your SZABIST email) | New Project shows a **Jakarta EE** generator. The free Community edition does not have it. |
+| 2 | JDK 26 | `java -version` prints 26 |
+| 3 | Tomcat 11, the **zip** (core) download, unzipped anywhere | `bin/startup.sh` (run `chmod +x bin/*.sh` first on Linux or macOS), then http://localhost:8080 shows the Tomcat page. Stop it with `bin/shutdown.sh`. |
+| 4 | PostgreSQL | `psql -U postgres -c 'select version()'` answers |
+| 5 | DBeaver | New connection → PostgreSQL → localhost:5432 → Test Connection is green |
+
+<Callout type="pitfall" title="Stop the manual Tomcat before pressing Run">
+If you started Tomcat by hand in step 3 and then press Run in IntelliJ, the IntelliJ-launched Tomcat fails with **Address already in use** on 8080. Only one process can listen on a port (lesson 1). Run `bin/shutdown.sh` first, or check what holds the port with `ss -ltnp | grep 8080` (Linux) or `lsof -i :8080` (macOS).
+</Callout>
+
+<Deeper kind="beyond" title="PostgreSQL in Docker instead of an installer">
+
+You already run Docker, so this is one command and nothing to uninstall later:
+
+```bash
+docker run -d --name webtech-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -v webtech-pg:/var/lib/postgresql/data postgres:17
+```
+
+DBeaver and JDBC connect to localhost:5432 exactly as with a native install. For the lab machines you still need the native installer, so know both.
+
+</Deeper>
+
+## First servlet, end to end
+
+<WorkedExample title="From an empty project to /demo/hello-servlet">
+  <Step label="Create the project">
+    New Project → **Jakarta EE**. Template: **Web application**. Application server: **New… → Tomcat Server**, pointing at the folder you unzipped. Build system: **Maven**. JDK: 26. Next screen: pick the newest Jakarta EE version offered (11 matches Tomcat 11) and keep **Servlet** ticked. IntelliJ generates `HelloServlet.java`, `index.jsp` and `web.xml`, the tree on slide 26.
+  </Step>
+  <Step label="Fix the context path" tryFirst="Before opening the run configuration: what URL do you want the app at, given the slides?">
+    Run → Edit Configurations → the Tomcat configuration → **Deployment** tab. Set Application context to `/demo`. On the **Server** tab the URL becomes http://localhost:8080/demo/.
+  </Step>
+  <Step label="Run it">
+    Press Run. The Services panel shows Tomcat's log; look for `Deployment of web application ... has finished`. The browser opens `index.jsp`, which links to `hello-servlet`. Click the link and you get **Hello World!** from the servlet's `init`-set message.
+  </Step>
+  <Step label="Change code and redeploy" tryFirst="Change the message and think about which method sets it. Will a redeploy be needed, or is a page refresh enough?">
+    `message` is set in `init()`, which runs once per deployment, so a refresh alone still shows the old text. Use the Run panel's **Update** (Ctrl+F10) → **Redeploy**. A redeploy destroys the old instance and creates a new one, so `init()` runs again.
+  </Step>
+</WorkedExample>
+
+<QuickCheck
+  id="fresh-tomcat-404"
+  question="You deploy, open http://localhost:8080/demo/hello and get 404, though the class is annotated @WebServlet(&quot;/hello-servlet&quot;). What is the most likely fix?"
+  options={["Use the URL /demo/hello-servlet: the mapping is exact", "Restart PostgreSQL", "Move the class out of WEB-INF/classes so it is public", "Change doGet to doPost"]}
+  answer="Use the URL /demo/hello-servlet: the mapping is exact"
+  explanation="Mappings match the path after the context path exactly (lesson 'One servlet, many threads'). /hello is not /hello-servlet, so the default servlet looked for a file called hello and found nothing."
+  feedback={{
+    "Restart PostgreSQL": "The database is not involved in this request at all.",
+    "Move the class out of WEB-INF/classes so it is public": "Classes must be in WEB-INF/classes. They are reached through mappings, never by file path.",
+    "Change doGet to doPost": "A wrong method gives 405, not 404. A 404 means nothing matched the path."
+  }}
+/>
+
+## The assignment: login (slides 60 to 63)
+
+*Use the form from the slides to capture userid and password, send it to the server, match it against existing credentials, and reply "you are logged in".* Slide 62 names a **UserDB** table, which needs JDBC. Build it in two versions so each part can fail on its own.
+
+**Version 1: credentials in a map.** This proves the form, the mapping and the method are right before a database is involved.
+
+```html
+<!-- src/main/webapp/login.html -->
+<form method="post" action="login">
+  <input type="text" name="userid" placeholder="user id">
+  <input type="password" name="password" placeholder="password">
+  <input type="submit" value="Log in">
+</form>
+```
+
+```java
+package com.example.demo;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Map;
+
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet(name = "loginServlet", value = "/login")
+public class LoginServlet extends HttpServlet {
+    // Read-only after construction, so sharing it across threads is safe.
+    // Version 1 of the assignment; the UserDB table replaces this map later.
+    private static final Map<String, String> USERS = Map.of(
+            "ali", "123",
+            "sara", "s3cret");
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String userid = request.getParameter("userid");     // local: one per request
+        String password = request.getParameter("password");
+
+        boolean ok = userid != null && password != null && password.equals(USERS.get(userid));
+
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        if (ok) {
+            out.println("<h1>Welcome, " + userid + ". You are logged in.</h1>");
+        } else {
+            out.println("<h1>Wrong user id or password.</h1>");
+        }
+    }
+}
+```
+
+Check it against the last two lessons: POST because it carries a password; `doPost` because the form says post; the parameter names match the `name` attributes exactly; the null checks come before `password.equals(...)`, so a missing field gives "wrong" instead of a 500; the map is a read-only static field, while `userid` and `password` are locals.
+
+<QuickCheck
+  id="login-null-order"
+  question="Why does version 1 write password.equals(USERS.get(userid)) and not USERS.get(userid).equals(password)?"
+  options={["For an unknown userid, USERS.get returns null, and calling equals on null throws a NullPointerException", "equals is only defined on the parameter side", "It is faster", "Map.get cannot be the receiver of a method call"]}
+  answer="For an unknown userid, USERS.get returns null, and calling equals on null throws a NullPointerException"
+  explanation="Map.get returns null for a missing key. Calling a method on the known non-null value, which the null check just guaranteed, avoids the NullPointerException and the 500 page an unknown user would otherwise trigger. This is the NullPointerException slide 48 was worried about."
+  feedback={{
+    "equals is only defined on the parameter side": "equals is defined on every object. The question is which side can be null.",
+    "It is faster": "The cost is identical. The difference is whether an unknown user crashes the request.",
+    "Map.get cannot be the receiver of a method call": "It can, as long as it does not return null. For an unknown user it does."
+  }}
+/>
+
+<Deeper kind="beyond" title="Version 2: the UserDB table over JDBC (ahead of the slides)">
+
+Create the table in DBeaver, on a database called webtech:
+
+```sql
+CREATE TABLE users (
+  userid   varchar(50)  PRIMARY KEY,
+  password varchar(100) NOT NULL
+);
+INSERT INTO users VALUES ('ali', '123'), ('sara', 's3cret');
+```
+
+Add the driver to `pom.xml` (`org.postgresql:postgresql`, compile scope) so it lands in WEB-INF/lib (the WAR figure in "From URL to file"). Then:
+
+```java
+@WebServlet("/login-db")
+public class LoginDbServlet extends HttpServlet {
+    private static final String URL = "jdbc:postgresql://localhost:5432/webtech";
+
+    @Override
+    public void init() throws ServletException {
+        try {
+            // Drivers in WEB-INF/lib are not auto-registered under Tomcat; load it explicitly.
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new ServletException("PostgreSQL JDBC driver missing from WEB-INF/lib", e);
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        String userid = request.getParameter("userid");
+        String password = request.getParameter("password");
+
+        String sql = "SELECT 1 FROM users WHERE userid = ? AND password = ?";
+        boolean ok;
+        try (Connection c = DriverManager.getConnection(URL, "postgres", "postgres");
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, userid);
+            ps.setString(2, password);
+            try (ResultSet rs = ps.executeQuery()) {
+                ok = rs.next();
+            }
+        } catch (SQLException e) {
+            throw new ServletException(e);
+        }
+
+        response.setContentType("text/html;charset=UTF-8");
+        response.getWriter().println(ok ? "<h1>You are logged in.</h1>" : "<h1>Wrong user id or password.</h1>");
+    }
+}
+```
+
+Imports: `java.io.IOException`, `java.sql.*` (Connection, DriverManager, PreparedStatement, ResultSet, SQLException) and the four `jakarta.servlet` ones. Three things here matter more than the rest:
+
+- **`?` placeholders, never string concatenation.** `"... WHERE userid = '" + userid + "'"` lets a user type `' OR '1'='1` and log in as anyone. That is SQL injection; PreparedStatement sends the values separately from the SQL.
+- **`Class.forName` in init.** Tomcat's docs say drivers in WEB-INF/lib are not found automatically by DriverManager. Skip this line and you get "No suitable driver".
+- **A connection per request** is fine for the assignment. Real apps borrow from a pool created once in `init` (the DataSource from the thread-safety quiz).
+
+</Deeper>
+
+<Callout type="careful" title="Plain-text passwords are for the assignment only">
+The table stores `123` as-is. Any real system stores a slow salted hash (bcrypt or Argon2) and compares hashes, so a leaked table does not leak passwords. Say so in one line in your submission. It costs nothing and shows you know.
+</Callout>
+
+<Further links={[
+  {
+    "href": "https://www.jetbrains.com/help/idea/creating-and-running-your-first-jakarta-ee-application.html",
+    "title": "IntelliJ IDEA: your first Jakarta EE application",
+    "kind": "docs",
+    "time": "20 min",
+    "why": "JetBrains' own walkthrough with screenshots of every wizard screen and the run configuration used above."
+  },
+  {
+    "href": "https://tomcat.apache.org/tomcat-11.0-doc/setup.html",
+    "title": "Tomcat 11: setup",
+    "kind": "docs",
+    "why": "Running Tomcat as a service on Linux and Windows, for when you deploy the course project to your VPS."
+  },
+  {
+    "href": "https://www.jetbrains.com/academy/student-pack/",
+    "title": "JetBrains student pack",
+    "kind": "tool",
+    "why": "Step 1 of the home task. Apply with the university email; approval is usually immediate."
+  }
+]} />

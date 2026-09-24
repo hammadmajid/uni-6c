@@ -1,0 +1,148 @@
+Every exam on chapter 1 has a question on "the users of a database". The categories are easy once you notice that they sort people by **how** they touch the data, not by job title.
+
+<Predict
+  id="teller-vs-scientist"
+  prompt="A bank teller and a data scientist both spend all day with the bank's database. The textbook calls both of them end users, but different kinds. What is the one difference it uses to separate them?"
+  answer="Who writes the queries. The teller runs canned transactions someone else programmed (naive or parametric user). The data scientist writes their own complex requests (sophisticated user)."
+>
+
+**Who writes the queries.** The teller presses the same few screens all day: *canned transactions* written by programmers. That makes them a **naive (parametric)** user. The data scientist writes complex queries directly against the DBMS: a **sophisticated** user. How often, how complex, and who wrote the request decide every end-user category.
+
+</Predict>
+
+## Actors on the scene
+
+Elmasri calls the people whose jobs involve the day-to-day use of a large database the **actors on the scene**:
+
+<DbActorsDiagram />
+
+| Actor | What they do | Example |
+|---|---|---|
+| **Database administrator (DBA)** | Authorises access, coordinates and monitors use, acquires hardware and software, answers for security breaches and poor response time. Backups and tuning. | The bank's IT administrator who controls access to customer records |
+| **Database designer** | Identifies the data to be stored and chooses structures for it, usually before the database exists. Talks to every user group, builds a view per group, then integrates them. | A data architect designing the university's student database |
+| **End users: casual** | Access the database occasionally, need different information each time, use a query tool. | A manager who checks enrolment figures once a month |
+| **End users: naive or parametric** | Constantly query and update through **canned transactions**: standard, pre-programmed requests. The largest group. | Bank tellers, airline reservation agents, a customer checking a balance |
+| **End users: sophisticated** | Know the DBMS's facilities and write complex requests themselves. | Engineers, scientists, business analysts |
+| **End users: standalone** | Keep a personal database with a ready-made package that has menus or a GUI. | Someone tracking their own finances in an accounting app |
+| **System analysts and application programmers** | Analysts gather requirements and specify the canned transactions; programmers implement, test, document and maintain them. | You, writing a JDBC servlet |
+
+Elmasri separates these from the **workers behind the scene**: the people who design and implement the DBMS itself, build tools around it, and operate the hardware. They never work with any particular database's content.
+
+<DbActorsSort />
+
+<Callout type="exam" title="Where the slides differ from Elmasri">
+- The slides give **four** end-user types (casual, naive, sophisticated, application programmers) and leave out **standalone** users. Elmasri has casual, naive/parametric, sophisticated and standalone, and puts application programmers in a separate actor group with system analysts. If asked "according to the lecture", give the slide's four; otherwise give Elmasri's four and mention programmers separately.
+- The slide gives "a business analyst running a sales report" as a **casual** user. Elmasri lists business analysts among **sophisticated** users. The deciding test is whether they write complex queries themselves.
+- "A bank teller entering transaction details into an **ATM** system" mixes two examples: tellers use a teller terminal, customers use the ATM. Both are naive users, so the classification is still right.
+</Callout>
+
+<QuickCheck
+  id="canned"
+  question="What is a canned transaction?"
+  options={[
+    "A standard, pre-programmed query or update that naive users run repeatedly",
+    "A transaction that has been rolled back",
+    "A query written ad hoc by a casual user",
+    "A transaction the DBA runs at night for backups"
+  ]}
+  answer="A standard, pre-programmed query or update that naive users run repeatedly"
+  explanation="Canned transactions are written by application programmers from the analysts' specification. The teller's 'deposit' screen runs one."
+  feedback={{
+    "A transaction that has been rolled back": "That is an aborted transaction. 'Canned' means pre-packaged, ready to run.",
+    "A query written ad hoc by a casual user": "Ad hoc queries are the opposite of canned: written on the spot for a one-off need.",
+    "A transaction the DBA runs at night for backups": "Backups are the DBA's job, but they are not what the term refers to."
+  }}
+/>
+
+<QuickCheck
+  id="dba-vs-designer"
+  question="The registrar asks for a new rule: every enrolment must reference an existing course. Who decides how this is modelled in the schema?"
+  options={["The database designer", "The DBA", "A naive end user", "A worker behind the scene"]}
+  answer="The database designer"
+  explanation="Choosing structures and constraints to represent the users' requirements is design work. The DBA then makes sure the database runs, is secure, and is backed up."
+  feedback={{
+    "The DBA": "The DBA administers a running database: access, monitoring, tuning, backups. Deciding what the structure means is the designer's job, though in small teams one person does both.",
+    "A naive end user": "Naive users run canned transactions; they never touch the schema.",
+    "A worker behind the scene": "Behind-the-scene workers build the DBMS software itself, not any particular university's schema."
+  }}
+/>
+
+<Deeper kind="beyond" title="The same actors in your Postgres setups">
+
+On a VPS you have probably been all of them at once. Split out:
+
+- **DBA:** the `postgres` superuser. `CREATE ROLE`, `GRANT`, `pg_dump` on a cron, `EXPLAIN ANALYZE` on slow queries.
+- **Designer:** whoever writes the migrations.
+- **Application programmer:** the backend code, connecting as one application role.
+- **Naive users:** the thousands of people using the app. They are rows in your `users` table, not database roles; they reach the data only through canned transactions your endpoints expose.
+- **Sophisticated user:** anyone you give a read replica and a SQL client.
+- **Worker behind the scene:** the PostgreSQL Global Development Group.
+
+</Deeper>
+
+## Advantages of the DBMS approach
+
+The slides list six advantages. Each is a feature you can name in Postgres, and naming one per advantage is what turns a list into a full-marks answer:
+
+| Advantage | How the DBMS delivers it | Postgres feature |
+|---|---|---|
+| **Controlling redundancy** | Each logical item stored once; controlled redundancy only where it helps performance, kept consistent by the DBMS. | Normalized tables, foreign keys, materialized views |
+| **Restricting unauthorized access** | Accounts, privileges per user and per operation. | Roles, `GRANT`/`REVOKE`, row-level security |
+| **Storage structures and search techniques** | Indexes, buffering, a query optimizer that picks an execution plan. | B-tree and GIN indexes, shared buffers, the planner |
+| **Enforcing integrity constraints** | Rules checked on every write, whatever program is writing. | `NOT NULL`, `UNIQUE`, `CHECK`, `PRIMARY KEY`, `FOREIGN KEY` |
+| **Backup and recovery** | Recover from hardware or software failures, and restore to the state before a failed transaction. | WAL, `pg_dump`, point-in-time recovery |
+| **Flexibility** | Change the structure as requirements change without rewriting every program. | `ALTER TABLE`, views over changed tables |
+
+Elmasri's full list adds: persistent storage for program objects, **multiple user interfaces** (query languages, forms, menus, APIs), representing **complex relationships**, **rules and triggers** that fire actions automatically, and the "additional implications": enforcing standards, **reduced application development time**, availability of up-to-date information to every user the moment it is committed, and economies of scale.
+
+<QuickCheck
+  id="adv-integrity"
+  question="A CHECK (fine ≥ 0) constraint on the library's loan table rejects a buggy program's attempt to write a negative fine. Which advantage of the DBMS approach is this?"
+  options={["Enforcing integrity constraints", "Restricting unauthorized access", "Controlling redundancy", "Backup and recovery"]}
+  answer="Enforcing integrity constraints"
+  explanation="The rule lives in the database, so every program is held to it, including buggy ones. In file processing each program would have had to check for itself."
+  feedback={{
+    "Restricting unauthorized access": "The program was authorised to write to the table. It was stopped because the value broke a rule, not because it lacked permission.",
+    "Controlling redundancy": "Nothing here is stored twice.",
+    "Backup and recovery": "No failure or restore is involved; the bad write never happened."
+  }}
+/>
+
+<QuickCheck
+  id="adv-devtime"
+  type="true-false"
+  question="Elmasri lists 'reduced application development time' as an advantage of using a DBMS."
+  answer="True"
+  explanation="Once the database exists, a new application needs only its queries and screens, not its own file formats, locking and recovery code. This is why the slide's 'development time is critical' is a weak reason to avoid a DBMS."
+/>
+
+<Deeper kind="exam" title="Model answer: users of a database system (5 marks)">
+
+Database users fall into **actors on the scene**, who work with the database's content, and **workers behind the scene**, who build and run the DBMS software.
+
+Actors on the scene: (1) the **DBA**, who authorises access, monitors use, acquires resources, and handles security, backup and performance; (2) **database designers**, who identify the data to be stored and choose structures to represent it; (3) **end users**: *casual* (occasional ad hoc queries, e.g. managers), *naive or parametric* (canned transactions, e.g. bank tellers and reservation agents), *sophisticated* (write complex queries, e.g. engineers and analysts), *standalone* (personal databases with ready-made packages); (4) **system analysts and application programmers**, who specify and implement the canned transactions.
+
+Workers behind the scene: DBMS designers and implementers, tool developers, operators and maintenance staff. One example per category is worth the marks.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.postgresql.org/docs/current/user-manag.html",
+    "title": "PostgreSQL: Database Roles",
+    "kind": "docs",
+    "why": "How Postgres models users and groups as roles. The DBA's first job, and the mechanism behind 'restricting unauthorized access'."
+  },
+  {
+    "href": "https://www.postgresql.org/docs/current/ddl-constraints.html",
+    "title": "PostgreSQL: Constraints",
+    "kind": "docs",
+    "why": "Every integrity constraint type from this lesson with runnable examples. Keep it for when the course reaches keys."
+  },
+  {
+    "href": "https://15445.courses.cs.cmu.edu/fall2025/",
+    "title": "CMU 15-445/645: Intro to Database Systems",
+    "kind": "tool",
+    "why": "Full lecture videos, slides and notes. The course to follow when this one reaches storage, indexing and transactions."
+  }
+]} />

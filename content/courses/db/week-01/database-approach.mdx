@@ -1,0 +1,246 @@
+The lecture lists ten characteristics of the database approach. Elmasri's chapter 1 has four, and the other six are what the textbook calls advantages. This lesson teaches all ten under the textbook's four headings, so you can write either version.
+
+<Predict
+  id="add-column"
+  prompt="Forty programs query the student table. You run ALTER TABLE student ADD COLUMN email text. How many of the forty programs have to change? And if instead you run CREATE INDEX on student(reg_no)?"
+  answer="Adding a column: none, as long as they name their columns instead of relying on SELECT * column positions. Adding an index: none, ever; queries just get faster. The first is logical data independence, the second physical."
+>
+
+**Adding a column: zero programs**, provided they name the columns they use. A program that asks for `reg_no, name, phone` gets exactly that, whatever else the table grows. **Adding an index: zero programs, always.** SQL says what you want, not how to find it, so the DBMS starts using the index without any caller knowing.
+
+In file processing both changes would have meant editing every program that reads the file, because the record layout was written into each program. The figure below shows where that insulation comes from.
+
+</Predict>
+
+## 1. Self-describing: the catalog
+
+A database system holds the data **and a complete description of it**: table names, column types, constraints, which index covers what. That description is **metadata** (data about data), stored in the **DBMS catalog**, also called the data dictionary. The DBMS reads the catalog before every query, which is why the same DBMS software can run a university database and a hospital database.
+
+In file processing, the description lived inside each program. In Postgres it is itself a set of tables you can query:
+
+```sql
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'student';
+```
+
+`information_schema` is the SQL-standard view of the catalog; `pg_catalog` is Postgres's own. `\d student` in `psql` is a shortcut that runs catalog queries.
+
+<QuickCheck
+  id="metadata"
+  question="Which of these is metadata, in the textbook's sense?"
+  options={[
+    "The phone number 0300-5647899 stored in the student table",
+    "The fact that the column phone has type varchar(15) and cannot be null",
+    "A nightly backup file of the student table",
+    "An index on reg_no"
+  ]}
+  answer="The fact that the column phone has type varchar(15) and cannot be null"
+  explanation="Metadata describes the structure and constraints of the data. It lives in the catalog, which is what makes the database self-describing."
+  feedback={{
+    "The phone number 0300-5647899 stored in the student table": "That is data: a recorded fact about the miniworld.",
+    "A nightly backup file of the student table": "A backup is a copy of the data (and its catalog), not a description of it.",
+    "An index on reg_no": "The index is a storage structure. The catalog entry that says the index exists and what it covers is metadata; the index itself is not."
+  }}
+/>
+
+## 2. Insulation between programs and data
+
+The DBMS keeps a description of the data at three levels, the **three-schema architecture** (ANSI/SPARC):
+
+- **External level:** the views each user group sees.
+- **Conceptual level:** the whole database for the whole community of users: entities, relationships, constraints. No storage detail.
+- **Internal level:** how it is physically stored: files, record layout, indexes.
+
+The DBMS keeps a **mapping** between each pair of neighbouring levels. That mapping is what buys independence.
+
+<ThreeSchemaDiagram />
+
+**Logical data independence**: the capacity to change the **conceptual schema** without having to change **external schemas or application programs**. Adding a column, adding a table, or splitting a table and replacing it with a view of the same shape are all logical changes.
+
+**Physical data independence**: the capacity to change the **internal schema** without having to change the **conceptual schema** (and so without changing external schemas or programs). Adding an index, moving a table to a faster disk, changing the file organisation are all physical changes.
+
+Logical data independence is harder to achieve, because programs depend on the structure they read. Physical independence is nearly total in any relational DBMS.
+
+<Callout type="exam" title="The slide's wording, and why it is imprecise">
+The slide says: "**Logical Independence – Changing the schema does not affect applications.** Physical Independence – Changing storage mechanisms does not affect the database structure."
+
+Reproduce that if the question says "according to the lecture". Know that the first line is loose: *which* schema? A change to the internal schema is physical independence. Say "changing the **conceptual** schema does not require changing **external schemas or application programs**". Name the levels and you are safe with any examiner.
+</Callout>
+
+<QuickCheck
+  id="indep-index"
+  question="The DBA adds a B-tree index on student(reg_no) and moves the table to an SSD. No program changes. Which property made that possible?"
+  options={["Physical data independence", "Logical data independence", "Multiple views", "Self-describing nature"]}
+  answer="Physical data independence"
+  explanation="Indexes and storage location are internal-schema decisions. Changing them without touching the conceptual schema is physical data independence."
+  feedback={{
+    "Logical data independence": "Logical independence is about the conceptual schema: tables, columns, relationships. An index and a disk are below that, in the internal schema.",
+    "Multiple views": "Views are the external level. Nothing about the external level changed here.",
+    "Self-describing nature": "The catalog does record that the index exists, but the property that keeps programs unchanged is physical data independence."
+  }}
+/>
+
+<QuickCheck
+  id="indep-column"
+  question="A new table fee_waiver is added and the student table gets a new column. The Library app, which uses a view of name and phone, keeps working unchanged. Which property is this?"
+  options={["Logical data independence", "Physical data independence", "Program–data dependence", "Concurrency control"]}
+  answer="Logical data independence"
+  explanation="The conceptual schema changed (new table, new column). The external schema (the Library view) and its program did not have to. That is exactly the definition of logical data independence."
+  feedback={{
+    "Physical data independence": "Nothing about storage changed. Tables and columns are the conceptual level.",
+    "Program–data dependence": "That is the file-processing problem, the opposite of what happened here.",
+    "Concurrency control": "Concurrency control is about simultaneous users, not schema changes."
+  }}
+/>
+
+## 3. Multiple views of the data
+
+A **view** is a subset of the database, or data derived from it, that is not necessarily stored. Each user group gets the view it needs. The slide's example: a student sees their own grades, a teacher sees all grades in a course, finance sees only fee records. In Postgres a view plus a grant does this:
+
+```sql
+CREATE VIEW fee_status AS
+  SELECT reg_no, name, installment_1, installment_2
+  FROM student JOIN fee USING (reg_no);
+
+GRANT SELECT ON fee_status TO finance_office;
+```
+
+Finance can now read fees and nothing else. Views are also how logical data independence is kept: if the underlying tables are reorganised, redefine the view and the program reading it never notices.
+
+## 4. Sharing data and multi-user transaction processing
+
+A multi-user DBMS lets many users and programs use the same data at the same moment. That needs **concurrency control**, so that simultaneous updates produce a correct result. The unit of work is the **transaction**: an executing program or process that includes one or more database accesses, such as reading or updating records.
+
+Before you step through it, work it out yourself.
+
+<QuickCheck
+  id="lost-update"
+  type="numeric"
+  unit="rupees"
+  question="Ali's account holds 10,000 rupees. At the ATM he withdraws 3,000 while his father deposits 5,000 from mobile banking. With no concurrency control the steps run in this order: ATM reads balance, mobile reads balance, ATM writes its result, mobile writes its result. What is the final balance in rupees?"
+  answer={15000}
+  explanation="Both read 10,000. The ATM writes 7,000; the mobile app then writes 10,000 + 5,000 = 15,000 over it. The withdrawal is lost: the correct answer is 12,000. The unit trap here is not a conversion but a stale read: each transaction computed from a value that was out of date by the time it wrote."
+/>
+
+<TxnInterleaveLab />
+
+The DBMS guarantees four properties for every transaction, known by their initials:
+
+| Property | Guarantee | What breaks without it | In the lab |
+|---|---|---|---|
+| **Atomicity** | All of the transaction happens, or none of it. | A transfer debits one account and never credits the other. | Crash mid-transfer, plain writes |
+| **Consistency** preservation | A transaction takes the database from one valid state to another; constraints hold before and after. | Stock goes negative; a grade references a student who does not exist. | |
+| **Isolation** | A transaction runs as if no other were running at the same time. | Lost updates, double-sold phones. | ATM + deposit, last phone |
+| **Durability** | Once committed, changes survive any later failure. | "Payment successful", then a power cut, then no payment. | Crash after COMMIT |
+
+<QuickCheck
+  id="acid-which"
+  question="Sara and another customer both buy the last phone because both read stock = 1 before either wrote. Which ACID property did the system fail to provide?"
+  options={["Isolation", "Atomicity", "Durability", "Consistency, and nothing else"]}
+  answer="Isolation"
+  explanation="Each transaction on its own was correct. They went wrong only because they interleaved and saw each other's intermediate state. Preventing that is isolation, enforced by concurrency control, here by locking the stock row."
+  feedback={{
+    "Atomicity": "Both transactions ran to completion; neither was left half-done. Atomicity is about partial transactions.",
+    "Durability": "Nothing was lost after a commit. Durability is about surviving failures.",
+    "Consistency, and nothing else": "The result is inconsistent, but it is caused by an isolation failure: each transaction alone preserves consistency. A CHECK (stock ≥ 0) would not catch this one, since stock ends at 0."
+  }}
+/>
+
+## The lecture's other six
+
+The slide's list continues past these four. In Elmasri they sit under the advantages of using a DBMS, and each is something you have configured in Postgres:
+
+| Slide characteristic | What it means | In Postgres |
+|---|---|---|
+| **Data integrity and security** | Constraints the DBMS enforces on every write; users authenticated and authorised. | `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`, `NOT NULL`; roles, `GRANT`, row-level security |
+| **Reduced redundancy and inconsistency** | Each fact stored once, so there is nothing to disagree with. | A normalized schema |
+| **Backup and recovery** | Restore after a crash or a mistake. | WAL, `pg_dump`, point-in-time recovery, replicas |
+| **Relationships** | Link rows across tables and keep the links valid (referential integrity). | Foreign keys, `JOIN` |
+| **Scalability and performance** | Stay fast as data grows. | Indexes, partitioning, caching in shared buffers |
+| **Transactions (ACID)** | Covered above. | `BEGIN` … `COMMIT` |
+
+<Callout type="exam" title="“No duplicate data” is too strong">
+The summary slide says "Less redundancy – no duplicate data". Elmasri's wording is **controlling redundancy**: store each logical item once *by default*, and allow **controlled redundancy** where it helps performance, with the DBMS keeping the copies consistent. Two everyday examples: a foreign key repeats the referenced key by design, and a denormalized reporting table deliberately copies data for speed. Write "reduced, controlled redundancy" and you match both the slide and the book.
+</Callout>
+
+## When not to use a DBMS
+
+A DBMS costs something: the licences and hardware, the training, and the overhead of doing security, concurrency control, recovery and integrity checking on every operation. Elmasri says a plain file-based solution may be better when:
+
+1. The database and applications are **simple, well defined, and not expected to change**.
+2. There are **stringent real-time requirements** that the DBMS overhead would not meet.
+3. It is an **embedded system with limited storage** where a general-purpose DBMS will not fit.
+4. There is **no multi-user access** to the data.
+
+<QuickCheck
+  id="no-dbms"
+  question="Which of these is the strongest case for NOT using a DBMS, in Elmasri's terms?"
+  options={[
+    "A thermostat's firmware storing the last 24 temperature readings in 2 KB of flash",
+    "A university's registration, library and exam offices sharing student records",
+    "An online shop taking orders from thousands of customers at once",
+    "A hospital where doctors, reception and finance need different views"
+  ]}
+  answer="A thermostat's firmware storing the last 24 temperature readings in 2 KB of flash"
+  explanation="An embedded system with tiny storage, a single user and a fixed, simple structure: three of Elmasri's four reasons at once. (Even here, SQLite is often used when a few hundred KB are available.)"
+  feedback={{
+    "A university's registration, library and exam offices sharing student records": "Shared data across departments is the textbook's reason FOR a DBMS: it removes the redundancy you saw in the first lesson.",
+    "An online shop taking orders from thousands of customers at once": "Many concurrent users writing the same stock rows is exactly what concurrency control is for.",
+    "A hospital where doctors, reception and finance need different views": "Multiple views and access control are characteristics of the database approach, not reasons to avoid it."
+  }}
+/>
+
+<Callout type="exam" title="The slide's list of when not to use a DBMS">
+The long deck lists seven: simple or small-scale applications; high performance with low latency required; cost constraints; no multi-user access or concurrency needed; static or read-only data; **when data security and privacy are not a concern**; **if development time is critical**. Reproduce them if asked for the lecture's list. Two are shaky against the textbook:
+
+- **Security not a concern** is not a reason to skip a DBMS. It only removes one of many reasons to use one.
+- **Development time is critical** is backwards: Elmasri lists **reduced application development time** as an *advantage* of a DBMS.
+
+"High performance with low latency" is the slide's version of Elmasri's *stringent real-time requirements*, and is fine.
+</Callout>
+
+<Deeper kind="exam" title="Model answer: explain the main characteristics of the database approach (10 marks)">
+
+1. **Self-describing nature.** The database contains the data and its complete definition (metadata) in the DBMS catalog, so the same DBMS can manage any database and programs need not embed the structure.
+2. **Insulation between programs and data, and data abstraction.** Through the three-schema architecture the DBMS provides program–data independence: *logical* (change the conceptual schema without changing external schemas or programs) and *physical* (change the internal schema without changing the conceptual schema). Users see a conceptual representation, not storage details.
+3. **Support for multiple views.** Each user group can have its own view, a subset or derived form of the data, which also restricts what they can see.
+4. **Sharing and multi-user transaction processing.** Concurrency control lets many users update the same data correctly; transactions have the ACID properties (define each in one line).
+
+If the lecture's ten are wanted, add: integrity constraints and security, reduced (controlled) redundancy, backup and recovery, relationships through foreign keys, scalability through indexing and partitioning. One example per point gets the marks: the ATM and deposit for isolation, a view for Finance for multiple views.
+
+</Deeper>
+
+<Deeper kind="why" title="Why isolation is enforced with locks, and what Postgres actually does">
+
+The lab used `SELECT … FOR UPDATE`, which takes a row lock: exactly the "locking inventory until the transaction completes" the slide describes. Postgres's default isolation level (READ COMMITTED) does **not** prevent the lost update if you read with a plain `SELECT` and write back a computed value. Two correct fixes: lock the row with `FOR UPDATE`, or make the update relative (`UPDATE account SET balance = balance - 3000`), which re-reads the current row under a lock. At the SERIALIZABLE level Postgres detects the conflict and aborts one transaction, which the application must retry. You will meet all of this formally when the course reaches transactions.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=pomxJOFVcQs",
+    "title": "Hussein Nasser: Relational database ACID transactions, explained by example",
+    "kind": "video",
+    "why": "Walks through each ACID property on a real Postgres instance. The isolation part matches the lab's ATM run."
+  },
+  {
+    "href": "https://www.postgresql.org/docs/current/information-schema.html",
+    "title": "PostgreSQL: The Information Schema",
+    "kind": "docs",
+    "why": "The self-describing catalog, as SQL-standard views you can query. Try the columns view on one of your own databases."
+  },
+  {
+    "href": "https://www.postgresql.org/docs/current/tutorial-transactions.html",
+    "title": "PostgreSQL tutorial: Transactions",
+    "kind": "docs",
+    "time": "5 min",
+    "why": "The bank-transfer example in Postgres's own words, including what a crash before COMMIT does."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/ANSI-SPARC_Architecture",
+    "title": "ANSI-SPARC architecture",
+    "kind": "blog",
+    "why": "Where the three-schema architecture came from (1975), with the original diagram."
+  }
+]} />

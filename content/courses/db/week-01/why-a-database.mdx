@@ -1,0 +1,157 @@
+You have designed Postgres schemas, so this lecture is mostly vocabulary for things you already do. The exam marks the vocabulary, though, and it marks it in Elmasri's words. Start with the problem databases were invented to solve.
+
+<Predict
+  id="three-files"
+  prompt="Registration, the library and the exam cell each keep their own file of students, written by their own program. Ali changes his phone number at the registration office. What does the library's file say the next day, and whose job is it to fix it?"
+  answer="The library still has the old number. Nobody's job: the registration program only writes the registration file, and nothing links the three copies. They stay inconsistent until someone re-enters the change in every department."
+>
+
+The library file still says **0300-5647899**, and so does anything else that copied it. No program is responsible for the other files, so the copies drift apart silently. Try it: save a new phone number through the Registration app below, then switch to the database approach and do the same.
+
+</Predict>
+
+<FileVsDbLab />
+
+<Callout type="key-idea" title="The whole lecture in one line">
+In file processing, **each application owns its data**. In the database approach, **the data is defined once, stored once, and shared** by every application through a DBMS.
+</Callout>
+
+## Data, database, DBMS
+
+**Data** are known facts that can be recorded and have implicit meaning: a name, a phone number, a book's price. They come in types: integer, float, string, image.
+
+A **database** is a collection of related data. Elmasri adds three implicit properties, and exam answers that list them get full marks:
+
+1. It represents some aspect of the real world, called the **miniworld** or **universe of discourse (UoD)**. Changes to the miniworld are reflected in the database.
+2. It is a **logically coherent** collection of data with inherent meaning. A random pile of data is not a database.
+3. It is **designed, built and populated for a specific purpose**, with an intended group of users and applications in mind.
+
+The lecture's example is a student database with three tables, all keyed by roll number:
+
+<MiniworldDiagram />
+
+A **DBMS** (database management system) is a general-purpose software system that makes it easier to **define, construct, manipulate and share** databases among various users and applications. It also **protects** the database (from crashes and from unauthorised access) and **maintains** it as requirements change over years. MySQL, PostgreSQL, Oracle and SQL Server are DBMSs; the rows in your Postgres cluster are the database.
+
+The **database system** is the database plus the DBMS software (plus, in some texts, the applications).
+
+<DbSystemDiagram />
+
+<QuickCheck
+  id="dbms-vs-db"
+  question="Which statement is correct?"
+  options={[
+    "PostgreSQL is a database.",
+    "PostgreSQL is a DBMS; the university's tables inside it are the database.",
+    "A database and a DBMS are the same thing seen from different users.",
+    "A DBMS is a collection of related data with a specific purpose."
+  ]}
+  answer="PostgreSQL is a DBMS; the university's tables inside it are the database."
+  explanation="The DBMS is the general-purpose software. The database is the specific, purpose-built collection of related data it manages. Together they make a database system."
+  feedback={{
+    "PostgreSQL is a database.": "Everyday speech says this, but in the exam PostgreSQL is a DBMS: general-purpose software that can manage any number of databases.",
+    "A database and a DBMS are the same thing seen from different users.": "One is data, the other is software. You can drop a database and the DBMS is still installed.",
+    "A DBMS is a collection of related data with a specific purpose.": "That is the definition of a database. A DBMS is the software that defines, constructs, manipulates and shares it."
+  }}
+/>
+
+## The four things a DBMS does
+
+The slides list the functions of a DBMS. Each one maps to something you type in `psql`:
+
+| Function | What it means | In Postgres |
+|---|---|---|
+| **Define** | Specify data types, structures and constraints. The definition is stored as metadata in the catalog. | `CREATE TABLE`, `ALTER TABLE` (DDL) |
+| **Construct** (load) | Store the data on a storage medium the DBMS controls. | `INSERT`, `COPY` from a CSV |
+| **Manipulate** | Query, update, generate reports. | `SELECT`, `UPDATE`, `DELETE` (DML) |
+| **Share** | Let many users and programs use it at the same time, correctly. | Hundreds of connections, locks, transactions |
+
+An **application program** reaches the database only by sending **queries** or requests to the DBMS. A query retrieves data; a **transaction** may read some data and write some. Your servlet never opens the table's files; it sends SQL down a JDBC connection and the DBMS does the rest.
+
+<QuickCheck
+  id="func-match"
+  question="Running COPY student FROM 'students.csv' to fill an empty table is which DBMS function?"
+  options={["Defining", "Constructing", "Manipulating", "Sharing"]}
+  answer="Constructing"
+  explanation="Constructing (or loading) is storing the initial data on storage controlled by the DBMS. Defining happened earlier with CREATE TABLE; manipulating is querying and updating data that is already there."
+  feedback={{
+    "Defining": "Defining is specifying structure and constraints, which CREATE TABLE did. COPY puts the rows in.",
+    "Manipulating": "Close, since COPY writes data. The textbook separates the initial load (constructing) from later queries and updates (manipulating).",
+    "Sharing": "Sharing is about concurrent users. A bulk load by one user is constructing."
+  }}
+/>
+
+## File processing: how it used to be done
+
+Computers were first used for calculation. When businesses adopted them, each department got its own **file processing system**: a set of programs, each with its own data files, producing reports. The slide's university has three:
+
+| Registration file | Library file | Examination file |
+|---|---|---|
+| RegNo, Name, Father name, Phone, Address, Class | RegNo, Name, Address, Book issued, Fine | RegNo, Name, Father name, Class, Semester, Grade |
+
+Three problems follow from this, and all three are exam points:
+
+1. **Redundancy.** The same fact (name, address) is stored in several files. That wastes storage and, worse, wastes **effort**: every change must be made several times.
+2. **Inconsistency.** Because updates are made separately, the copies disagree. The lab above showed it: after one update, which phone number is right?
+3. **Program–data dependence.** The structure of each file is written into the programs that read it. Add a field to the registration file and every program that reads it must be changed and recompiled.
+
+The **database approach** keeps a single repository, defined once and accessed by all three applications through the DBMS.
+
+<QuickCheck
+  id="fps-problem"
+  question="The library and registration offices hold different addresses for the same student. What is this problem called?"
+  options={["Data inconsistency", "Program–data dependence", "Data abstraction", "Concurrency anomaly"]}
+  answer="Data inconsistency"
+  explanation="Redundancy (the address stored twice) is the cause; inconsistency (the two copies disagree) is the symptom the question describes."
+  feedback={{
+    "Program–data dependence": "That is about file structure being coded into programs, not about two copies of a value disagreeing.",
+    "Data abstraction": "Data abstraction is a benefit of the database approach: hiding storage details from users.",
+    "Concurrency anomaly": "Concurrency problems come from two users changing the same data at the same moment. Here two separate copies were updated at different times."
+  }}
+/>
+
+<QuickCheck
+  id="redundancy-cost"
+  type="true-false"
+  question="In file processing, the only cost of redundancy is wasted disk space."
+  answer="False"
+  explanation="Elmasri lists three costs: duplicated effort to enter and update the same data several times, wasted storage, and files that become inconsistent. The effort and the inconsistency matter far more than the disk."
+/>
+
+<Callout type="exam" title="Types of database by application: what the slide says and what is precise">
+The slide lists **traditional** (structured, relational, SQL: banking, inventory, payroll), **multimedia** (images, audio, video) and **GIS** (maps, satellite images; PostGIS). Reproduce those three with their examples.
+
+One slide line is loose: it gives **MongoDB and Cassandra** as "multimedia databases". They are general-purpose NoSQL systems (document and wide-column). Streaming services store video in object storage and keep the metadata in a database. If asked, name MongoDB as a NoSQL example; if the question is literally "according to the lecture", give the slide's list.
+</Callout>
+
+<Deeper kind="exam" title="Model answer: differentiate file processing and the database approach (5 marks)">
+
+**File processing:** each application defines and maintains its own files. Consequences: (1) redundancy, the same data stored in many files, wasting storage and effort; (2) inconsistency, copies updated at different times disagree; (3) program–data dependence, file structure is coded into programs, so changing a file means changing every program; (4) no sharing or concurrent access across departments.
+
+**Database approach:** a single repository, defined once and shared by many users through a DBMS. The definition is stored in a catalog, programs are insulated from storage details, each user can have a view, and the DBMS controls concurrent access and recovery.
+
+Close with the university example: registration, library and exam files each holding the student's name and address, versus one STUDENT table used by all three applications.
+
+</Deeper>
+
+<Deeper kind="history" title="Where the DBMS came from">
+
+The first general-purpose DBMSs appeared in the 1960s: IBM's IMS (hierarchical) for the Apollo programme's parts lists, and CODASYL network databases. Both still tied programs to the physical access paths. In 1970 Edgar Codd at IBM proposed the **relational model**, with data as tables and queries that say what you want, not how to navigate to it. That separation is the data independence you meet in the next lesson. IBM's System R and Berkeley's Ingres built it in the 1970s; Postgres is Ingres's direct descendant ("post-Ingres").
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=7NPIENPr-zk",
+    "title": "CMU 15-445 #01: Relational Model and Algebra (Andy Pavlo)",
+    "kind": "video",
+    "time": "75 min",
+    "why": "Opens with exactly this lecture's argument: a CSV file per entity, then every way it breaks. Watch the first 25 minutes."
+  },
+  {
+    "href": "https://www.postgresql.org/docs/current/tutorial-concepts.html",
+    "title": "PostgreSQL tutorial: Concepts",
+    "kind": "docs",
+    "time": "3 min",
+    "why": "One page tying relation, table, row and column to database and cluster in Postgres's own terms."
+  }
+]} />
