@@ -1,0 +1,364 @@
+Quiz 1 covers the Java basics deck (`courses/web-tech/references/java-basics.pdf`) up to abstract classes, not the servlet slides. You already write typed backends, so this skips what a class is and spends the time on what Java does its own way, and on what the quiz will ask. Every code sample here was compiled and run on JDK 26.
+
+<Predict
+  id="jb-args-predict"
+  prompt="Slide 9: Main is in package com.example, and main runs System.out.println with 'Hi ' + args[0] + args[0]. What does java com.example.Main Zubair print? And what happens with no argument at all?"
+  answer="With Zubair: Hi ZubairZubair (args[0] is used twice). With no argument: the program crashes with java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0, and the exit code is 1."
+>
+
+**`Hi ZubairZubair`.** The expression concatenates `args[0]` twice. Slide 10's console shows `Hi Zubair`, which is what slide 13's version (one `args[0]`) prints; slide 10 pairs slide 9's code with the wrong output.
+
+**No argument:** `args` is an empty array, not null, so indexing it throws:
+
+```
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0
+	at com.example.Main.main(Main.java:5)
+```
+
+That is slide 11's "exception will be thrown". The JVM exits with code 1 instead of 0.
+
+</Predict>
+
+## From Main.java to a running process
+
+<WorkedExample title="The javac → bytecode → JVM pipeline (slides 3 to 13)">
+  <Step label="The source">
+    `MyProject/com/example/Main.java` starts with `package com.example;`. The package is a folder path: `com` is the parent folder, `example` the child, and the name is the company's domain reversed (`example.com` becomes `com.example`).
+  </Step>
+  <Step label="Compile" tryFirst="What file does javac produce, and what is inside it?">
+    `javac com/example/Main.java` produces `com/example/Main.class`, containing **bytecode**: instructions for the JVM, not for your CPU. The same `.class` runs on any OS that has a JVM, which is the whole point.
+  </Step>
+  <Step label="Run" tryFirst="From which folder, with which name?">
+    From `MyProject`, run `java com.example.Main Zubair`: the fully qualified class name, with no `.class` extension. The JVM loads the class, finds `main`, and passes `Zubair` in as `args[0]`.
+  </Step>
+  <Step label="Shortcut">
+    Since Java 11, `java com/example/Main.java` compiles in memory and runs in one step. It is handy for a quick check; the quiz wants the two-step `javac`, then `java`.
+  </Step>
+</WorkedExample>
+
+<Callout type="exam" title="Slides 6 to 8: javac Main.java, then java Main">
+The slides compile and run with `javac Main.java` and `java Main`. For a class with `package com.example;` that does **not** run: from inside `com/example`, `java Main` fails with `Could not find or load main class Main (wrong name: com/example/Main)`. The working version is `java com.example.Main`, from the project root. If a question copies the slide's commands, reproduce them; if it asks how to run a packaged class, give the fully qualified name. Slide 2 also says the three statements must be "exactly as they appear", including `import java.lang.*;`. That import is harmless but redundant: every Java file imports `java.lang` implicitly, which is why `String` and `System` need no import.
+</Callout>
+
+Only a class with a `main` method can run on its own (slide 4). The signature is fixed:
+
+| Part | Why it is there |
+|---|---|
+| `public` | The JVM calls it from outside the class. |
+| `static` | Called before any object exists; there is no `this` yet. |
+| `void` | Returns nothing. The exit code comes from how the JVM stops, not from a return value. |
+| `main` | The name the launcher looks up. |
+| `String[] args` | The command-line arguments, never null, possibly empty. |
+
+<QuickCheck
+  id="jb-package-folder"
+  question="A file begins with package pk.edu.szabist.webtech; and declares public class Login. Where must Login.java live, relative to the source root?"
+  options={["pk/edu/szabist/webtech/Login.java", "webtech/szabist/edu/pk/Login.java", "Login.java at the root, anywhere", "pk.edu.szabist.webtech/Login.java"]}
+  answer="pk/edu/szabist/webtech/Login.java"
+  explanation="Each dot in the package name is one folder level, outermost first. The package is the reversed domain (szabist.edu.pk), which is exactly the convention slide 3 describes."
+  feedback={{
+    "webtech/szabist/edu/pk/Login.java": "Reversed the wrong way. The package already is the reversed domain; its folders follow it left to right.",
+    "Login.java at the root, anywhere": "javac compiles it there, but the JVM then looks for pk/edu/szabist/webtech/Login.class and cannot find the class.",
+    "pk.edu.szabist.webtech/Login.java": "Dots become folder separators. There is no folder with dots in its name."
+  }}
+/>
+
+<QuickCheck
+  id="jb-bytecode"
+  question="What does javac produce from Main.java?"
+  options={["Main.class, containing bytecode that the JVM executes", "Main.exe, containing machine code for the current CPU", "Main.jar, the packaged application", "Nothing on disk; it runs the program immediately"]}
+  answer="Main.class, containing bytecode that the JVM executes"
+  explanation="Slide 5: compilation turns the Java program into a .class file of bytecode; execution is the JVM running that bytecode. The JIT compiler inside the JVM turns hot bytecode into machine code at run time, which is why Java is compiled twice."
+  feedback={{
+    "Main.exe, containing machine code for the current CPU": "That would tie the program to one OS and CPU. Bytecode is what makes Java portable.",
+    "Main.jar, the packaged application": "A JAR is a zip of .class files made by the jar tool or the build, not by javac.",
+    "Nothing on disk; it runs the program immediately": "That is the java Main.java source launcher. javac only compiles."
+  }}
+/>
+
+## What happens when you press Run
+
+Slide 15 lists what the IDE sets off. Put it in order before reading on.
+
+<OrderCheck
+  id="jb-run-order"
+  prompt="Order what happens from pressing Run in the IDE to the process exiting."
+  items={["The IDE starts a new process running the java executable", "java boots the JVM inside that process", "The JVM initialises its subsystems: garbage collector, JIT compiler, class loader", "The bootstrap classes are loaded: java.lang.Object, java.lang.String", "The main thread is created and runs main", "main finishes and the process exits with code 0, or non-zero on failure"]}
+  explanation="That is slide 15 in order. Two fixes to its wording: 'class leader' is the class loader, and the main thread does not call System.exit() when main returns. The launcher waits for every non-daemon thread to finish, then shuts the JVM down. An uncaught exception gives exit code 1, as the args example showed."
+  topLabel="First"
+  bottomLabel="Last"
+/>
+
+Slide 17's diagram names the class loader subsystem, the **runtime data areas** and the execution engine. The runtime data areas are the part examiners ask about. Step through a three-line `main` and watch what lands where:
+
+<JvmMemoryStepper />
+
+<Callout type="key-idea" title="Two rules that answer most memory questions">
+Every object is on the **heap**, shared by all threads. Every local variable, including a variable that holds a reference, is in a **stack frame** belonging to one thread. `Person p = new Person("Ali")` puts the object on the heap and the reference `p` on the stack. The method area holds each class's bytecode once, however many objects exist.
+</Callout>
+
+<QuickCheck
+  id="jb-memory-areas"
+  question="Which JVM runtime data areas are shared by all threads?"
+  options={["The method area and the heap", "The Java stack and the pc register", "The heap and the native method stack", "All five are shared"]}
+  answer="The method area and the heap"
+  explanation="Shared: method area (class data, bytecode, static fields) and heap (all objects). Per thread: the Java stack, the pc register and the native method stack. This is why two threads can see the same object but never each other's local variables, the same reason request data belongs in locals in a servlet."
+  feedback={{
+    "The Java stack and the pc register": "Both are per thread: each thread has its own call stack and its own next instruction.",
+    "The heap and the native method stack": "The heap is shared, but the native method stack is per thread, like the Java stack.",
+    "All five are shared": "If stacks were shared, two threads calling the same method would overwrite each other's locals."
+  }}
+/>
+
+## Objects, references and toString
+
+`Person p = new Person();` then `System.out.println(p);` prints `com.example.Person@8efb846` (slides 19 and 20). To create an object you need a constructor and the `new` keyword, and what comes back is a reference to the object on the heap (slide 21). The value after `@` is the object's hash code in hex, **not** its memory address: `Object.toString()` returns the class name, `@`, then `Integer.toHexString(hashCode())`, and objects can move on the heap during garbage collection while that number stays fixed.
+
+`println(p)` and `println(p.toString())` print the same thing, because `println` calls `toString()` on whatever it is given. Slide 27's exercise (solution on slide 28), printing your name instead of the "gibberish", is solved by overriding it:
+
+```java
+package com.example;
+
+public class Person {
+    @Override
+    public String toString() {
+        return "Zubair";
+    }
+}
+```
+
+Where does `toString` come from if `Person` never declares a parent? Slides 23 and 24: every class extends `java.lang.Object`, and if you do not write `extends`, the compiler writes `extends Object` for you. So a `Person` reference can be typed as `Person`, or as a parent type, all the way up to `Object`. That choice changes what compiles, but not what runs:
+
+<RefTypeLab />
+
+<Callout type="key-idea" title="Compile time looks at the reference, run time looks at the object">
+javac allows a call only if the **declared type** has that method: `Object p = new Person()` cannot call `p.getName()`, which is slide 26's "you will not be able to call methods of the person class that are not in the Object class". At run time the JVM runs the **object's** version of the method. So `Object o = new Student("Ali")` then `println(o)` prints `Student: Ali`, using Student's override, even though `o` is declared as Object.
+</Callout>
+
+<QuickCheck
+  id="jb-dispatch"
+  question="Person overrides toString to return 'Person: ' + name, and Student overrides it to return 'Student: ' + name. What does Object o = new Student('Ali'); System.out.println(o); print?"
+  options={["Student: Ali", "Person: Ali", "com.example.Student@1b6d3586 or similar", "It does not compile: Object has no name"]}
+  answer="Student: Ali"
+  explanation="println calls o.toString(). Object declares toString, so the call compiles; at run time the JVM dispatches to the object's class, Student, and runs its override. Toggle the same case in the lab above."
+  feedback={{
+    "Person: Ali": "That would need the object to be a Person or a class without its own override, like Faculty in the lab.",
+    "com.example.Student@1b6d3586 or similar": "That is Object's default toString, used only when no class in the chain overrides it.",
+    "It does not compile: Object has no name": "The call is toString(), which Object declares. Only getName() would fail through an Object reference."
+  }}
+/>
+
+<QuickCheck
+  id="jb-declared-type"
+  type="true-false"
+  question="Person p = new Student('Ali'); p.study(); compiles, because the object really is a Student."
+  answer="False"
+  explanation="javac checks the declared type, Person, and Person has no study() method: 'cannot find symbol'. To call it you need a Student reference: Student s = (Student) p; s.study();."
+/>
+
+## Inheritance and super
+
+Slides 29 to 38 start from `Student` and `Faculty` as copies of each other (a `name` field, a constructor, a getter and a setter), then move the shared part into a parent:
+
+```java
+public class Person {
+    private String name;
+
+    public Person(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+public class Student extends Person {
+    Student(String name) {
+        super(name);   // runs Person(String) first
+    }
+}
+```
+
+`name` is `private` to Person, so Student cannot touch it directly; it gets there only through `super(name)` and later through `getName()`. `super(...)` calls the parent's constructor, so the parent's part of the object is built before the child's.
+
+<QuickCheck
+  id="jb-no-super"
+  question="Delete the line super(name); from Student's constructor and leave Person unchanged. What happens?"
+  options={["Compile error: constructor Person in class Person cannot be applied to given types", "It compiles, and name is left null", "It compiles, and Java passes name to Person automatically", "Runtime NullPointerException when getName() is called"]}
+  answer="Compile error: constructor Person in class Person cannot be applied to given types"
+  explanation="With no explicit super(...), the compiler inserts super() with no arguments. Person has only Person(String), and declaring any constructor removes the free no-argument one, so there is nothing for super() to call."
+  feedback={{
+    "It compiles, and name is left null": "It would, if Person also had a no-argument constructor. It does not.",
+    "It compiles, and Java passes name to Person automatically": "Java never forwards constructor arguments for you.",
+    "Runtime NullPointerException when getName() is called": "It never gets to run: this is caught at compile time."
+  }}
+/>
+
+<Deeper kind="edge" title="Constructor order, and super() no longer has to come first">
+
+Every constructor starts by running its parent's, all the way up to Object, so with `Person()` printing `Person()` and `Student()` printing `Student()`, `new Student()` prints `Person()` first, then `Student()`.
+
+The textbook rule "`super(...)` must be the first statement" was relaxed in **Java 25** (JEP 513, flexible constructor bodies): code that does not touch `this`, such as validating an argument, may now come before `super(...)`. Your JDK 26 compiles it, and older JDKs reject it. For the quiz, "super must be the first statement" is still the expected answer unless the question says otherwise.
+
+</Deeper>
+
+## Abstract classes
+
+Slide 39 marks `Person` as `abstract`, and `new Person("Zubair")` stops compiling: `Person is abstract; cannot be instantiated`. That is fine, because nobody is just a Person; everyone is a Student or a Faculty. Slides 41 to 47 then build the classic example, `Employee`, whose `earnings()` has no sensible body in the parent.
+
+<Predict
+  id="jb-abstract-predict"
+  prompt="Employee declares public abstract double earnings(); with no body. SalariedEmployee extends Employee but you forget to write earnings() in it. Does SalariedEmployee compile? Would it compile if you also marked SalariedEmployee abstract?"
+  answer="No: 'SalariedEmployee is not abstract and does not override abstract method earnings() in Employee'. Yes, if SalariedEmployee is itself abstract; then the obligation passes down to its first concrete subclass."
+>
+
+The first **concrete** (non-abstract) class in the chain must implement every inherited abstract method. javac's words: `SalariedEmployee is not abstract and does not override abstract method earnings() in Employee`. An abstract subclass can leave it unimplemented and pass the job down.
+
+</Predict>
+
+| Rule | What javac says if you break it |
+|---|---|
+| An abstract method has no body, and must say `abstract` | `missing a method body, or should be declared abstract` |
+| A class with even one abstract method must be declared abstract | `is not abstract and does not override abstract method` |
+| An abstract class cannot be instantiated with `new` | `is abstract; cannot be instantiated` |
+| A concrete subclass must override every abstract method | `is not abstract and does not override abstract method` |
+| An abstract class **can** have fields, constructors and concrete methods | (allowed: Person keeps `name`, its constructor and `getName`) |
+| An abstract class **need not** have any abstract method | (allowed: slide 39's Person has none) |
+
+Here is the Employee family with the slides' bugs fixed, plus the two exercises from slides 49 and 50 (an array of Employee and a List of Employee), compiled and run:
+
+```java
+public abstract class Employee {
+    private String name;
+
+    public Employee(String name) {      // needed: the children call super(name)
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public abstract double earnings();  // no body
+}
+
+public class SalariedEmployee extends Employee {
+    private double weeklySalary;
+
+    public SalariedEmployee(String name, double weeklySalary) {
+        super(name);
+        this.weeklySalary = weeklySalary;
+    }
+
+    @Override
+    public double earnings() {
+        return weeklySalary;
+    }
+}
+
+public class HourlyEmployee extends Employee {
+    private double rate;   // per hour
+    private double hours;  // this week
+
+    public HourlyEmployee(String name, double rate, double hours) {
+        super(name);
+        this.rate = rate;
+        this.hours = hours;
+    }
+
+    @Override
+    public double earnings() {
+        return rate * hours;
+    }
+}
+
+// in main:
+Employee[] staff = new Employee[2];                 // an array of references: allowed
+staff[0] = new SalariedEmployee("Zubair", 50000);
+staff[1] = new HourlyEmployee("Ali", 1500, 20);
+
+List<Employee> payroll = new ArrayList<>();         // java.util.List, java.util.ArrayList
+payroll.add(staff[0]);
+payroll.add(staff[1]);
+
+for (Employee e : payroll) {
+    System.out.println(e.getName() + " earns " + e.earnings());
+}
+// Zubair earns 50000.0
+// Ali earns 30000.0
+```
+
+`new Employee[2]` creates an **array of two empty references**, not two Employee objects, which is why it is allowed for an abstract type (slide 48: "abstract can still behave like types"). The loop calls `earnings()` through an Employee reference, and each object runs its own version: the same dispatch as `toString` in the lab.
+
+<Callout type="exam" title="Three bugs in slide 47's HourlyEmployee">
+As printed, the slide's code does not compile, for three reasons. (1) It calls `super(name)`, but slide 45's Employee has no `Employee(String)` constructor, only the implicit no-argument one. (2) It assigns `hourlyRate` and `hourlyWage`, which do not exist; the parameters are `rate` and `wage`. (3) `rate * wage` multiplies two rates. Hourly pay is rate × hours, as in Deitel's original version of this example. If asked to write the class, add the constructor to Employee and use rate and hours. If asked what the slide's code does, the answer is that it does not compile.
+</Callout>
+
+<QuickCheck
+  id="jb-abstract-no-methods"
+  type="true-false"
+  question="A class declared abstract must contain at least one abstract method."
+  answer="False"
+  explanation="The rule runs one way only: one abstract method forces the class to be abstract (slide 45), but an abstract class may have none. Slide 39's Person is abstract with no abstract methods, used purely to forbid new Person(...)."
+/>
+
+<QuickCheck
+  id="jb-abstract-array"
+  question="Employee is abstract. Which line does NOT compile?"
+  options={["Employee e = new Employee();", "Employee[] staff = new Employee[10];", "Employee e = new SalariedEmployee('Zubair', 50000);", "List of Employee: List<Employee> list = new ArrayList<>();"]}
+  answer="Employee e = new Employee();"
+  explanation="You cannot instantiate an abstract class. The other three only create references or containers of references typed Employee, and fill them with concrete subclasses. That is exactly slides 48 to 50."
+  feedback={{
+    "Employee[] staff = new Employee[10];": "This creates an array of ten null references, not ten Employee objects. Allowed.",
+    "Employee e = new SalariedEmployee('Zubair', 50000);": "A concrete subclass object behind an abstract-type reference: the normal use of an abstract class.",
+    "List of Employee: List<Employee> list = new ArrayList<>();": "The list holds references typed Employee. You add SalariedEmployee and HourlyEmployee objects to it."
+  }}
+/>
+
+<Deeper kind="exam" title="Model answer: what is an abstract class? Give an example. (4 marks)">
+
+An abstract class is a class declared with the `abstract` keyword that **cannot be instantiated**. It exists to be extended: it holds the fields and methods its subclasses share, and can declare **abstract methods** (no body) that every concrete subclass is forced to implement. A class with even one abstract method must itself be declared abstract.
+
+Example: `Employee` is abstract, with a `name` field, `getName()`, and `public abstract double earnings();`. `SalariedEmployee` returns its weekly salary from `earnings()`, and `HourlyEmployee` returns rate × hours. `new Employee()` is a compile error, but `Employee[] staff` can hold both kinds, and `staff[i].earnings()` runs each object's own version.
+
+The marks: the definition with "cannot be instantiated" (1), abstract methods have no body and must be implemented by subclasses (1), the example with the abstract method (1), and a subclass implementing it (1).
+
+</Deeper>
+
+<Deeper kind="beyond" title="Java 25's instance main methods">
+
+Since Java 25 (JEP 512), a file containing just `void main()` with `IO.println("Hi");` inside is a complete program: no class declaration, no `static`, no `String[] args`. It runs on your JDK 26. The quiz and the deck use the classic `public static void main(String[] args)`, and so does every framework you will meet, but it explains the shorter programs you may see in newer tutorials.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=ZBJ0u9MaKtM",
+    "title": "Ranjith Ramachandran: JVM architecture tutorial",
+    "kind": "video",
+    "why": "A whiteboard walk through the same diagram as slide 14: class loader subsystem, runtime data areas, execution engine. Good for fixing the five areas in memory."
+  },
+  {
+    "href": "https://docs.oracle.com/javase/specs/jvms/se26/html/jvms-2.html#jvms-2.5",
+    "title": "JVM Specification §2.5: Run-Time Data Areas",
+    "kind": "docs",
+    "why": "The primary source for pc register, Java stacks, heap, method area and native method stacks, each in one or two paragraphs."
+  },
+  {
+    "href": "https://dev.java/learn/inheritance/abstract-classes/",
+    "title": "dev.java: Abstract methods and classes",
+    "kind": "docs",
+    "why": "Oracle's own tutorial page on the rules in the table above, with a short comparison to interfaces (the next part of the deck)."
+  },
+  {
+    "href": "https://dev.java/learn/inheritance/polymorphism/",
+    "title": "dev.java: Polymorphism",
+    "kind": "docs",
+    "why": "The declared-type versus object-type rule from the lab, with a worked example of overriding and dispatch."
+  }
+]} />

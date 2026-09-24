@@ -1,0 +1,307 @@
+<Callout type="exam" title="Scope: assumed, not announced">
+Quiz 1 is on Tuesday 29 September. The scope has not been announced, so this drill covers everything taught before it: lectures 01 to 04 (the Internet, the network edge, layering and OSI versus TCP/IP, circuit versus packet switching, delay, loss, throughput). If the announced scope differs, tell Claude.
+</Callout>
+
+Aim for 30 minutes, calculator only. Most quizzes are 10 to 15 minutes, so the numericals should take you under two minutes each. Write the unit conversion first every time.
+
+## Definitions and the Internet
+
+<QuickCheck
+  id="q1-rfc"
+  type="short-answer"
+  question="Internet standards are published as RFCs. What does RFC stand for?"
+  answer={["Request for Comments", "Request for Comment"]}
+  explanation="Request for Comments. They are developed by the IETF (Internet Engineering Task Force). Both acronyms appear on the lecture 01 slide and are easy one-mark questions."
+/>
+
+<QuickCheck
+  id="q1-service-view"
+  question="Which statement describes the Internet from the service view rather than the nuts-and-bolts view?"
+  options={["Millions of connected hosts running network apps", "Communication links of fiber, copper, radio and satellite", "Infrastructure that provides services to applications and a programming interface for them to connect", "Routers and switches that forward packets"]}
+  answer="Infrastructure that provides services to applications and a programming interface for them to connect"
+  explanation="The service view describes what the Internet does for applications: it delivers data for the Web, VoIP, email and games, and gives programs an interface (sockets) to send and receive. The other three options describe its components, which is the nuts-and-bolts view."
+  feedback={{
+    "Millions of connected hosts running network apps": "That is the first bullet of the nuts-and-bolts view: the end systems.",
+    "Communication links of fiber, copper, radio and satellite": "Links are hardware, so this is the nuts-and-bolts view.",
+    "Routers and switches that forward packets": "Packet switches are components, so this is the nuts-and-bolts view."
+  }}
+/>
+
+<QuickCheck
+  id="q1-hosts"
+  type="true-false"
+  question="According to the lecture slides, hosts and end systems are two names for the same thing."
+  answer="True"
+  explanation="The slide says hosts = end systems, the devices at the edge that run network applications. Clients and servers are both hosts. Routers are not: they sit in the core."
+/>
+
+## Layers
+
+<QuickCheck
+  id="q1-hop-to-hop"
+  question="According to the lecture slides, which OSI layer provides hop-to-hop delivery?"
+  options={["Physical", "Data link", "Network", "Transport"]}
+  answer="Data link"
+  explanation="The slide's pairing: data link is hop to hop (one link, one frame), network is source to destination (across routers), transport is process to process (to the right port). Learn those three phrases; they are the instructor's wording."
+  feedback={{
+    "Physical": "The physical layer moves individual bits over the medium. It has no notion of delivering a unit to a node.",
+    "Network": "Network is source to destination: it carries a packet across many hops, using routing.",
+    "Transport": "Transport is process to process, identified by port numbers."
+  }}
+/>
+
+<QuickCheck
+  id="q1-address-types"
+  question="Match the address to the layer. The port address (the slides call it service-point addressing) belongs to:"
+  options={["Data link layer", "Network layer", "Transport layer", "Session layer"]}
+  answer="Transport layer"
+  explanation="Three addresses, three layers: physical (MAC) address at the data link layer, logical (IP) address at the network layer, port (service-point) address at the transport layer."
+  feedback={{
+    "Data link layer": "The data link layer uses the physical (MAC) address.",
+    "Network layer": "The network layer uses the logical (IP) address.",
+    "Session layer": "The session layer handles dialog control and synchronization. It has no addresses of its own."
+  }}
+/>
+
+<QuickCheck
+  id="q1-dialog"
+  type="short-answer"
+  question="Dialog control and synchronization points are the job of which OSI layer? (one word)"
+  answer={["Session", "Session layer"]}
+  explanation="Session layer: dialog control (half or full duplex) and synchronization (checkpoints, so a long transfer can resume from the last one). The Internet stack has no session layer; applications do this themselves when they need it."
+/>
+
+<QuickCheck
+  id="q1-pdu-network"
+  question="In the TCP/IP stack, the unit of data at the network layer is called a:"
+  options={["Message", "Segment", "Datagram", "Frame"]}
+  answer="Datagram"
+  explanation="Top to bottom: message (application), segment (transport), datagram (network), frame (link). The slides' encapsulation figure writes these beside M, Ht M, Hn Ht M and Hl Hn Ht M."
+  feedback={{
+    "Message": "Message is the application-layer unit.",
+    "Segment": "Segment is the transport-layer unit: the message plus a transport header.",
+    "Frame": "Frame is the link-layer unit, which wraps the datagram."
+  }}
+/>
+
+<QuickCheck
+  id="q1-encap-header"
+  question="At the sender, the header written Hn in the encapsulation figure is added by which layer?"
+  options={["Application", "Transport", "Network", "Link"]}
+  answer="Network"
+  explanation="Each layer adds its own header in front of what it receives from above: Ht by transport, Hn by network, Hl by link. The receiver strips them in reverse order."
+  feedback={{
+    "Application": "The application produces M itself; it adds no header in the figure.",
+    "Transport": "Transport adds Ht, which turns the message into a segment.",
+    "Link": "Link adds Hl, and turns the datagram into a frame."
+  }}
+/>
+
+<QuickCheck
+  id="q1-missing-layers"
+  question="Which two OSI layers are missing from the Internet protocol stack?"
+  options={["Presentation and session", "Session and transport", "Data link and physical", "Presentation and application"]}
+  answer="Presentation and session"
+  explanation="The slide says the Internet stack is missing these layers, so their services, if needed, must be implemented in the application. TLS encryption and gzip compression are examples of presentation-layer jobs done inside the application."
+  feedback={{
+    "Session and transport": "Transport is very much present: TCP and UDP.",
+    "Data link and physical": "Both exist in the five-layer stack (link, physical).",
+    "Presentation and application": "Application is the top layer of the Internet stack."
+  }}
+/>
+
+## Switching and the core
+
+<QuickCheck
+  id="q1-forwarding"
+  question="Moving an arriving packet from a router's input link to the appropriate output link, using the local table, is called:"
+  options={["Routing", "Forwarding", "Switching setup", "Multiplexing"]}
+  answer="Forwarding"
+  explanation="Lecture 04 lists two key network-core functions. Forwarding is local and per packet: look up the header in the forwarding table and send the packet out the right link. Routing is global: algorithms decide the source-to-destination route and fill those tables."
+  feedback={{
+    "Routing": "Routing decides the route and builds the table. Using the table for one packet is forwarding.",
+    "Switching setup": "Setup belongs to circuit switching, and packet routers do not do it.",
+    "Multiplexing": "Multiplexing (FDM, TDM) is how a link is shared, not what a router does with one packet."
+  }}
+/>
+
+<QuickCheck
+  id="q1-idle-circuit"
+  type="true-false"
+  question="In circuit switching, a circuit segment that is idle during a call can be used by another call."
+  answer="False"
+  explanation="The resources are dedicated: the slide says 'circuit segment idle if not used by call (no sharing)'. That wasted idle capacity is exactly what packet switching reclaims through statistical multiplexing."
+/>
+
+<QuickCheck
+  id="q1-pkt-downside"
+  question="According to the lecture slides, the main drawback of packet switching is:"
+  options={["It needs a call setup phase", "Excessive congestion is possible, causing packet delay and loss", "It cannot carry bursty data", "Resources sit idle when a user is silent"]}
+  answer="Excessive congestion is possible, causing packet delay and loss"
+  explanation="The slide: great for bursty data, resource sharing, no call setup, but excessive congestion is possible, so protocols are needed for reliable data transfer and congestion control."
+  feedback={{
+    "It needs a call setup phase": "No call setup is one of packet switching's advantages. Setup belongs to circuit switching.",
+    "It cannot carry bursty data": "Bursty data is what packet switching is best at.",
+    "Resources sit idle when a user is silent": "That is the drawback of circuit switching."
+  }}
+/>
+
+<QuickCheck
+  id="q1-circuit-users"
+  type="numeric"
+  question="A 5 Mbps link is shared by users who each need 250 kbps while active. How many users can circuit switching support?"
+  answer={20}
+  explanation="5 Mbps = 5000 kbps. 5000 ÷ 250 = 20. The trap is dividing 5 by 250 without converting Mbps to kbps first, which gives 0.02."
+/>
+
+<QuickCheck
+  id="q1-tdm"
+  type="numeric"
+  unit="kbps"
+  question="A 1.536 Mbps link uses TDM with 12 slots per frame. What is the rate of one circuit, in kbps?"
+  answer={128}
+  explanation="1.536 Mbps = 1536 kbps. 1536 ÷ 12 = 128 kbps. Convert before dividing: 1.536 ÷ 12 = 0.128 is in Mbps, not kbps."
+/>
+
+<QuickCheck
+  id="q1-circuit-file"
+  type="numeric"
+  unit="s"
+  question="An 800,000-bit file is sent over a circuit on a 2 Mbps link that uses TDM with 20 slots. Circuit setup takes 500 ms. Total time to send the file, in seconds?"
+  answer={8.5}
+  explanation="Circuit rate = 2,000,000 ÷ 20 = 100,000 bits/s. Transfer = 800,000 ÷ 100,000 = 8 s. Add setup: 500 ms = 0.5 s, so 8.5 s. Two traps: using the full 2 Mbps instead of one slot, and adding 500 instead of 0.5."
+/>
+
+## Delay, loss, throughput
+
+<QuickCheck
+  id="q1-dtrans"
+  type="numeric"
+  unit="ms"
+  question="A 1250-byte packet is pushed onto a 10 Mbps link. Transmission delay in milliseconds?"
+  answer={1}
+  explanation="L = 1250 × 8 = 10,000 bits. L/R = 10,000 ÷ 10,000,000 = 0.001 s = 1 ms. Forgetting × 8 gives 0.125 ms."
+/>
+
+<QuickCheck
+  id="q1-dprop"
+  type="numeric"
+  unit="ms"
+  question="Two routers are 3000 km apart; the signal propagates at 2×10⁸ m/s. Propagation delay in milliseconds?"
+  answer={15}
+  explanation="3000 km = 3,000,000 m. d/s = 3×10⁶ ÷ 2×10⁸ = 0.015 s = 15 ms. Propagation depends only on distance and speed, never on packet size or link rate."
+/>
+
+<QuickCheck
+  id="q1-store-forward"
+  type="numeric"
+  unit="s"
+  question="Following the lecture 04 one-hop example: a 6 Mbit packet goes from source through one router to destination, with both links at 1.5 Mbps and zero propagation delay. End-to-end delay in seconds?"
+  answer={8}
+  explanation="L/R = 6 Mbit ÷ 1.5 Mbps = 4 s per link. Store-and-forward: the router must receive the whole packet before sending, so end-to-end = 2L/R = 8 s. Answering 4 s forgets the second link."
+/>
+
+<QuickCheck
+  id="q1-multi-link"
+  type="numeric"
+  unit="ms"
+  question="A 2000-byte packet crosses 4 store-and-forward links, each 4 Mbps with 1 ms propagation delay. Ignoring processing and queueing, end-to-end delay in milliseconds?"
+  answer={20}
+  explanation="L = 16,000 bits. Per link: 16,000 ÷ 4,000,000 = 4 ms transmission, plus 1 ms propagation, gives 5 ms. Four links: 20 ms. Counting transmission only once gives 8 ms, which is wrong because each router retransmits the whole packet."
+/>
+
+<QuickCheck
+  id="q1-intensity"
+  type="numeric"
+  question="1500-byte packets arrive at 500 packets per second at a 12 Mbps output link. What is the traffic intensity La/R?"
+  answer={0.5}
+  explanation="L = 12,000 bits. La = 12,000 × 500 = 6,000,000 bits/s. Divided by 12,000,000: 0.5. Average queueing delay is small; as La/R approaches 1 it grows sharply, and above 1 the queue grows without bound."
+/>
+
+<QuickCheck
+  id="q1-throughput"
+  type="numeric"
+  unit="s"
+  question="A server sends a 10 MB file (80 × 10⁶ bits) to a client. The server's link is 2 Mbps, the client's link is 5 Mbps, and the core is not a bottleneck. How long does the transfer take, in seconds?"
+  answer={40}
+  explanation="Throughput = min(2, 5) = 2 Mbps. 80,000,000 ÷ 2,000,000 = 40 s. The trap is using 5 Mbps, the faster link; the bottleneck sets the rate."
+/>
+
+<QuickCheck
+  id="q1-loss-cause"
+  question="A packet is lost at a router when:"
+  options={["Its propagation delay is too long", "It arrives to find the output buffer full", "The link's transmission rate is lower than the previous link", "The router has to check bit errors"]}
+  answer="It arrives to find the output buffer full"
+  explanation="The queue (buffer) has finite capacity. When the arrival rate exceeds the output rate for long enough the buffer fills, and packets arriving at a full buffer are dropped."
+  feedback={{
+    "Its propagation delay is too long": "Long propagation adds delay but never drops a packet.",
+    "The link's transmission rate is lower than the previous link": "A slower outgoing link causes queueing; loss happens only when the queue overflows.",
+    "The router has to check bit errors": "That is processing delay, a few microseconds, not loss."
+  }}
+/>
+
+## Short answers
+
+<Predict
+  id="q1-diff-switching"
+  prompt="Differentiate between circuit switching and packet switching. (4 marks)"
+  answer="Four contrasts: reserved vs on-demand resources, setup vs none, guaranteed vs variable rate/delay, idle capacity wasted vs shared (statistical multiplexing). Add an example of each."
+>
+
+| | Circuit switching | Packet switching |
+|---|---|---|
+| Resources | Reserved end to end for the call (dedicated, no sharing) | Used on demand; packets share links |
+| Setup | Call setup needed before data flows | No call setup |
+| Performance | Guaranteed, constant rate and delay | Variable delay; loss possible under congestion |
+| Idle capacity | Wasted when the caller is silent | Used by other users (statistical multiplexing) |
+| Example | Traditional telephone network | The Internet |
+
+One-line closer for full marks: "With a 1 Mbps link and users needing 100 kbps active 10% of the time, circuit switching supports 10 users; packet switching supports 35 with under 0.0004 probability of more than 10 active."
+
+</Predict>
+
+<Predict
+  id="q1-nodal-delay"
+  prompt="Name the four sources of packet delay at a node and write the nodal delay formula. (4 marks)"
+  answer="dnodal = dproc + dqueue + dtrans + dprop. Processing (check bit errors, pick output link), queueing (wait at the output buffer, depends on congestion), transmission L/R, propagation d/s."
+>
+
+**d_nodal = d_proc + d_queue + d_trans + d_prop**
+
+- **Processing:** examine the header, check bit errors, decide the output link. Microseconds.
+- **Queueing:** time waiting at the output link for earlier packets to be sent. Depends on congestion; zero to milliseconds.
+- **Transmission:** L/R, the time to push all the packet's bits onto the link. Depends on packet length and link rate.
+- **Propagation:** d/s, the time for one bit to travel the link. Depends on distance and the medium's speed (about 2×10⁸ m/s).
+
+Graders look for the distinction between transmission and propagation: one depends on L and R, the other on d and s.
+
+</Predict>
+
+<Predict
+  id="q1-why-layering"
+  prompt="Why do we use a layered architecture? Give two advantages and one criticism. (3 marks)"
+  answer="Explicit structure to identify the pieces and their relationships; modularization eases maintenance because a layer's implementation can change transparently. Criticism: duplication of functionality and layers needing information from other layers."
+>
+
+1. **Explicit structure:** a layered reference model lets you identify the pieces of a complex system and how they relate (the airline analogy: ticket, baggage, gates, runway, routing).
+2. **Modularization:** changing how one layer implements its service is transparent to the rest of the system. A change in the gate procedure does not affect the rest of the trip; swapping Wi-Fi for Ethernet does not change HTTP.
+
+**Criticism ("layering considered harmful?"):** layers can duplicate functions (error control at both link and transport), and a layer may need information that only another layer has, which strict layering forbids.
+
+</Predict>
+
+<Predict
+  id="q1-transport-duties"
+  prompt="According to the lecture slides, list the responsibilities of the transport layer. (4 marks)"
+  answer="Process-to-process delivery of the message, via: service-point (port) addressing, segmentation and reassembly (sequence numbers), connection control (connectionless or connection-oriented), end-to-end flow control, process-to-process error control."
+>
+
+The transport layer delivers a message from one **process** to another. It is concerned with:
+
+- **Service-point addressing:** port numbers pick the process.
+- **Segmentation and reassembly:** the message is split into segments carrying sequence numbers, and put back in order at the receiver.
+- **Connection control:** connectionless (UDP) or connection-oriented (TCP).
+- **Flow control:** end to end. The slide's wording is "mechanism for overwhelming the receiver"; the intended meaning is a mechanism *to prevent* overwhelming the receiver. Write it that way.
+- **Error control:** process to process, not per link.
+
+</Predict>

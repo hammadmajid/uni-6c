@@ -69,6 +69,13 @@
           "minutes": 30,
           "kind": "checkpoint",
           "objective": "solve the numericals and comparison questions the midterm will draw from weeks 1 and 2."
+        },
+        {
+          "slug": "quiz-1-revision",
+          "title": "Quiz 1 revision",
+          "minutes": 30,
+          "kind": "checkpoint",
+          "objective": "drill lectures 01 to 04 in quiz format before quiz 1 on Tuesday 29 September: definitions, layer jobs, switching, and delay and throughput numericals."
         }
       ]
     },

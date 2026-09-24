@@ -30,7 +30,7 @@
       "slug": "week-02",
       "week": 2,
       "title": "Servlets: mapping, lifecycle, GET and POST",
-      "outline": "Lecture 01 slides 34 to 63. What a servlet is, mapping by @WebServlet or web.xml, the lifecycle and the one-instance-many-threads model, query strings and getParameter, HTML forms, the 405 you get from posting to a doGet-only servlet, and the login assignment. Plus the home-task dev setup (IntelliJ, JDK 26, Tomcat 11, PostgreSQL, DBeaver).",
+      "outline": "Lecture 01 slides 34 to 63. What a servlet is, mapping by @WebServlet or web.xml, the lifecycle and the one-instance-many-threads model, query strings and getParameter, HTML forms, the 405 you get from posting to a doGet-only servlet, and the login assignment. Plus the home-task dev setup (IntelliJ, JDK 26, Tomcat 11, PostgreSQL, DBeaver). Also the Java basics deck, slides 1 to 50 (packages to abstract classes), for quiz 1 on Monday 28 Sept.",
       "lessons": [
         {
           "slug": "servlet-lifecycle",
@@ -56,6 +56,19 @@
           "minutes": 25,
           "kind": "checkpoint",
           "objective": "answer lecture 01's material in the instructor's style without notes."
+        },
+        {
+          "slug": "java-basics-to-abstract",
+          "title": "Java basics through abstract classes",
+          "minutes": 40,
+          "objective": "compile and run a packaged class from the command line, place objects and references in the JVM's memory areas, predict what compiles and what runs through a parent-typed reference, and apply the abstract-class rules the quiz tests."
+        },
+        {
+          "slug": "quiz-1-revision",
+          "title": "Quiz 1 revision",
+          "minutes": 25,
+          "kind": "checkpoint",
+          "objective": "drill the Java basics deck, slides 1 to 50, in the instructor's phrasing before quiz 1 on Monday 28 Sept."
         }
       ]
     }
