@@ -46,6 +46,27 @@
           "objective": "answer quiz-style questions on lectures 1 and 2 without notes, including PEAS and agent-type long answers."
         }
       ]
+    },
+    {
+      "slug": "week-03",
+      "week": 3,
+      "title": "Task environments",
+      "outline": "Lecture 3. The nature of environments: the six properties from the slides (fully vs partially observable, deterministic vs stochastic, episodic vs sequential, static vs dynamic, discrete vs continuous, known vs unknown), more PEAS examples, and reading the agent design off the environment. Includes the quiz 1 revision over lectures 1 to 3.",
+      "lessons": [
+        {
+          "slug": "task-environments",
+          "title": "Task environments: the six questions that pick your agent",
+          "minutes": 45,
+          "objective": "classify any environment on the six axes with a one-line justification each, keep known/unknown separate from observability, and say which agent design each set of poles demands."
+        },
+        {
+          "slug": "quiz-1-revision",
+          "title": "Quiz 1 revision (lectures 1–3)",
+          "minutes": 30,
+          "kind": "checkpoint",
+          "objective": "answer quiz-style questions across definitions, agents and PEAS, and the task-environment axes without notes, including a full six-axis classification of the taxi."
+        }
+      ]
     }
   ]
 }

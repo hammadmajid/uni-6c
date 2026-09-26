@@ -1,0 +1,147 @@
+<Callout type="exam" title="Assignment 1 — due Monday 28 September, to Dr. Maria Zuraiz (3 marks)">
+Four scenario questions on layering, performance and switching — the same material as quiz 1, applied to specific situations. The brief is `courses/cndc/assignments/assignment-1-layers-switching-performance.pdf`. This workshop is practice, not a submission: attempt each part in your own words first, then check against the model answer and mark scheme. Write your final answers yourself — "copied or shown assignments will be marked zero".
+</Callout>
+
+Attempt every part before revealing. Each bolded term in a model answer is worth roughly the marks shown.
+
+## Warm-up: pin the concepts
+
+<QuickCheck
+  id="aw-protocol-def"
+  question="A protocol defines which of the following about the messages two devices exchange?"
+  options={[
+    "Only the physical medium the bits travel over",
+    "The format and order of messages, and the actions taken on sending and receipt",
+    "Only the speed of the link",
+    "Only which application produced the data"
+  ]}
+  answer="The format and order of messages, and the actions taken on sending and receipt"
+  explanation="The lecture's definition: protocols define the format and order of messages sent and received among network entities, and the actions taken on message transmission and receipt. That shared agreement is what lets a device in Tokyo interpret a message from Islamabad."
+  feedback={{
+    "Only the physical medium the bits travel over": "The medium is the physical layer's concern. A protocol is the agreed rules, independent of whether the link is fibre or radio.",
+    "Only the speed of the link": "Link speed is a property of the medium, not the rule set that governs the conversation.",
+    "Only which application produced the data": "Identifying the application is one job (ports), but a protocol is the whole agreement on format, order and actions."
+  }}
+/>
+
+<QuickCheck
+  id="aw-bottleneck"
+  question="Buffering during video playback is most directly caused when the path's available throughput falls below the:"
+  options={["Propagation delay", "Video's encoded bitrate", "Number of routers on the path", "Packet header size"]}
+  answer="Video's encoded bitrate"
+  explanation="The player drains its buffer at the encoded bitrate. If the bottleneck link can no longer deliver bits that fast, the buffer empties and playback stalls to refill. This is the min-rate-along-the-path idea from the throughput lesson."
+  feedback={{
+    "Propagation delay": "Propagation adds a one-off startup delay, but once playback begins it is steady throughput, not distance, that keeps the buffer full.",
+    "Number of routers on the path": "Hops add delay, but a 20-hop path with ample capacity never buffers. It is the slowest link's rate that matters.",
+    "Packet header size": "Header overhead is a few percent; it does not explain repeated stalls."
+  }}
+/>
+
+<QuickCheck
+  id="aw-lpwan"
+  question="A sensor link that must reach many kilometres on weak, variable signal while sipping battery power is the use case for:"
+  options={["Circuit switching", "Packet switching over Ethernet", "Low-Power WAN (LPWAN)", "Time-division multiplexing on a T1 line"]}
+  answer="Low-Power WAN (LPWAN)"
+  explanation="LPWAN technologies (LoRa, Sigfox, NB-IoT) trade data rate for long range, low power and robustness to a weak or variable signal. That matches network C in Q3."
+  feedback={{
+    "Circuit switching": "Circuit switching reserves a constant-rate path; it says nothing about long range on weak radio links and wastes capacity for bursty sensors.",
+    "Packet switching over Ethernet": "Ethernet is a short-range wired medium. The scenario is a long-distance, variable-strength link.",
+    "Time-division multiplexing on a T1 line": "A T1 is a fixed wired trunk, not a long-range low-power radio link."
+  }}
+/>
+
+## Q1 — Protocols and layering (offices in Islamabad, New York and Tokyo)
+
+<Predict
+  id="aw-q1-protocols"
+  prompt="Q1.1 — Explain why protocols and algorithms are critical for maintaining seamless global communication among these offices. (about 1.5 marks)"
+  answer="Protocols are the shared rules (format and order of messages, and the actions on send and receipt) that let devices from different vendors, operating systems and countries interpret each other's data — without a common protocol a message from Islamabad is meaningless in Tokyo. Algorithms do the work that makes delivery seamless despite distance and load: routing chooses a path across the global core (and reroutes around failures), congestion and flow control stop links being overwhelmed, and error detection and correction give reliable delivery over long, noisy links. Protocols supply the common language; algorithms make that language arrive efficiently and reliably at continental scale, so users never see the complexity."
+  placeholder="Protocols provide… ; algorithms provide… ; together…"
+>
+
+- **Protocols = agreed rules** (0.5): format and order of messages, and the actions taken on transmission and receipt. They give heterogeneous devices a common language, so a message is interpretable at every office regardless of vendor or OS.
+- **Algorithms = the mechanisms that make it work** (0.5): routing (best path across the global internet, rerouting around outages), congestion and flow control (no link overwhelmed), error detection and correction (reliable delivery over long-haul links), addressing.
+- **Together, "seamless"** (0.5): protocols standardise *what* is said; algorithms handle *how* it is delivered efficiently and reliably across three continents and time zones. The user just sees a working call or email.
+
+</Predict>
+
+<Predict
+  id="aw-q1-nolayers"
+  prompt="Q1.2 — If there were no layered architecture, describe two major issues the network would face when connecting devices worldwide. (about 1.5 marks)"
+  answer="1) No modularity or interoperability: with one monolithic stack, any change — a new medium, a new application, a new vendor — forces rewriting the whole system, and implementations from different vendors could not be made to talk. You could not swap Wi-Fi for Ethernet without touching the applications. 2) No separation of concerns: every device would have to handle addressing, routing, reliability and encoding as one tangled block, which is impossible to standardise globally, impossible to debug (you cannot localise a fault to a layer), and gives no common reference model for the world's networks to agree on."
+  placeholder="Issue 1… Issue 2…"
+>
+
+Two issues, roughly 0.75 each — any two of these, clearly explained:
+
+- **No modularity / interoperability.** A monolithic stack couples everything: changing the medium, adding an application, or using another vendor's equipment means rewriting the whole thing, and independent implementations cannot interoperate. Layering lets a layer's implementation change transparently (swap Ethernet for Wi-Fi and HTTP is unaffected).
+- **No separation of concerns / no common reference.** Without layers, one block must do addressing, routing, reliability and encoding together. That is impossible to standardise across the world, and impossible to debug because a fault cannot be isolated to a layer. A shared reference model is what lets global networks agree on interfaces.
+
+The mark scheme rewards naming the benefit that is *lost* (modularity, transparency, standardisation) and giving a concrete consequence.
+
+</Predict>
+
+## Q2 — Video streaming: buffering and frame skips
+
+<Predict
+  id="aw-q2-metrics"
+  prompt="Q2 — A video platform reports buffering delays and randomly skipping frames. Which two of {delay, path loss, throughput} are most responsible, and how are they interconnected? (mark for the two metrics + the link between them)"
+  answer="Throughput and loss. Buffering happens when available throughput (the min rate along the path, set by the bottleneck link) drops below the video's encoded bitrate, so the playout buffer drains and playback stalls to refill. Randomly skipping frames is packet loss: packets carrying those frames are dropped, usually at a congested router whose output buffer has overflowed, so the frames never arrive. The two are interconnected because both come from congestion at the bottleneck: as the arrival rate approaches the link rate, throughput falls AND the router queue fills until it overflows and drops packets — low throughput and high loss share the same root cause, and loss further cuts the useful throughput (goodput). Rising delay/jitter as the queue fills makes the buffering worse, but throughput and loss are the two primary metrics."
+  placeholder="The two metrics are… ; they are linked because…"
+>
+
+- **The two metrics: throughput and (path) loss.**
+  - **Buffering delays → throughput.** The player consumes bits at the encoded bitrate. When the bottleneck link's throughput falls below that rate, the buffer empties and playback pauses to rebuffer.
+  - **Frame skips → packet loss.** Packets carrying some frames are dropped (a congested router's output buffer overflows), so those frames are missing and get skipped.
+- **How they are interconnected:** both are symptoms of **congestion at the bottleneck**. As arrival rate nears the link rate, throughput drops *and* the queue fills until it overflows, causing loss. So they share one cause, and loss lowers goodput further.
+- **Honest caveat for full marks:** delay/jitter also rises with congestion and worsens buffering; if the instructor's key pairs buffering with *delay* instead of throughput, both are defensible — say buffering is throughput-below-bitrate and note delay as the secondary factor.
+
+</Predict>
+
+## Q3 — Match the switching technology to the network
+
+<Predict
+  id="aw-q3-match"
+  prompt="Q3 — Match circuit switching, packet switching and Low-Power WAN to: Network A (3 users, each a constant connection); Network B (100 users, small random bursts); Network C (long-distance link, variable signal). Justify each. (mark per correct + justified match)"
+  answer="A → Circuit switching: few users each needing a constant, dedicated rate; reserving a circuit per user gives a guaranteed rate and delay, and with users always active there is no wasted idle capacity. B → Packet switching: many users with bursty, random traffic; statistical multiplexing lets them share the links on demand, so you can support far more than circuit switching could, whereas reserving circuits would waste capacity during each user's silences. C → Low-Power WAN: a long-range link with weak, variable signal suits LPWAN (LoRa, Sigfox, NB-IoT), which is built for kilometres of range on low power and tolerates poor, variable signal at the cost of data rate."
+  placeholder="A → … because… ; B → … because… ; C → … because…"
+>
+
+| Network | Best fit | Why |
+|---|---|---|
+| **A** — 3 users, constant connection | **Circuit switching** | Few users, each needing a dedicated, constant rate. A reserved circuit gives guaranteed rate and delay, and because they are always active none of the reserved capacity is wasted. |
+| **B** — 100 users, random bursts | **Packet switching** | Bursty, many users. Statistical multiplexing shares the links on demand, supporting far more users than reserving a circuit each would; circuit switching would waste capacity during the silences between bursts. |
+| **C** — long-distance, variable signal | **Low-Power WAN** | LPWAN (LoRa, Sigfox, NB-IoT) is designed for long range on low power and is robust to a weak, variable signal, trading away data rate — exactly this link's profile. |
+
+Full marks need the *justification*, not just the label: tie A to "guaranteed dedicated rate, no idle waste", B to "statistical multiplexing of bursty traffic", C to "long range, low power, tolerant of weak signal".
+
+</Predict>
+
+## Q4 — Mars–Earth data transmission model
+
+<Predict
+  id="aw-q4-model"
+  prompt="Q4.1 — Which layered model (OSI or TCP/IP) would you choose for a Mars–Earth link, and why? (justify in one paragraph)"
+  answer="TCP/IP, because it is the practical, fully implemented and deployed stack that real communication software is built on, whereas OSI is mainly a seven-layer reference model that is rarely implemented as-is. I would build on TCP/IP for interoperability with existing tools and hardware. The one honest caveat is the enormous propagation delay (roughly 4 to 24 minutes one way) and intermittent line-of-sight: standard TCP assumes sub-second round trips for its acknowledgements, timeouts and flow control, so it breaks over interplanetary distances. The real design therefore keeps the TCP/IP structure but adds delay-tolerant networking (the Bundle Protocol, store-and-forward) above it. So: choose TCP/IP for practicality, adapted with DTN for the delay."
+  placeholder="I would choose … because … (one paragraph)"
+>
+
+- **Choose TCP/IP** (main mark): it is the model that is actually implemented and deployed; OSI is a reference model used for teaching and for describing layers, rarely built directly. Engineering a real system means building on TCP/IP.
+- **Justify with the delay caveat** (this is what lifts the answer): Earth–Mars propagation is minutes each way and the link drops out of view, which violates standard TCP's assumption of fast round-trip acknowledgements. The accepted real-world answer is TCP/IP's structure plus **delay-tolerant networking** (DTN / Bundle Protocol, store-and-forward at each hop).
+- Picking **OSI** and justifying it by its cleaner separation and standardisation is also acceptable if argued — but note it is a model, not a deployed stack.
+
+</Predict>
+
+<Predict
+  id="aw-q4-remove"
+  prompt="Q4.2 — If you had to remove one layer, which would you remove and how would it impact communication?"
+  answer="Removing the transport layer would be the most damaging: you would lose process-to-process (port) addressing, segmentation and reassembly, and reliability and flow/congestion control — over a minutes-long round trip, with no way to multiplex applications or recover lost data, communication would collapse, so I would NOT remove it. If forced to drop the least harmful layer, remove the session (and presentation) layer: the TCP/IP stack already omits them and pushes their duties — dialog control, synchronisation checkpoints, encryption and compression — into the application. Impact: applications must implement those services themselves (for a Mars link, resumable checkpointed transfers matter, so the application would have to provide them), but core delivery still works."
+  placeholder="I would remove … ; impact: …"
+>
+
+Two ways to score well — show you understand what each layer *does*:
+
+- **Argue which removal is worst.** Removing the **transport layer** costs you ports (process-to-process addressing), segmentation/reassembly, and reliability + flow/congestion control. Over a multi-minute RTT with dropouts, losing reliability and multiplexing is catastrophic — so it should *not* be removed.
+- **Then remove the least harmful.** The **session/presentation** layer is the safe cut: TCP/IP already lacks it, so its jobs (dialog control, synchronisation checkpoints, encryption, compression) move into the application. Impact is manageable, though for Mars you would want the application to re-implement checkpointing so a huge transfer can resume after a blackout.
+
+</Predict>

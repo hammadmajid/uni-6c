@@ -1,0 +1,149 @@
+<Callout type="exam" title="Quiz 1 — Monday 28 September (4.5 marks)">
+This drill covers lectures 1 to 3: definitions and the Turing test, agents and PEAS and the five agent types, and lecture 3's task environments. You already drilled lectures 1 and 2 hard in the week-2 checkpoint, so this revision keeps those tight and spends most of its time on the environment axes — the newest material and the most likely fresh quiz content. If the announced scope turns out to be only lectures 1 and 2, tell Claude and drop the environment section.
+</Callout>
+
+No notes. Attempt each item before revealing; anything you miss goes to your review queue.
+
+## Lectures 1–2: the must-not-miss items
+
+<QuickCheck
+  id="aq-approaches"
+  question="Russell and Norvig build their book on which of the four approaches to AI?"
+  options={["Thinking humanly", "Thinking rationally", "Acting humanly", "Acting rationally"]}
+  answer="Acting rationally"
+  explanation="The rational-agent approach: do the action expected to maximise the performance measure. More general than the 'laws of thought' and more testable than imitating humans."
+  feedback={{
+    "Thinking humanly": "That is cognitive modelling. The book discusses it but does not build on it.",
+    "Thinking rationally": "Correct inference is only one route to acting well; reflexes are rational without it.",
+    "Acting humanly": "That is the Turing-test approach — imitation, which is hard to make a science of."
+  }}
+/>
+
+<QuickCheck
+  id="aq-agent-eq"
+  type="short-answer"
+  question="Complete the lecture's equation: Agent = ______ + Program."
+  answer={["architecture", "Architecture"]}
+  explanation="Agent = architecture + program. The architecture is the device with sensors and actuators; the program implements the agent function on it."
+/>
+
+<QuickCheck
+  id="aq-reflex-condition"
+  question="A simple reflex agent acts rationally only when the environment is:"
+  options={["Fully observable", "Stochastic", "Multi-agent", "Continuous"]}
+  answer="Fully observable"
+  explanation="It decides on the current percept alone, so everything relevant must be in that percept. Otherwise it needs internal state — a model-based agent. This is the bridge between lecture 2 (agent types) and lecture 3 (environments)."
+  feedback={{
+    "Stochastic": "Randomness makes every agent's job harder; the reflex agent's specific weakness is not seeing the whole state.",
+    "Multi-agent": "A reflex agent can face other agents if it can see all it needs. Observability is the condition.",
+    "Continuous": "Continuous values make rule tables awkward, but the defining requirement is full observability."
+  }}
+/>
+
+## Lecture 3: task environments
+
+<QuickCheck
+  id="aq-six-axes"
+  type="short-answer"
+  question="Lecture 3 classifies an environment as fully or partially observable, deterministic or stochastic, static or dynamic, discrete or continuous, known or unknown — and one more pair about whether one decision affects the next. Name that pair (either word)."
+  answer={["episodic vs sequential", "episodic", "sequential", "Episodic", "Sequential", "episodic or sequential"]}
+  explanation="Episodic vs sequential. Episodic = independent one-shot episodes (a part-picking robot judging each part); sequential = each decision affects the ones after it (chess, driving)."
+/>
+
+<QuickCheck
+  id="aq-taxi-observable"
+  question="An automated taxi cannot see the car hidden behind a truck ahead. Its environment is therefore:"
+  options={["Partially observable", "Fully observable", "Deterministic", "Static"]}
+  answer="Partially observable"
+  explanation="Its sensors do not capture the complete state, so it is partially observable — which is why a taxi needs internal state and cannot be a simple reflex agent."
+  feedback={{
+    "Fully observable": "Fully observable would mean the sensors capture the whole state, as a chessboard is fully visible. A hidden car breaks that.",
+    "Deterministic": "A different axis (predictability of outcomes). The taxi is also stochastic, but the hidden car is about observability.",
+    "Static": "A different axis (whether the world changes while deciding)."
+  }}
+/>
+
+<QuickCheck
+  id="aq-known-not-observable"
+  question="A brand-new video game shows the entire board on screen, but you have not learned its rules yet. On the two axes, it is:"
+  options={[
+    "Fully observable but unknown",
+    "Partially observable but known",
+    "Fully observable and known",
+    "Partially observable and unknown"
+  ]}
+  answer="Fully observable but unknown"
+  explanation="Observable is about seeing the state (the whole board is on screen: fully observable); known is about knowing the rules (you have not learned them: unknown). The two axes are independent — the exam's favourite trap."
+  feedback={{
+    "Partially observable but known": "Both halves are backwards: the board is fully visible, and the rules are what you lack.",
+    "Fully observable and known": "It is fully observable, but you do not yet know the rules, so it is unknown.",
+    "Partially observable and unknown": "The whole board is visible, so it is fully observable, not partial."
+  }}
+/>
+
+<QuickCheck
+  id="aq-episodic-example"
+  question="Which is the safest example of an EPISODIC environment to give on the quiz?"
+  options={[
+    "A part-picking / inspection robot judging each item on its own",
+    "A game of chess",
+    "An automated taxi driving across a city",
+    "A crossword being solved"
+  ]}
+  answer="A part-picking / inspection robot judging each item on its own"
+  explanation="Each item is an independent episode, so the part-picking robot is the textbook episodic case. Note: the lecture slide also lists chess under episodic, but chess is sequential — every move affects the rest. Give the robot, not chess."
+  feedback={{
+    "A game of chess": "The slide lists it as episodic, but it is sequential: each move constrains all later moves. Avoid it as your episodic example.",
+    "An automated taxi driving across a city": "Sequential — where you are now depends on every turn you took.",
+    "A crossword being solved": "Sequential — each answer constrains the letters left for the rest."
+  }}
+/>
+
+<OrderCheck
+  id="aq-hardness"
+  prompt="Order these environments from the one a simple agent can handle to the one needing the most capable agent (memory, look-ahead, utility, learning)."
+  items={["Crossword (fully observable, deterministic, static, known)", "Chess with a clock (fully observable, sequential, semi-dynamic)", "Poker (partially observable, stochastic)", "Automated taxi (partially observable, stochastic, dynamic, continuous)"]}
+  explanation="More hard poles = a more capable agent. The crossword is near the easy corner; chess adds sequentiality and a clock; poker adds partial observability and stochasticity; the taxi piles on dynamic, continuous and multi-agent as well."
+  topLabel="Simplest agent"
+  bottomLabel="Most capable agent"
+/>
+
+## Long answers
+
+Write what you would put on the paper, then reveal. Each bolded term is roughly one mark.
+
+<Predict
+  id="aq-long-classify-taxi"
+  prompt="Classify the automated-taxi environment on all six of lecture 3's axes, one line of justification each. (6 marks)"
+  answer="Partially observable — sensors cannot see around trucks or behind the car. Stochastic — traffic, weather and other drivers make outcomes uncertain. Sequential — where the taxi is depends on every earlier action. Dynamic — the world keeps moving while the agent decides. Continuous — speed, steering and position vary smoothly. Known — the rules of the road and of physics are given (it is the state that is hidden, not the rules). It sits at almost every hard pole, which is why it needs model-based, utility-based and learning designs together."
+  placeholder="Observable: … Deterministic: … Episodic: … Static: … Discrete: … Known: …"
+>
+
+- **Partially observable:** sensors miss what is behind a truck or around a corner.
+- **Stochastic:** other drivers, pedestrians and weather make the outcome of an action uncertain.
+- **Sequential:** the current position and speed depend on every earlier decision.
+- **Dynamic:** the environment changes while the agent is deciding, so a stale decision is dangerous.
+- **Continuous:** speed, steering angle and position are real-valued, and time flows continuously.
+- **Known:** the rules of the road and of physics are known in advance — do not confuse this with observability; the rules are known even though the state is not fully visible.
+
+Closer for full marks: because it lands on so many hard poles at once, the taxi needs the most capable agents from lecture 2 — memory (model-based), trade-offs (utility-based) and improvement (learning).
+
+</Predict>
+
+<Predict
+  id="aq-long-peas"
+  prompt="Give a PEAS description for an automated taxi driver. (4 marks)"
+  answer="P: safe, fast, legal, comfortable trip; maximise profits. E: roads, other traffic, pedestrians, customers (and weather, signs). A: steering wheel, accelerator, brake, signal, horn, display. S: cameras, sonar/lidar, speedometer, GPS, engine sensors, keyboard. Full marks need three or more items per heading and no category errors — 'pedestrians' is environment, not a sensor."
+  placeholder="P: … E: … A: … S: …"
+>
+
+Straight from the lecture's own table, so learn it:
+
+- **P**erformance measure: safe, fast, legal, comfortable trip; maximise profits.
+- **E**nvironment: roads, other traffic, pedestrians, customers (add weather and road signs).
+- **A**ctuators: steering, accelerator, brake, signal, horn, display.
+- **S**ensors: cameras, sonar or lidar, speedometer, GPS, engine sensors, keyboard.
+
+The usual slip is putting "pedestrians" or "customers" under sensors — they are part of the environment.
+
+</Predict>

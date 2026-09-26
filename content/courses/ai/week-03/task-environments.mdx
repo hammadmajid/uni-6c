@@ -1,0 +1,185 @@
+PEAS says **what** an agent is for. Before you can build it, you need to know **how hard** its world is. Lecture 3 gives you six questions to ask of any environment; the answers decide which of last week's five agent designs you actually need.
+
+<Predict
+  id="te-why-taxi-hard"
+  prompt="A chess program and a self-driving taxi are both agents. A strong chess program was written decades before a working taxi. Name two things about the taxi's world — not the taxi's hardware — that make it a far harder environment to build an agent for."
+  answer="The taxi cannot see the whole state (traffic behind a truck, a child about to step out): its world is partially observable, where the chessboard is fully visible. And the outcome of an action is uncertain — braking on a wet road, other drivers doing the unexpected — so the world is stochastic, where a chess move has one fixed result. Other fair answers: the taxi's world keeps changing while it decides (dynamic vs the board that waits), its inputs are continuous (speed, steering) not a finite set of moves, and it shares the road with many other agents."
+>
+
+None of these is about horsepower or cameras. They are properties of the **world**:
+
+- The chessboard is fully **on the table**; the road hides what is behind the next truck.
+- A chess move has one fixed result; a brake on a wet road might not.
+- The board waits for you to think; traffic does not.
+
+Those are three of the six dimensions this lesson is about. Get them right and the agent design almost falls out.
+
+</Predict>
+
+Think of it the way you size up a workload before choosing an architecture. Can I see the whole state, or only a noisy slice? Are operations idempotent and predictable, or full of races? Is each request independent, or part of a long session? Does the world change under me while I hold a lock? The six dials below are the same triage for an agent's environment.
+
+<EnvironmentTypes />
+
+The rest of the lesson takes the dials one at a time. Each is an independent yes/no — an environment is one point in a six-dimensional space, and the corner it sits in tells you how capable an agent it needs.
+
+## 1. Fully vs partially observable
+
+If the agent's sensors give it access to the **complete state** of the environment at each moment, it is fully observable. If noise, missing sensors, or hidden parts of the world leave gaps, it is partially observable.
+
+- **Fully observable:** a chessboard — every piece is visible. The lecture's phrase: "the agent has direct access to all environmental features necessary for decision making."
+- **Partially observable:** a card game — you cannot see the opponent's hand. Driving in traffic — you cannot see around the corner.
+
+For an engineer this is the difference between a system where every request carries the full state you need, and one where you must **remember** what you saw earlier because it is no longer visible. Full observability is exactly the condition under which a simple reflex agent is enough; partial observability is what forces internal state — a model-based agent.
+
+<QuickCheck
+  id="te-poker-observable"
+  question="You are writing an agent to play poker against opponents whose cards you cannot see. The poker environment is:"
+  options={["Fully observable", "Partially observable", "Deterministic", "Static"]}
+  answer="Partially observable"
+  explanation="The hidden cards mean the agent never has the complete state, so it is partially observable. That is why a poker agent must reason about what it cannot see, using probabilities over the opponents' possible hands."
+  feedback={{
+    "Fully observable": "A fully observable game would show every card, like chess shows every piece. Poker deliberately hides the opponents' hands.",
+    "Deterministic": "That is a different axis (predictability of outcomes). Poker is also stochastic because of the shuffle, but the question asks about observability.",
+    "Static": "Also a different axis. The point here is that you cannot see the whole state."
+  }}
+/>
+
+## 2. Deterministic vs stochastic
+
+If the next state is **completely determined** by the current state and the agent's action, the environment is deterministic. If there is randomness — the same action can lead to different outcomes — it is stochastic.
+
+- **Deterministic:** a crossword; a letter you write stays written. The lecture's example is arithmetic: 2 + 2 is always 4.
+- **Stochastic:** poker (the shuffle), a spin of a wheel, a car on a wet road. The lecture's phrase: "the state of the environment only partially determines the result of an agent's action."
+
+The systems analogy is **idempotent and predictable** versus **subject to races and failures**: an operation that always yields the same result versus one where the network, a retry, or another writer can change the outcome. Stochastic worlds are why agents reason about **expected** utility rather than a single guaranteed result.
+
+<Callout type="pitfall" title="Deterministic does not mean easy, and a clock does not make it stochastic">
+A deterministic environment can still be huge (chess has more positions than atoms in the observable universe). And an environment whose only unpredictable element is another rational player is often called **strategic** rather than fully stochastic — the uncertainty is the opponent, not dice.
+</Callout>
+
+## 3. Episodic vs sequential
+
+In an **episodic** environment the agent's experience is a series of independent one-shot episodes: the current percept is all that matters, and this action does not affect the next episode. In a **sequential** environment, the current decision affects all future ones.
+
+- **Episodic:** an assembly-line robot that inspects each part as "defective or not" — each part is judged on its own. This is the textbook's canonical episodic case.
+- **Sequential:** chess — every move changes the moves available later. Driving — where you are now depends on every turn you took.
+
+<Callout type="exam" title="The slide lists chess under 'episodic' — it is sequential">
+The lecture-3 slide gives "chess (optimal solution), part-picking robot" as examples of an **episodic** environment. The part-picking robot is right, but **chess is sequential**, not episodic — each move constrains every move that follows, which is the whole reason chess needs look-ahead search. This is a slip in the slide. On the quiz, if the question is "give an example of an episodic environment", answer with the **part-picking / inspection robot** (safe and correct). If a multiple-choice key insists chess is episodic, it is following this slide; know that the standard answer is sequential and why.
+</Callout>
+
+<QuickCheck
+  id="te-episodic-inspect"
+  question="A quality-control agent looks at one photo of a product on a conveyor and labels it 'pass' or 'fail', then moves to the next photo, unaffected by earlier ones. This environment is:"
+  options={["Sequential", "Episodic", "Partially observable", "Dynamic"]}
+  answer="Episodic"
+  explanation="Each photo is an independent episode: the current percept decides the action, and this decision does not change the next one. That independence is the definition of episodic, and it is why such tasks need no memory of past episodes."
+  feedback={{
+    "Sequential": "Sequential would mean this label changes what the agent should do next. Here each item is judged on its own, with no carry-over.",
+    "Partially observable": "Observability is a separate axis. Even if each photo were a full view, the point is that episodes are independent.",
+    "Dynamic": "Whether the belt moves is the static/dynamic axis. Episodic is about independence between decisions."
+  }}
+/>
+
+## 4. Static vs dynamic
+
+If the environment can change **while the agent is deliberating**, it is dynamic. If it waits for the agent to act, it is static. A special case — the environment does not change but the agent's **score** does (a clock ticks) — is **semi-dynamic**.
+
+- **Static:** a crossword; it never changes on its own.
+- **Semi-dynamic:** chess with a clock; the board waits, but your time drains.
+- **Dynamic:** driving; the world keeps moving whether or not you have decided.
+
+This is precisely the concurrency problem. In a static world you can take as long as you like to compute the best action, like a batch job on a frozen snapshot. In a dynamic world the state you read may be **stale by the time you act**, so the agent must decide fast enough to stay relevant — the same reason a controller has a deadline and a lock has a timeout.
+
+## 5. Discrete vs continuous
+
+This concerns whether the states, time, percepts and actions come in a **finite, distinct set** (discrete) or vary **smoothly** (continuous).
+
+- **Discrete:** chess — finite squares, pieces and moves; turns tick one at a time.
+- **Continuous:** driving — speed, steering angle and position vary smoothly, and time flows continuously.
+
+For a builder this is **enumerable states** versus a control problem over real-valued signals. Discrete worlds let you build tables and search trees; continuous worlds usually need functions, sampling or discretisation.
+
+## 6. Known vs unknown
+
+In a **known** environment the agent (or its designer) knows the **rules** — the outcomes, or outcome probabilities, of every action. In an **unknown** environment the agent must **learn** how the world works.
+
+The trap, and a favourite exam point: **known is not the same as observable.**
+
+- A new video game with the board fully visible on screen but rules you have not learned yet: **fully observable but unknown**.
+- Driving a familiar car: the **rules** of physics and the road are known, yet the environment is **partially observable** because you still cannot see around the truck.
+
+<QuickCheck
+  id="te-known-vs-observable"
+  question="An automated taxi knows the laws of physics and every traffic rule, but its sensors cannot see the car hidden behind a truck. On the known/unknown and observable axes, the taxi's environment is:"
+  options={[
+    "Unknown and partially observable",
+    "Known and partially observable",
+    "Known and fully observable",
+    "Unknown and fully observable"
+  ]}
+  answer="Known and partially observable"
+  explanation="Known refers to the rules, which the taxi has; partially observable refers to the current state, which its sensors cannot fully capture. The two axes are independent — this is the distinction the slide draws between knowing how the world works and being able to see all of it."
+  feedback={{
+    "Unknown and partially observable": "The rules of the road and of physics are given, so the environment is known. What it lacks is full visibility of the current state.",
+    "Known and fully observable": "It is known, but a car hidden behind a truck means the state is not fully visible, so it is partially observable.",
+    "Unknown and fully observable": "Both halves are wrong: the rules are known, and the state is not fully observable."
+  }}
+/>
+
+## Putting the six together
+
+An environment is one point in this six-dimensional space, and the corner it lands in tells you how hard the agent has to be:
+
+| | Easiest corner | Hardest corner |
+|---|---|---|
+| Observable | Fully | Partially |
+| Predictable | Deterministic | Stochastic |
+| Episodes | Episodic | Sequential |
+| Change | Static | Dynamic |
+| Values | Discrete | Continuous |
+| Rules | Known | Unknown |
+| Example | Crossword | Automated taxi |
+
+- The **crossword** sits near the easy corner (fully observable, deterministic, static, discrete, known — though sequential): a fairly simple agent solves it.
+- The **automated taxi** sits at nearly every hard pole at once, which is exactly why it needs the most capable designs from last week — model-based, utility-based, and learning — all together.
+
+That is the payoff of this lesson: you rarely choose an agent type in the abstract. You classify the environment on these six dials, and the poles you land on tell you whether a reflex table will do or whether you need memory, look-ahead, a utility function, and the ability to learn.
+
+<Deeper kind="formal" title="The seventh axis the slide leaves out: single vs multi-agent">
+
+Russell and Norvig list a seventh dimension the lecture's slide omits: **single-agent vs multi-agent**. Is the agent operating alone (a crossword solver), or are there other agents whose behaviour it must model?
+
+Multi-agent environments split further:
+
+- **Competitive:** chess, poker — one agent's success means another's failure, which invites randomised strategies (bluffing) and game-theoretic reasoning.
+- **Cooperative:** cars on a road partly cooperate to avoid collisions, even as they compete for space.
+
+If the quiz asks for the properties of a task environment and expects six, give the slide's six (observable, deterministic, episodic, static, discrete, known). If it expects the textbook's list, add single/multi-agent as the seventh.
+
+</Deeper>
+
+<Callout type="exam" title="The instructor's exact list (reproduce this wording)">
+Lecture 3 asks you to classify an environment on these six properties, in this order: **fully observable vs partially observable, deterministic vs stochastic, episodic vs sequential, static vs dynamic, discrete vs continuous, known vs unknown.** A common 5–6 mark question gives you an environment (chess, taxi, poker, a part-picking robot, a crossword) and asks you to place it on each axis with a one-line reason. Practise on the taxi and the part-picking robot — both are on the slides.
+</Callout>
+
+<Further links={[
+  {
+    "href": "https://aima.cs.berkeley.edu/",
+    "title": "Artificial Intelligence: A Modern Approach — book site",
+    "kind": "docs",
+    "why": "The source of this material (chapter 2.3, 'The nature of environments'). The figure comparing task-environment properties across chess, poker, taxi and more is the exact table the slides are built from."
+  },
+  {
+    "href": "https://inst.eecs.berkeley.edu/~cs188/su24/",
+    "title": "Berkeley CS188: Intro to AI",
+    "kind": "docs",
+    "why": "The gold-standard undergraduate AI course. Its first lectures walk through the same environment axes and, unlike the slide, keep chess firmly in the sequential column."
+  },
+  {
+    "href": "https://github.com/aimacode/aima-python/blob/master/aima/agents.py",
+    "title": "aima-python: agents.py",
+    "kind": "tool",
+    "why": "Runnable code for the vacuum and wumpus environments. Read how Environment and its subclasses model observability and determinism before AI Lab builds its own search environments."
+  }
+]} />

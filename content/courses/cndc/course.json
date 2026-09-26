@@ -76,6 +76,13 @@
           "minutes": 30,
           "kind": "checkpoint",
           "objective": "drill lectures 01 to 04 in quiz format before quiz 1 on Tuesday 29 September: definitions, layer jobs, switching, and delay and throughput numericals."
+        },
+        {
+          "slug": "assignment-1-workshop",
+          "title": "Assignment 1 workshop",
+          "minutes": 40,
+          "kind": "checkpoint",
+          "objective": "produce answers to the four Assignment 1 scenarios (protocols and layering, video-streaming performance, switching-technology matching, and the Mars–Earth model) with a mark scheme, before the Monday 28 September deadline."
         }
       ]
     },
