@@ -1,0 +1,123 @@
+You have shipped plenty of working software without ever drawing a process diagram. So the honest question is: what does "engineering" add that skilled coding does not? The lecture's answer is about **scale, cost and change**, the three forces that break the lone-hacker approach.
+
+<Predict
+  id="why-discipline"
+  prompt="A two-person startup builds a working app in a weekend with no process at all. The same feature set, built for a bank with 40 engineers, takes months and a pile of documents. What changed to justify the extra weight, if the feature is the same?"
+  answer="The number of people who must coordinate, the cost of failure, and the lifespan over which it must keep changing. With 40 people you cannot hold the design in a few heads; with a bank's money at stake a defect is expensive; and a system that lives ten years must be handed between teams and adapted repeatedly. Engineering is the discipline that makes software predictable and maintainable at that scale, not faster at small scale."
+>
+
+The weekend app and the bank system might compute the same thing. What differs is everything *around* the code: coordination across many people, the cost of a defect, and the number of years and hands the system has to survive. Software engineering is the response to those, not a tax on small projects.
+
+</Predict>
+
+## The definition to memorise
+
+The IEEE definition, straight off the slide:
+
+> Software engineering is **the application of a systematic, disciplined, quantifiable approach** to the development, operation and maintenance of software; that is, the application of engineering to software.
+
+Three load-bearing words: **systematic** (a repeatable method, not ad hoc), **disciplined** (you follow it even when it is inconvenient), **quantifiable** (you measure, so you can tell whether it is working). Notice it covers **operation and maintenance**, not just development. The build is a slice of the life; the long tail is running and changing it.
+
+<QuickCheck
+  id="ieee-def"
+  question="The IEEE definition calls software engineering a 'systematic, disciplined, quantifiable approach' to which of the following?"
+  options={[
+    "The design and coding of software only",
+    "The development, operation and maintenance of software",
+    "The testing and deployment of software only",
+    "The management of software teams"
+  ]}
+  answer="The development, operation and maintenance of software"
+  explanation="The definition deliberately spans the whole life: development, operation and maintenance. Restricting it to coding or testing misses the point that most of a system's life is after first release."
+  feedback={{
+    "The design and coding of software only": "Coding is one activity. The definition explicitly includes operation and maintenance, which is where most cost lives.",
+    "The testing and deployment of software only": "Testing and deployment are part of it, but the definition covers the full life cycle, not just the tail end.",
+    "The management of software teams": "Management is one umbrella activity, but the definition is about the whole engineering approach to the software itself."
+  }}
+/>
+
+## Why you cannot just scale up hacking
+
+The lecture lists five forces that make an engineering process necessary. Read them as failure modes of the no-process approach:
+
+- **Large software**: building a wall is not building a house. Past a certain size, informal methods collapse under their own coordination cost.
+- **Scalability**: without engineering foundations, growing a system is harder than rewriting it, so nothing compounds.
+- **Cost**: hardware got cheap through disciplined manufacturing; software stays expensive precisely when the process is undisciplined.
+- **Dynamic nature**: requirements and environments keep shifting, so the system needs a controlled way to absorb change (the maintainability point from the last lesson).
+- **Quality management**: a better process is the only reliable route to a better product. You cannot inspect quality in at the end.
+
+## Engineering is a layered technology
+
+The slide pictures software engineering as a stack. Each layer rests on the one below:
+
+<SeLayeredTechnology />
+
+The bedrock is a **quality focus**: without a culture that cares about quality, the layers above are theatre. On it sits the **process**, the framework that holds everything together and defines what gets done when. **Methods** provide the technical how-to for each activity (how to gather requirements, design, test). **Tools** (your IDE, Git, CI, profilers) automate and support the methods. Pull out the process layer and your tools are just fast ways to make a mess.
+
+<Callout type="pitfall">
+
+The tempting mistake is to buy tools and call it engineering. Tools are the top, thinnest layer. A team with the best CI pipeline and no process still ships chaos, faster. The exam likes this ordering question: quality focus, then process, then methods, then tools, bottom to top.
+
+</Callout>
+
+<QuickCheck
+  id="layers-order"
+  question="In the layered-technology view, what is the bedrock layer that everything else rests on?"
+  options={["Tools", "Methods", "Process", "A quality focus"]}
+  answer="A quality focus"
+  explanation="The base of the stack is a total-quality-management-style quality focus. Process sits on it, methods on the process, and tools on top."
+  feedback={{
+    "Tools": "Tools are the top layer, the thinnest one. They automate methods but rest on everything below.",
+    "Methods": "Methods are the how-to for activities. They sit above the process, not at the base.",
+    "Process": "Process is the layer directly above the base. The base itself is the quality focus that gives the process a reason to exist."
+  }}
+/>
+
+## Different software, different build
+
+The application type shapes how you should build. The lecture's domains are not just labels; each implies a different method emphasis:
+
+| Application type | What it is | Where the engineering weight goes |
+|---|---|---|
+| System software | OSes, drivers, compilers | Correctness, performance, low-level rigour |
+| Application software | Business and productivity apps | Requirements fit, usability |
+| Engineering/scientific | Simulations, number crunching | Numerical accuracy, validation against reality |
+| Embedded software | Firmware inside devices | Real-time limits, reliability, tiny resources |
+| Product-line software | One codebase, many configured products | Reuse, variability management |
+| Web applications | Networked, browser-delivered systems | Security, scale, evolution speed |
+| AI software | Learning and reasoning systems | Data quality, evaluation, unpredictability |
+
+You feel this already: you would never test a payments backend the way you test a throwaway data script. Same discipline, different dials.
+
+<QuickCheck
+  id="app-type"
+  question="Firmware for a pacemaker must react within hard time limits, never fail dangerously, and fit tiny memory. Which application type, and which quality dominates?"
+  options={[
+    "Web application; scale",
+    "Embedded software; real-time reliability",
+    "System software; developer productivity",
+    "AI software; data quality"
+  ]}
+  answer="Embedded software; real-time reliability"
+  explanation="Firmware inside a device with hard timing and safety constraints is embedded software, where real-time behaviour and reliability dominate over almost everything else."
+  feedback={{
+    "Web application; scale": "A pacemaker is not browser-delivered or traffic-scaled. Its constraints are timing and safety, which are the embedded signature.",
+    "System software; developer productivity": "System software is a plausible neighbour, but the defining constraints here (hard real-time, safety, tiny memory) are the classic embedded profile.",
+    "AI software; data quality": "Nothing here involves learning from data. The constraints are timing and reliability."
+  }}
+/>
+
+<Further links={[
+  {
+    "href": "https://en.wikipedia.org/wiki/Software_engineering",
+    "title": "Software engineering (overview)",
+    "kind": "docs",
+    "why": "A compact map of the discipline, its history and its sub-areas. Good for sanity-checking the definitions the slides give in shorthand."
+  },
+  {
+    "href": "https://software-engineering-book.com/",
+    "title": "Sommerville — introduction chapter slides",
+    "kind": "docs",
+    "why": "The free chapter-1 slides state 'software engineering is an engineering discipline concerned with all aspects of software production' and list the professional and process ideas this course builds on."
+  }
+]} />

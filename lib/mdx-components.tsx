@@ -16,6 +16,7 @@ import { aiComponents } from "@/components/ai";
 import { aiLabComponents } from "@/components/ai-lab";
 import { dbComponents } from "@/components/db";
 import { webTechComponents } from "@/components/web-tech";
+import { seComponents } from "@/components/se";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mdxComponents: Record<string, ComponentType<any>> = {
@@ -36,4 +37,5 @@ export const mdxComponents: Record<string, ComponentType<any>> = {
   ...aiLabComponents,
   ...dbComponents,
   ...webTechComponents,
+  ...seComponents,
 };

@@ -1,0 +1,203 @@
+No notes. This covers lectures 1 to 3: software and its qualities, the process activities, and the process models. The SDLC quiz was on 25 September, so the model questions are the ones to nail. Attempt every item before revealing; anything you miss goes to your review queue. Where the slide's wording differs from the textbook, write the slide's version and add the textbook's precision in a clause.
+
+## Short answers
+
+<QuickCheck
+  id="cp-program-software"
+  question="Which statement matches the lecture's distinction between a program and software?"
+  options={[
+    "Software is faster than a program",
+    "A program performs a well-defined task; software is the program plus its documentation and user guide",
+    "A program has a database; software does not",
+    "Software is written in a high-level language; a program is not"
+  ]}
+  answer="A program performs a well-defined task; software is the program plus its documentation and user guide"
+  explanation="The slide: a program is code performing a well-defined task, whereas software includes the code, its documentation and the user guide."
+  feedback={{
+    "Software is faster than a program": "Speed is not the distinction. The line is about documentation and use, not performance.",
+    "A program has a database; software does not": "Backwards and irrelevant. Data structures are part of software, but the defining extra is documentation.",
+    "Software is written in a high-level language; a program is not": "Language level is unrelated to the program/software distinction."
+  }}
+/>
+
+<QuickCheck
+  id="cp-wear"
+  question="Which statement about software wear is correct, per the lecture?"
+  options={[
+    "Software wears out faster than hardware",
+    "Software does not wear out; it is engineered, not manufactured in the classical sense",
+    "Software wears out only if run continuously",
+    "Software and hardware wear out at the same rate"
+  ]}
+  answer="Software does not wear out; it is engineered, not manufactured in the classical sense"
+  explanation="Software has no physical fatigue; it is developed/engineered and does not wear out. It appears to 'rot' because of change, not wear."
+  feedback={{
+    "Software wears out faster than hardware": "Software has no wear mechanism at all. Its problems come from change, not fatigue.",
+    "Software wears out only if run continuously": "Running it does not degrade the bits. Editing it is what introduces new faults.",
+    "Software and hardware wear out at the same rate": "Hardware wears; software does not. They are not comparable on this axis."
+  }}
+/>
+
+<QuickCheck
+  id="cp-attributes"
+  question="Which set names Sommerville's four essential attributes of good software?"
+  options={[
+    "Speed, size, colour, cost",
+    "Maintainability, dependability and security, efficiency, acceptability",
+    "Portability, correctness, popularity, price",
+    "Modularity, recursion, concurrency, caching"
+  ]}
+  answer="Maintainability, dependability and security, efficiency, acceptability"
+  explanation="The four essentials are maintainability, dependability and security, efficiency, and acceptability. All are non-functional."
+  feedback={{
+    "Speed, size, colour, cost": "These are not the four essential attributes; efficiency covers speed and size, but the list is wrong.",
+    "Portability, correctness, popularity, price": "Portability and correctness are real qualities, but they are not Sommerville's four essentials, and popularity/price are not software attributes.",
+    "Modularity, recursion, concurrency, caching": "These are design and implementation techniques, not the essential quality attributes."
+  }}
+/>
+
+<QuickCheck
+  id="cp-layers"
+  question="Order the layered-technology stack from the base upward."
+  type="short-answer"
+  answer={["quality process methods tools", "quality focus process methods tools", "a quality focus, process, methods, tools"]}
+  explanation="Base to top: a quality focus, then process, then methods, then tools. Write them in that order."
+/>
+
+<QuickCheck
+  id="cp-activities"
+  question="Which is NOT one of the four generic software process activities?"
+  options={["Specification", "Validation", "Deployment automation", "Evolution"]}
+  answer="Deployment automation"
+  explanation="The four are specification, development, validation and evolution. Deployment is part of evolution/release, but 'deployment automation' is a tooling concern, not one of the four fundamental activities."
+  feedback={{
+    "Specification": "Specification is one of the four: defining what to build and its constraints.",
+    "Validation": "Validation is one of the four: checking the software does what the customer needs.",
+    "Evolution": "Evolution is one of the four: changing the software over time."
+  }}
+/>
+
+<QuickCheck
+  id="cp-srs"
+  question="On the lecture's SDLC, the Software Requirements Specification (SRS) is the output of which phase?"
+  options={["Design", "Requirement analysis", "Coding", "Maintenance"]}
+  answer="Requirement analysis"
+  explanation="The requirement-analysis phase produces the SRS, which then guides design, development and testing."
+  feedback={{
+    "Design": "Design produces the Design Document Specification (DDS), not the SRS.",
+    "Coding": "Coding consumes the SRS and DDS to produce source code; it does not produce the SRS.",
+    "Maintenance": "Maintenance happens after release, long after the SRS is written."
+  }}
+/>
+
+<QuickCheck
+  id="cp-waterfall-def"
+  question="The waterfall model is best described as:"
+  options={[
+    "Concurrent, repeated activities producing many versions",
+    "A sequential model with each activity a separate phase in linear order",
+    "Assembly from reusable components",
+    "Loops of plan, risk analysis, engineering and evaluation"
+  ]}
+  answer="A sequential model with each activity a separate phase in linear order"
+  explanation="Waterfall: a sequential approach where each fundamental activity is a separate phase, in linear order, signed off before the next."
+  feedback={{
+    "Concurrent, repeated activities producing many versions": "That is incremental development.",
+    "Assembly from reusable components": "That is the reuse-oriented (integration and configuration) model.",
+    "Loops of plan, risk analysis, engineering and evaluation": "Those four phases are the spiral model."
+  }}
+/>
+
+<QuickCheck
+  id="cp-waterfall-disadvantage"
+  question="Which is a disadvantage of the waterfall model stated on the slide?"
+  options={[
+    "It welcomes changing requirements cheaply",
+    "No working software is produced until late in the life cycle",
+    "It delivers a usable version in the first increment",
+    "It requires no documentation"
+  ]}
+  answer="No working software is produced until late in the life cycle"
+  explanation="A key slide disadvantage: no working software until late, so problems surface when they are expensive to fix."
+  feedback={{
+    "It welcomes changing requirements cheaply": "The opposite: waterfall makes change costly and needs stable requirements.",
+    "It delivers a usable version in the first increment": "That is incremental development's advantage, not waterfall's.",
+    "It requires no documentation": "Waterfall is document-heavy; each phase signs off deliverables."
+  }}
+/>
+
+<QuickCheck
+  id="cp-reuse-step"
+  question="Which distinctive step belongs to the reuse-oriented (integration and configuration) model?"
+  options={["Requirements refinement to fit available components", "Unit testing", "Writing all components from scratch", "Signing off a linear sequence of phases"]}
+  answer="Requirements refinement to fit available components"
+  explanation="Because the system is assembled from existing parts, requirements are refined to fit what those parts can do."
+  feedback={{
+    "Unit testing": "Every model unit-tests. It is not distinctive to reuse.",
+    "Writing all components from scratch": "Reuse deliberately avoids writing from scratch.",
+    "Signing off a linear sequence of phases": "That is waterfall's character, not reuse's."
+  }}
+/>
+
+<OrderCheck
+  id="cp-waterfall-order"
+  prompt="Put the waterfall phases in order."
+  items={["Requirements definition", "System and software design", "Implementation and unit testing", "Integration and system testing", "Operation and maintenance"]}
+  explanation="Requirements, design, implementation and unit test, integration and system test, then operation and maintenance: the cascade order."
+  topLabel="First"
+  bottomLabel="Last"
+/>
+
+## Long answers
+
+Write what you would put on the paper, then reveal and mark yourself. Each bolded term is roughly one mark.
+
+<Predict
+  id="cp-long-good-software"
+  prompt="What is software, and what makes software 'good'? Answer in terms of the lecture's definition and the essential attributes. (4 marks)"
+  answer="Software is not just code: it is the programs (instructions), the data structures they use, and the documentation that describes their operation and use. A program becomes software when others can install, trust and maintain it. Good software has four essential, non-functional attributes: maintainability (cheap to change as needs evolve), dependability and security (no dangerous failures, no data loss or leaks), efficiency (no waste of CPU, memory or power), and acceptability (understandable, usable and compatible for its intended users). The instructor's slides phrase the same idea as operational, transitional and maintenance qualities."
+  placeholder="Software is… Good software is…"
+>
+
+Full marks hit: **three-part definition** (programs, data structures, documentation), the **program-vs-software** point, and **all four attributes** named with a one-line meaning each. Mentioning that the attributes are **non-functional**, or giving the slide's operational/transitional/maintenance grouping, earns the polish.
+
+</Predict>
+
+<Predict
+  id="cp-long-waterfall"
+  prompt="Explain the waterfall model with a labelled diagram, and give two advantages, two disadvantages, and its condition of use. (6 marks)"
+  answer="Waterfall is a sequential model: each fundamental activity is a separate phase in linear order, signed off before the next begins. Diagram: five cascading boxes stepping down and right, Requirements definition, System and software design, Implementation and unit testing, Integration and system testing, Operation and maintenance, with forward arrows and limited one-phase-back feedback. Advantages: simple to understand and manage; each phase has clear deliverables and reviews; suits small projects with stable requirements. Disadvantages: no working software until late; change is very costly once underway. Condition of use: only when requirements are well understood and unlikely to change radically."
+  placeholder="Definition… diagram… advantages… disadvantages… when to use…"
+>
+
+Structure and marks: **definition** (1), **labelled diagram** with the five phases and arrows (2), **two advantages** (1), **two disadvantages** (1.5), and the **fit rule** — stable, well-understood requirements (0.5). Draw the diagram; examiners reward the labelled cascade more than the prose.
+
+</Predict>
+
+<Predict
+  id="cp-long-compare"
+  prompt="A startup's product requirements are unclear and will keep changing as users try early versions, and they need something usable within a month. Recommend a process model over waterfall and justify it, naming one trade-off you accept. (5 marks)"
+  answer="Recommend incremental development. The requirements are volatile and will firm up only through use, which is exactly what waterfall handles worst, and the one-month deadline needs working software early. Incremental delivers an initial version with the most important functionality, exposes it to users, and evolves it through versions as feedback arrives, so change is cheap and the product is steered by real use. The trade-off accepted: reduced visibility and less formal documentation per increment, and a risk that the system structure degrades unless time is spent refactoring between increments. (Reuse-oriented would also help if suitable off-the-shelf components existed, but the core problem here is unknown requirements, which incremental resolves through feedback.)"
+  placeholder="Model… why not waterfall… justification… trade-off…"
+>
+
+The full-marks shape: **name the model** (incremental), **read the scenario** (volatile requirements + early delivery), **justify with a fitting advantage** (early feedback, cheap change), and **name one accepted disadvantage** (less documentation/visibility or structure decay). Mentioning why the other models fit less well earns the last mark.
+
+</Predict>
+
+## Assignment 1
+
+This connects straight to your submission. Brief: `courses/se/assignments/assignment-01-requirements-engineering-project.pdf`. It is a **group requirements-engineering project proposal** worth 3.5 marks, and it must **not be a CRUD app** (create/read/update/delete front-ends for a database); the point is that you write some **novel algorithm or data structure**. You must provide: the **title**, a **problem statement**, the **scope** (goals and boundaries), the **nature** of the project (web app, Android app, etc.), and the **software process model with justification and steps**.
+
+Do not draft the project here; the idea has to be yours. But the last deliverable is exactly this week's material, so make sure you can defend the model choice.
+
+<Predict
+  id="cp-assignment-model"
+  prompt="For the assignment's 'software process model' section, how should you justify your choice, whatever your project is? Write the reasoning template you will fill in. (self-check)"
+  answer="State the model, then justify it from your project's own facts: (1) how stable and well-understood your requirements are (stable and clear leans waterfall/V; unclear and evolving leans incremental/iterative/prototype; risky and expensive leans spiral); (2) how early and often you need to deliver a working version (early/often leans incremental); (3) whether suitable off-the-shelf components exist (yes leans integration and configuration). Then give the model's steps in order and tie each to a concrete task in your project. End by naming one disadvantage of your chosen model and how you will manage it (e.g. for incremental, schedule refactoring between increments to stop structure decay)."
+  placeholder="My model is… because my requirements are… I need to deliver… the steps are… the trade-off I manage is…"
+>
+
+There is no single right model; the marks are in the **justification tied to your project's requirements stability, delivery need and reuse opportunity**, plus **listing the model's steps** and acknowledging one trade-off. If your project is genuinely non-CRUD (a real algorithm at its core), an incremental or iterative model is usually the honest fit, because you will not get the algorithm right on the first specification.
+
+</Predict>

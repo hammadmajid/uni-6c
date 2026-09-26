@@ -1,0 +1,139 @@
+There was a quiz on the SDLC on 25 September, so this is the hot part of the course. A **process model** is a specific way of arranging the four activities from last week. This lesson does the oldest and most-examined one, the **waterfall model**, and the SDLC framing it comes from.
+
+<Predict
+  id="waterfall-order"
+  prompt="You are told to build a system strictly in phases, finishing and signing off each before the next starts, with no going back. Put these in the order you think the waterfall model uses: testing, design, requirements, maintenance, implementation."
+  answer="Requirements definition, then system and software design, then implementation and unit testing, then integration and system testing, then operation and maintenance. Each phase produces a signed-off document that feeds the next, and the model assumes you do not need to revisit an earlier phase, which is exactly its weakness."
+>
+
+If your order was requirements, design, implementation, testing, maintenance, you already have the waterfall. The interesting part is not the order; it is what the model *assumes* by refusing to loop.
+
+</Predict>
+
+## What a process model adds
+
+The four generic activities tell you *what* has to happen. A **process model** decides the **order, overlap and repetition**: run the activities once in a line, or interleave and repeat them, or assemble from existing parts. Same ingredients, different recipe. The slide lists the common models as waterfall, iterative, incremental, V, spiral and agile; this course focuses on Sommerville's three fundamentals, starting here.
+
+The **SDLC** (software development life cycle) is the umbrella term for this: a process used by industry to design, develop and test high-quality software that meets customer expectations within time and cost. Every model below is one shape of the SDLC.
+
+## The waterfall model
+
+The waterfall model is a **sequential** approach: each fundamental activity is a **separate phase**, arranged in **linear order**. A phase must finish and sign off its work product before the next begins, so progress flows one way, like water down a cascade.
+
+<SeWaterfallModel />
+
+The dashed arrows are the only feedback the pure model allows: in practice you may step **back one phase** to fix something, but the model is built on the assumption that you rarely need to. Going from a testing failure all the way back to a requirements mistake is exactly the expensive path it handles badly.
+
+<QuickCheck
+  id="waterfall-nature"
+  question="What best describes the waterfall model?"
+  options={[
+    "A sequential approach where each activity is a separate phase in linear order",
+    "An approach where all activities run concurrently and repeat",
+    "An approach built from reusing existing components",
+    "An approach with no fixed phases at all"
+  ]}
+  answer="A sequential approach where each activity is a separate phase in linear order"
+  explanation="The slide's definition: a sequential approach where each fundamental activity is represented as a separate phase, arranged in linear order."
+  feedback={{
+    "An approach where all activities run concurrently and repeat": "That is incremental development, next lesson. Waterfall's whole character is that phases are separate and sequential.",
+    "An approach built from reusing existing components": "That is the reuse-oriented model. Waterfall assumes you build each phase from scratch in order.",
+    "An approach with no fixed phases at all": "Waterfall is the most phase-rigid model there is. Fixed, signed-off phases are its defining feature."
+  }}
+/>
+
+## When to use it, and when not to
+
+The slide is explicit about the fit: waterfall should **only be applied when requirements are well understood and unlikely to change radically** during development, because its rigid structure makes change hard once the process is underway.
+
+**Advantages (from the slide):**
+
+- Simple and easy to understand and use.
+- Easy to manage: each phase has specific deliverables and a review process.
+- Phases are processed and completed one at a time.
+- Works well for smaller projects where requirements are very well understood.
+
+**Disadvantages (from the slide):**
+
+- Once you are in testing, it is very hard to go back and change something poorly understood at the concept stage.
+- No working software is produced until **late** in the life cycle.
+- High amounts of risk and uncertainty.
+- Poor for complex, object-oriented, long or ongoing projects.
+- Not suitable where requirements are at moderate-to-high risk of changing.
+
+<Callout type="key-idea">
+
+The two disadvantages that matter most, and that the exam probes: **no working software until late** (so problems surface when they are expensive) and **change is costly** (so it assumes stable requirements). Every later model is an attempt to fix one of these two.
+
+</Callout>
+
+<QuickCheck
+  id="waterfall-when"
+  question="According to the lecture, when should the waterfall model be applied?"
+  options={[
+    "When requirements are volatile and expected to change often",
+    "When requirements are well understood and unlikely to change radically",
+    "When the team wants working software in the first week",
+    "When the project is large, complex and long-running"
+  ]}
+  answer="When requirements are well understood and unlikely to change radically"
+  explanation="The slide restricts waterfall to projects where requirements are well understood and stable, because its rigidity makes accommodating change during development hard."
+  feedback={{
+    "When requirements are volatile and expected to change often": "This is the opposite of waterfall's fit. Volatile requirements are exactly what its rigid phases handle badly.",
+    "When the team wants working software in the first week": "Waterfall produces no working software until late in the life cycle, so it is the wrong choice for early delivery.",
+    "When the project is large, complex and long-running": "The slide lists long, ongoing and complex projects among waterfall's poor fits."
+  }}
+/>
+
+<QuickCheck
+  id="waterfall-risk"
+  question="Which disadvantage of the waterfall model most directly explains why a serious requirements mistake is so expensive in it?"
+  options={[
+    "It is simple and easy to understand",
+    "No working software is produced until late in the life cycle",
+    "Each phase has specific deliverables",
+    "It works well for small projects"
+  ]}
+  answer="No working software is produced until late in the life cycle"
+  explanation="Because nothing runs until late, a requirements error stays hidden until testing or operation, by which point undoing it means unwinding design and code too."
+  feedback={{
+    "It is simple and easy to understand": "That is an advantage, not the reason mistakes are costly.",
+    "Each phase has specific deliverables": "That is an advantage (easy to manage), not the cause of expensive late change.",
+    "It works well for small projects": "That is a stated advantage, and it is about project size, not about the cost of late-discovered errors."
+  }}
+/>
+
+<Deeper kind="exam" title="Model answer: explain the waterfall model with a diagram, and give two advantages and two disadvantages (6 marks)">
+
+**Definition (1)**: a sequential process model in which each fundamental activity is a separate phase in linear order; a phase is completed and its documents signed off before the next begins.
+
+**Diagram (2)**: draw five cascading boxes, each stepping down and right, labelled Requirements definition → System and software design → Implementation and unit testing → Integration and system testing → Operation and maintenance. Draw forward arrows down the cascade and small back-arrows for limited one-phase feedback.
+
+**Advantages (1.5)**: simple to understand and manage; each phase has clear deliverables and a review; suits small projects with well-understood, stable requirements.
+
+**Disadvantages (1.5)**: no working software until late; change is very costly once underway, so it needs stable requirements; poor for large, complex or long projects.
+
+Close with the fit rule: use it only when requirements are well understood and unlikely to change.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=e5aIqhaZbrs",
+    "title": "Waterfall Model in Software Development: Simple Breakdown",
+    "kind": "video",
+    "why": "A short, animated walk through the phases and the one-way flow. Watch it once to fix the cascade diagram in your head before the exam."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Waterfall_model",
+    "title": "Waterfall model",
+    "kind": "docs",
+    "why": "The history (Royce's 1970 paper actually argued against the naive version) and a clear advantages/disadvantages table that matches the slide."
+  },
+  {
+    "href": "https://martinfowler.com/bliki/WaterfallProcess.html",
+    "title": "Martin Fowler — WaterfallProcess",
+    "kind": "blog",
+    "why": "A working engineer's short critique of why the pure waterfall's late feedback is the core problem. Sharpens the 'no working software until late' disadvantage."
+  }
+]} />

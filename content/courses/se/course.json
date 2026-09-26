@@ -1,0 +1,77 @@
+{
+  "slug": "se",
+  "code": "CSC 3109",
+  "short": "SE",
+  "title": "Software Engineering",
+  "description": "Software engineering as a discipline: what software really is, why building it at scale needs an engineering process, and how the classic process models (waterfall, incremental, integration and configuration) arrange the same four activities differently. Built week by week from Awais Mahmood's lectures (slides by Tehreem Saboor); no full outline yet, so the roadmap grows as lectures arrive. There was a quiz on the SDLC on 2026-09-25, so the process models get the most depth. Marks: 4 quizzes and 4 assignments (2 of each before the midterm), plus midterm and final.",
+  "textbook": "Ian Sommerville, Software Engineering (10th ed., 2015). The slides mix Sommerville's framing with Pressman's (layered technology, umbrella activities); lessons teach Sommerville and flag the slide wording where it differs.",
+  "modules": [
+    {
+      "slug": "week-01",
+      "week": 1,
+      "title": "What software is, and what engineering it means",
+      "outline": "Lecture 1. Software as programs + data + documentation; program vs software; why software does not wear out; software categories (S/P/E-type) and application types; the attributes of good software (maintainability, dependability and security, efficiency, acceptability); software engineering as a discipline and why it is needed; the layered-technology view.",
+      "lessons": [
+        {
+          "slug": "what-software-is",
+          "title": "What software is, and what makes it good",
+          "minutes": 40,
+          "objective": "define software as more than code, tell a program from a piece of software, explain why software degrades without wearing out, classify software by category and application type, and name the four attributes of good software with an example of each."
+        },
+        {
+          "slug": "software-engineering-discipline",
+          "title": "Software engineering as a discipline",
+          "minutes": 35,
+          "objective": "state the IEEE definition of software engineering, say why scale, cost and change make it necessary, place engineering activities in the layered-technology view, and match an application type to the way it is best built."
+        }
+      ]
+    },
+    {
+      "slug": "week-02",
+      "week": 2,
+      "title": "Professional software development and practice",
+      "outline": "Lecture 2. The software process and its work products; the four generic process activities (specification, development, validation, evolution) and how the slides' SDLC phases map onto them; professional and ethical responsibility for software engineers.",
+      "lessons": [
+        {
+          "slug": "generic-process-activities",
+          "title": "The software process: four activities, many work products",
+          "minutes": 40,
+          "objective": "define a software process and its work products, name and order the four generic activities, map the slides' seven SDLC phases onto those four, and say which activity a given deliverable belongs to."
+        },
+        {
+          "slug": "professional-practice-and-ethics",
+          "title": "Professional and ethical responsibility",
+          "minutes": 30,
+          "objective": "explain what makes software engineering a profession, list the issues of professional responsibility (confidentiality, competence, IP, computer misuse), and reason about an ethical dilemma using the ACM/IEEE code's spirit."
+        }
+      ]
+    },
+    {
+      "slug": "week-03",
+      "week": 3,
+      "title": "Software process models",
+      "outline": "Lecture 3 (exam-hot: quiz on the SDLC was 2026-09-25). The SDLC as a framing; the three fundamental process models from Sommerville: the waterfall model, incremental development, and integration and configuration (reuse-oriented), each with a diagram, advantages, disadvantages and when to use it. The slides also list iterative, V, spiral, prototype and agile; those are named and placed. Assignment 1 (process model justification) linked from the checkpoint.",
+      "lessons": [
+        {
+          "slug": "sdlc-and-waterfall",
+          "title": "The SDLC and the waterfall model",
+          "minutes": 45,
+          "objective": "explain what a process model adds on top of the generic activities, draw the waterfall model, list its advantages and disadvantages, and say exactly when its rigidity is a fit and when it is a trap."
+        },
+        {
+          "slug": "incremental-and-reuse",
+          "title": "Incremental and integration-and-configuration models",
+          "minutes": 45,
+          "objective": "draw incremental development and the reuse-oriented model, contrast them with waterfall on change tolerance and delivery, place iterative, V, spiral and prototyping among them, and pick a justified model for a given project."
+        },
+        {
+          "slug": "week-3-checkpoint",
+          "title": "Process models checkpoint (lectures 1-3)",
+          "minutes": 35,
+          "kind": "checkpoint",
+          "objective": "answer quiz-style questions across software, the process activities and the process models without notes, including a full model-choice justification, and read the Assignment 1 brief."
+        }
+      ]
+    }
+  ]
+}

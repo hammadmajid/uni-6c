@@ -1,0 +1,129 @@
+Waterfall's two sins were late feedback and costly change. The other two fundamental models each attack one of them: **incremental development** delivers early and often, and **integration and configuration** avoids writing the risky code at all. This lesson does both, then places the slide's other models (iterative, V, spiral, prototype) around them.
+
+<Predict
+  id="fix-waterfall"
+  prompt="Requirements for your project are genuinely unclear and will change as users try it. Waterfall is a bad fit. Without naming a model, describe how you would organise the work instead."
+  answer="Build a small, working slice of the most important functionality, put it in front of users, learn from how they use it, and fold that into the next slice, repeating until the system is acceptable. You deliver running software early and let the requirements firm up through feedback instead of guessing them all up front. That is incremental development."
+>
+
+You just described incremental development. The instinct is the one you already use with pull requests and deploys; this lesson gives it its textbook name and diagram.
+
+</Predict>
+
+## Incremental development
+
+Sommerville's definition: incremental development is based on developing an **initial implementation**, exposing it to **user feedback**, and **evolving it through several versions** until an acceptable system is built. The three activities (specification, development, validation) do not run once in a line; they **interleave** and repeat.
+
+<SeIncrementalModel />
+
+Each increment ships a **real, running version**. Early increments carry the most important or most urgently needed functionality, so the customer has something usable quickly and every later increment folds in what they learned from the last. This is the opposite of waterfall's "nothing runs until the end".
+
+**Advantages:** early delivery of working software; cheaper to accommodate changing requirements (you only rework the current increment); user feedback continuously steers the product; risk is spread across increments instead of concentrated at the end.
+
+**Disadvantages:** the process is less visible (fewer formal documents per increment, so managers see less), and the system structure can **degrade** as increment after increment is bolted on without periodic refactoring, hurting maintainability.
+
+<QuickCheck
+  id="incremental-def"
+  question="Incremental development is best described as:"
+  options={[
+    "Completing each phase fully before the next begins",
+    "Building an initial version, getting user feedback, and evolving it through several versions",
+    "Assembling a system mostly from existing reusable components",
+    "Analysing all risks before any code is written"
+  ]}
+  answer="Building an initial version, getting user feedback, and evolving it through several versions"
+  explanation="Sommerville's definition exactly: an initial implementation, exposed to user feedback, evolved through several versions until acceptable."
+  feedback={{
+    "Completing each phase fully before the next begins": "That is the waterfall model. Incremental deliberately interleaves and repeats the activities.",
+    "Assembling a system mostly from existing reusable components": "That is the reuse-oriented (integration and configuration) model, covered next.",
+    "Analysing all risks before any code is written": "Heavy up-front risk analysis is the spiral model's signature, not incremental's."
+  }}
+/>
+
+## Integration and configuration (reuse-oriented)
+
+The third model attacks cost from a different angle: **do not write most of the code**. In the **reuse-oriented** model, the system is **assembled** from existing software: off-the-shelf components, configurable application systems (think a CMS, an ERP, cloud services), and libraries.
+
+<SeReuseModel />
+
+The stage that makes this model distinctive is **requirements refinement**: because you are constrained by what existing components can already do, you **bend the requirements to fit the components**, rather than building components to fit the requirements. You have done this every time you accepted a framework's conventions instead of fighting them.
+
+**Advantages:** less software to write, so faster delivery and lower cost and risk. **Disadvantages:** you give up control, because the requirements compromises may not give users exactly what they wanted, and you are exposed to the evolution of components you do not own.
+
+<QuickCheck
+  id="reuse-refine"
+  question="Which activity is unique to the reuse-oriented (integration and configuration) model, reflecting that you must work within what existing components can do?"
+  options={["Requirements refinement", "Unit testing", "System design from scratch", "Risk analysis"]}
+  answer="Requirements refinement"
+  explanation="Because the system is built from existing parts, requirements are refined (compromised) to fit what those parts can already do, an activity the from-scratch models do not have."
+  feedback={{
+    "Unit testing": "Every model tests its software. Unit testing is not unique to reuse.",
+    "System design from scratch": "Designing from scratch is what reuse deliberately avoids. Its point is to assemble, not build.",
+    "Risk analysis": "Explicit risk analysis is the spiral model's hallmark, not the reuse model's distinctive step."
+  }}
+/>
+
+## Which model, and when
+
+Put the three on two axes: how stable the requirements are, and how soon you need to deliver.
+
+<SeModelFit />
+
+- **Waterfall**: stable, well-understood requirements; a single, late delivery is acceptable.
+- **Incremental**: volatile requirements; you need working software early and often to steer the product.
+- **Integration and configuration**: suitable off-the-shelf parts exist, and you can bend requirements to use them.
+
+The slide's other models slot in as combinations of these instincts:
+
+| Model (on the slide) | One-line placement |
+|---|---|
+| **Iterative** | Build all features thinly, then deepen them pass after pass; the sibling of incremental |
+| **V model** | Waterfall bent into a V, pairing each phase with the test level that verifies it |
+| **Prototype** | Build a throwaway or evolving mock-up to pin down unclear requirements, then build for real |
+| **Spiral** | Repeated loops of plan, risk analysis, engineering and customer evaluation, with risk analysis front and centre |
+
+<Callout type="exam">
+
+A recurring exam question gives a project scenario and asks you to **choose a model and justify it**. Answer in three moves: (1) read the requirements stability and the delivery need from the scenario; (2) name the model; (3) justify with one advantage that fits and name one disadvantage you accept. "Requirements are unclear and will change, so incremental: early feedback steers it, at the cost of less documentation and possible structure decay" is a full-mark shape.
+
+</Callout>
+
+<QuickCheck
+  id="model-choice"
+  question="A hospital wants a booking system where the workflow is genuinely unclear and staff will only know what they want once they use something. Delivery should start soon. Best-fit model?"
+  options={["Waterfall", "Incremental development", "Pure reuse with no new code", "V model"]}
+  answer="Incremental development"
+  explanation="Unclear, evolving requirements plus a need for early delivery is the exact incremental profile: ship a small usable version, learn from staff, and evolve it."
+  feedback={{
+    "Waterfall": "Waterfall needs stable, well-understood requirements up front, which this project does not have.",
+    "Pure reuse with no new code": "Reuse helps if suitable components exist, but the core problem here is unknown requirements, which incremental delivery resolves through feedback.",
+    "V model": "The V model is waterfall with paired test levels; it shares waterfall's need for stable requirements, so it is a poor fit for an unclear workflow."
+  }}
+/>
+
+<Deeper kind="exam" title="Model answer: compare waterfall and incremental development (5 marks)">
+
+Set up a table with rows and contrast each: **Activities** (waterfall: separate sequential phases; incremental: interleaved and repeated). **Delivery** (waterfall: one delivery, late; incremental: many, starting early). **Change** (waterfall: costly, needs stable requirements; incremental: cheap, welcomes change). **Visibility/documentation** (waterfall: high, document per phase; incremental: lower, less formal). **Structure** (waterfall: clean, designed once; incremental: can degrade without refactoring). **Best fit** (waterfall: small projects, well-understood stable requirements; incremental: evolving requirements, need for early feedback). Conclude with the one-sentence rule: choose by requirements stability and how early you must deliver.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.cs.odu.edu/~zeil/cs350/f23/Public/processModels/index.html",
+    "title": "ODU CS350 — Software Development Process Models",
+    "kind": "docs",
+    "why": "A university course page that draws waterfall, incremental and reuse the Sommerville way, with the same diagrams you must reproduce. Good side-by-side revision."
+  },
+  {
+    "href": "https://martinfowler.com/articles/newMethodology.html",
+    "title": "Martin Fowler — The New Methodology",
+    "kind": "blog",
+    "why": "The definitive essay on why iterative and incremental (agile) approaches beat plan-driven ones when requirements change. Context for why incremental exists."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Software_development_process",
+    "title": "Software development process — model comparison",
+    "kind": "docs",
+    "why": "Places iterative, V, spiral and prototyping alongside the three fundamentals, so the slide's longer list stops feeling like a pile of unrelated names."
+  }
+]} />

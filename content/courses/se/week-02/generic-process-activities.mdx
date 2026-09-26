@@ -1,0 +1,124 @@
+Every team has a way of turning an idea into running software, even if nobody wrote it down. The lecture's word for that way is the **software process**. This lesson names the four activities every process is built from, so that next week the models (waterfall, incremental, reuse) are just different *orderings* of the same four.
+
+<Predict
+  id="what-is-process"
+  prompt="Think about how a feature actually gets from 'someone asks for it' to 'it is live and being used' on a team you know. Write down the distinct stages it passes through. How many are there, roughly?"
+  answer="Most people list something like: figure out what is wanted, design and build it, test/review it, ship it, then keep fixing and changing it. That collapses to four families: specification (what to build), development (design and build), validation (check it does it), evolution (change it over time). The exact number of steps a team names varies, but they all fold into these four generic activities."
+>
+
+Whatever stages you listed, they collapse into four families. That is the lesson: processes differ in the *arrangement*, not the *ingredients*.
+
+</Predict>
+
+## The software process
+
+The slide defines a **software process** as a **road map that helps you create software**: the way we produce software, giving **stability and control**. Its other job is to define **work products** (also called deliverables): the programs, documents and data produced as a consequence of the engineering activities.
+
+That phrase "documents and data", not just programs, is the same point as week 1: the output of a process is software, not merely code. A design document, a test report and a schema are all work products, and a process that produces none of them produces nothing another team can trust.
+
+## The four generic activities
+
+Sommerville reduces every process to **four fundamental activities**:
+
+<SeProcessActivities />
+
+- **Specification**: define what the software must do, and the constraints on it. Its main work product is a requirements document.
+- **Development (design and implementation)**: design the architecture, then write the code. Work products: design documents and source code.
+- **Validation**: check that the software does what the customer wanted. Work products: test plans, test results.
+- **Evolution**: change the software in response to changing needs. This is not an afterthought; it is where most of a long-lived system's life and cost sit.
+
+The arrows show the naive left-to-right order, but the loop matters more: **evolution feeds new requirements back into specification**. A running system is never "done"; it is between changes.
+
+<QuickCheck
+  id="four-activities"
+  question="Which of these is one of Sommerville's four fundamental software process activities?"
+  options={["Marketing", "Software validation", "Recruitment", "Procurement"]}
+  answer="Software validation"
+  explanation="The four are specification, development, validation and evolution. Validation is the activity of checking the software does what the customer needs."
+  feedback={{
+    "Marketing": "Marketing is a business function, not one of the four engineering process activities.",
+    "Recruitment": "Hiring is a management concern. It is not one of the four process activities.",
+    "Procurement": "Buying hardware or licences is not a fundamental software process activity in this framing."
+  }}
+/>
+
+## Mapping the slide's SDLC onto the four
+
+The instructor's SDLC slide lists **seven** phases. They are not a different theory; they are a finer-grained cut of the same four activities. Line them up:
+
+| Slide's SDLC phase | Generic activity | Role named on the slide |
+|---|---|---|
+| Requirement gathering | Specification | Business analyst |
+| Requirement analysis | Specification | Business analyst |
+| Design | Development | System architect |
+| Development / coding | Development | Developer |
+| Testing | Validation | Tester |
+| Deployment | Evolution (release) | All team |
+| Maintenance | Evolution | Support / technical team |
+
+The slide's requirements-gathering questions are worth keeping, because exams reuse them: *who will use the system, how will they use it, what data goes in, what data comes out*. And the analysis phase produces the **Software Requirements Specification (SRS)**, the document that guides design, development and testing.
+
+<Callout type="exam">
+
+Two SDLC facts the slide states that quizzes love: (1) the requirements-analysis phase produces the **SRS**, which serves as the guideline for design, development and testing; (2) the **design** phase produces a **Design Document Specification (DDS)** that specifies hardware, system requirements and the overall architecture. If asked "what is the output of the analysis/design phase", give the SRS/DDS by name.
+
+</Callout>
+
+<QuickCheck
+  id="srs-phase"
+  question="On the lecture's SDLC, which phase produces the Software Requirements Specification (SRS) that guides the later phases?"
+  options={["Design", "Requirement analysis", "Testing", "Deployment"]}
+  answer="Requirement analysis"
+  explanation="The slide says the requirement-analysis phase ends by creating the SRS, which then serves as the guideline for design, development and testing."
+  feedback={{
+    "Design": "Design consumes the SRS and produces the Design Document Specification (DDS), a different work product.",
+    "Testing": "Testing checks the built software against the SRS; it does not produce the SRS.",
+    "Deployment": "Deployment hands the finished product to the customer. The SRS was written much earlier."
+  }}
+/>
+
+## Work products are the currency
+
+Because the process is defined by its deliverables, "which activity am I in" is usually answered by "which work product am I producing". A quick map:
+
+| Work product | Activity |
+|---|---|
+| Requirements document / SRS | Specification |
+| Architecture and design (DDS) | Development |
+| Source code | Development |
+| Test plan and test report | Validation |
+| Release notes, patches | Evolution |
+
+<QuickCheck
+  id="work-product"
+  question="A tester writes a document listing every requirement and the test that proves the system meets it. Which activity is this work product part of?"
+  options={["Specification", "Development", "Validation", "Evolution"]}
+  answer="Validation"
+  explanation="Checking that the built software satisfies the requirements is validation, and a requirement-to-test mapping is a validation work product."
+  feedback={{
+    "Specification": "Specification produces the requirements themselves. Here the requirements already exist and are being checked.",
+    "Development": "Development produces design and code. A test-coverage document is about verifying that code, not producing it.",
+    "Evolution": "Evolution is changing the software after release. This document is about validating it before release."
+  }}
+/>
+
+<Deeper kind="beyond" title="Where DevOps fits">
+
+The four activities predate continuous delivery, but they still hold. A modern CI/CD pipeline does not remove specification, development, validation and evolution; it *compresses the loop* so that all four happen for a tiny slice of change, many times a day. When you open a PR (specification of a small change), implement it (development), let CI run the tests (validation) and merge and deploy (evolution, then straight back to the next change), you are running the same four activities on a very tight cycle. Next week's incremental model is the textbook name for that instinct.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://software-engineering-book.com/",
+    "title": "Sommerville — software processes chapter (ch. 2) slides",
+    "kind": "docs",
+    "why": "The free chapter-2 slides define the four fundamental activities in the exact words used above, with the diagrams the exam expects you to reproduce."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Software_development_process",
+    "title": "Software development process",
+    "kind": "docs",
+    "why": "Cross-checks the slide's SDLC phases against the wider field, and shows how the same activities get named differently across methodologies."
+  }
+]} />

@@ -1,0 +1,109 @@
+Software engineering is not just a technical activity; it carries responsibilities the way medicine or civil engineering does, because the software you write can lose people money, leak their data, or in some domains hurt them. This lesson is the "professional" half of the lecture title: what it means to be a professional, and where the ethical lines sit.
+
+<Predict
+  id="ethics-dilemma"
+  prompt="Your manager tells you to ship a feature this week and skip the security review, because a big customer is waiting. You are fairly sure there is an injection vulnerability. What do you owe your employer, and what do you owe the public, and which wins?"
+  answer="You owe your employer diligence and honouring reasonable instructions; you owe the public not to release software you believe is unsafe. When they conflict, the profession's codes put the public interest first: you should refuse to ship known-unsafe code, escalate clearly in writing, and offer the fastest safe alternative. Being an employee does not transfer the responsibility off you; competence and honesty about risk are personal duties."
+>
+
+This is the shape of almost every real ethics case: a legitimate business pressure against a duty to people who are not in the room. The codes exist to tell you which one wins by default.
+
+</Predict>
+
+## What makes it a profession
+
+A profession is more than a paid skill. It implies **specialised knowledge**, a duty of **competence**, and accountability to people who **cannot check your work themselves**. A patient cannot audit a surgeon; a bank customer cannot audit the transaction code. Because others rely on your judgement, the judgement itself becomes a responsibility, not just the output.
+
+Sommerville frames this as: software engineers must behave in an **honest and ethically responsible way** to be respected as professionals, going **beyond simply applying the law** because the law lags technology.
+
+## The four issues of professional responsibility
+
+Sommerville names four areas of professional responsibility. Read them as duties that survive whatever your employer asks:
+
+- **Confidentiality**: respect the confidentiality of employers and clients whether or not a formal agreement was signed.
+- **Competence**: do not accept work that is beyond your competence, and do not misrepresent your level of skill.
+- **Intellectual property rights**: understand and respect patents, copyright and licensing; do not violate them for an employer's convenience.
+- **Computer misuse**: do not use your skills to misuse other people's computers, from the trivial (running games on an employer's machine) to the serious (deploying malware or unauthorised access).
+
+<Callout type="key-idea">
+
+The theme across all four: your responsibility is **personal and does not transfer**. "My manager told me to" is not a defence for shipping known-unsafe code, pirating a library, or accessing data you should not. Being an employee constrains how you act on a concern; it does not remove the concern.
+
+</Callout>
+
+<QuickCheck
+  id="responsibility-area"
+  question="A developer copies a GPL-licensed library into a closed-source commercial product to save a week, ignoring the licence terms. Which area of professional responsibility is breached?"
+  options={["Confidentiality", "Competence", "Intellectual property rights", "Computer misuse"]}
+  answer="Intellectual property rights"
+  explanation="Licences, copyright and patents are intellectual property. Ignoring a library's licence terms is an IP-rights violation, one of Sommerville's four responsibility areas."
+  feedback={{
+    "Confidentiality": "Confidentiality is about protecting employer and client secrets, not about honouring third-party licences.",
+    "Competence": "Competence is about not taking on work beyond your ability. The developer here was capable; the issue was the licence.",
+    "Computer misuse": "Computer misuse is about attacking or abusing others' systems, not about violating a software licence."
+  }}
+/>
+
+## The ACM/IEEE code of ethics
+
+The professional bodies (ACM and IEEE Computer Society) publish a shared **Software Engineering Code of Ethics**. You do not need it verbatim, but you should know its spine: **eight principles**, in a deliberate priority order.
+
+| # | Principle | One line |
+|---|---|---|
+| 1 | **Public** | Act consistently with the public interest, above all else |
+| 2 | **Client and employer** | Act in their best interests, consistent with the public interest |
+| 3 | **Product** | Ensure products meet the highest professional standards |
+| 4 | **Judgment** | Maintain integrity and independence in professional judgement |
+| 5 | **Management** | Managers promote an ethical approach to the work |
+| 6 | **Profession** | Advance the integrity and reputation of the profession |
+| 7 | **Colleagues** | Be fair to and supportive of colleagues |
+| 8 | **Self** | Keep learning; practise ethical self-improvement |
+
+The order is the message: **the public interest sits above the client and employer**. That is precisely what resolves the opening dilemma.
+
+<QuickCheck
+  id="code-priority"
+  question="In the ACM/IEEE code, when the client's or employer's interest conflicts with the public interest, which takes priority?"
+  options={[
+    "The employer, since they pay your salary",
+    "The public interest",
+    "Whichever the engineer personally prefers",
+    "The client, since they own the product"
+  ]}
+  answer="The public interest"
+  explanation="Principle 1 (Public) is placed first on purpose: engineers must act consistently with the public interest, and the client-and-employer principle is explicitly qualified as 'consistent with the public interest'."
+  feedback={{
+    "The employer, since they pay your salary": "Payment does not outrank public safety in the code. The employer principle is subordinate to the public one.",
+    "Whichever the engineer personally prefers": "The code is not a matter of personal preference; it sets a priority order, with the public first.",
+    "The client, since they own the product": "Ownership does not override the public interest. Principle 1 comes before principle 2."
+  }}
+/>
+
+## Reasoning about a dilemma
+
+The codes are not a lookup table; they are a way to argue. A workable method for exam scenarios:
+
+1. Name the **duties in tension** (e.g. employer's schedule vs public's safety).
+2. Apply the **priority order** (public first, then client/employer, then product quality).
+3. Choose the action that honours the higher duty **while doing the least harm to the lower** (escalate in writing, propose a safe fast path, refuse only the unsafe part).
+
+<Deeper kind="exam" title="Model answer: is whistle-blowing ever justified? (5 marks)">
+
+Structure it: (1) **State the tension**: an engineer's duty of confidentiality and loyalty to the employer against the duty to the public. (2) **Apply the code**: principle 1 (public) outranks principle 2 (employer), so where the public faces real, serious harm the duty to the public can override confidentiality. (3) **Qualify it**: whistle-blowing is a last resort, justified only after internal escalation has failed, when the harm is serious and the evidence is sound; done recklessly it breaches the duty to colleagues and the profession (principles 6 and 7). (4) **Conclude**: it is justified when serious public harm is otherwise unavoidable and internal channels are exhausted, not as a first move. Cite a real case (e.g. a safety-critical defect knowingly shipped) for the extra mark.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://en.wikipedia.org/wiki/Programming_ethics",
+    "title": "Programming ethics",
+    "kind": "docs",
+    "why": "Summarises the ACM/IEEE code and the four responsibility areas with short, exam-sized examples of each ethical issue."
+  },
+  {
+    "href": "https://software-engineering-book.com/",
+    "title": "Sommerville — professional and ethical responsibility (ch. 1)",
+    "kind": "docs",
+    "why": "The source this lesson follows. The chapter-1 slides list confidentiality, competence, IP rights and computer misuse verbatim, plus the code's eight principles."
+  }
+]} />

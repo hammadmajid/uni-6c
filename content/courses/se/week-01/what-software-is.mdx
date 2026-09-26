@@ -1,0 +1,129 @@
+You ship code for a living, so "what is software" sounds like a question you answered in 2019. This first lesson is about the gap between the code you push and the thing the customer actually bought, because that gap is the whole reason software engineering exists.
+
+<Predict
+  id="program-vs-software"
+  prompt="You write a 200-line Python script that resizes images, and it works. A company sells an image-resizing product. Beyond more features, name two things the product has that your script does not."
+  answer="At least: documentation (user guide, API docs, install instructions), and a maintained lifecycle (versioning, bug fixes, support). Also data structures and configuration the program relies on, tests, a build and release process, and licensing. The script is a program; the product is software, which is the program plus everything that lets other people rely on it over time."
+>
+
+The lecture draws exactly this line. A **program** is code that performs a well-defined task. **Software** is the program **plus its documentation plus the data structures and configuration it needs plus everything that keeps it usable by people who did not write it**. Your script is a program. The moment someone else has to install, trust, and maintain it, it has to become software.
+
+</Predict>
+
+## Software is three things, not one
+
+The IEEE-style definition on the slide has three parts:
+
+1. **Instructions** (the programs) that when executed provide the desired features, function and performance.
+2. **Data structures** that let the programs manipulate information adequately.
+3. **Documentation** that describes the operation and use of the programs.
+
+Miss any one and you do not have a product. A backend with no schema is not going to manipulate anything; a service with no runbook is not something an ops team can operate at 3am. You already know this in your bones as "code is the easy part".
+
+<QuickCheck
+  id="program-software-diff"
+  question="According to the lecture, what is the difference between a computer program and computer software?"
+  options={[
+    "A program is compiled; software is interpreted",
+    "A program is a piece of code that performs a well-defined task; software is the code plus its documentation and user guide",
+    "A program runs on one machine; software runs on many",
+    "There is no difference; the terms are interchangeable"
+  ]}
+  answer="A program is a piece of code that performs a well-defined task; software is the code plus its documentation and user guide"
+  explanation="The slide's answer verbatim: a program performs a well-defined task, whereas software includes the programming code, its documentation and the user guide."
+  feedback={{
+    "A program is compiled; software is interpreted": "Compilation is a language toolchain detail, not the program/software distinction. Both can be compiled or interpreted.",
+    "A program runs on one machine; software runs on many": "Distribution is not the defining line. A single-machine tool with docs and a support process is still software.",
+    "There is no difference; the terms are interchangeable": "The lecture makes a specific distinction: software adds documentation and the user guide around the program."
+  }}
+/>
+
+## Software does not wear out, but it does rot
+
+A car door has a fatigue life; hinge it a million times and it fails. Software has no such physical failure mode: the same bits run the same way on day 3000 as on day 1. The slide's point is that software is **developed or engineered, not manufactured** in the classical sense, and it **does not wear out**.
+
+So why does old software feel broken? Not wear, but **change**. Every bug fix and feature edit perturbs the system, and each perturbation can introduce new faults. The idealised reliability curve should flatten forever; the real curve creeps upward with every change, because the world around the code (the OS, the libraries, the business rules) moves and the code is dragged after it. That is exactly what the lecture calls **legacy software**: systems that must be adapted, enhanced, extended or re-architected to keep working in a world that changed underneath them.
+
+<Callout type="key-idea">
+
+Hardware fails from wear; software "fails" from change. This flips your maintenance intuition: the risky moment for a running system is not old age, it is the next edit. That is why so much of this course is about controlling change.
+
+</Callout>
+
+## Two ways to slice the software zoo
+
+The lecture classifies software twice. First by **how well the problem is understood** (Lehman's S/P/E types):
+
+| Type | Meaning | Example |
+|---|---|---|
+| **S-type** (static) | Fully specifiable; the problem and its solution are exactly known and do not change | A calculator |
+| **P-type** (practical) | Specifiable, but the solution is not obvious; you know the end result, not the route | A chess or sketch program |
+| **E-type** (embedded) | Models a real-world process and becomes part of that world, so it must evolve with it | Air-traffic control, online trading |
+
+Then by **application domain**: system software, application software, engineering/scientific software, embedded software, product-line software, web applications, and AI software. These are not exclusive; a modern product is usually several at once.
+
+<QuickCheck
+  id="etype"
+  question="A stock-trading platform must keep changing as markets, regulations and traders' behaviour change, and it has itself become part of how the market works. Which category from the lecture fits best?"
+  options={["S-type (static)", "P-type (practical)", "E-type (embedded)", "System software"]}
+  answer="E-type (embedded)"
+  explanation="E-type systems model a real-world process and become a component of the world they model, so they must continuously evolve. The slide uses online trading as its example."
+  feedback={{
+    "S-type (static)": "S-type problems are fully specifiable and do not change, like a calculator. A trading platform changes constantly.",
+    "P-type (practical)": "P-type means the solution is hard to describe even though the problem is stable. Here the whole environment keeps moving, which is the E-type signature.",
+    "System software": "That is an application-domain label (OSes, drivers, compilers), a different axis. The question is about how the problem evolves, which is the S/P/E axis."
+  }}
+/>
+
+## What makes software good
+
+A program that "works" can still be bad software. Sommerville names **four essential attributes** of good software, and these are what quizzes ask you to recall:
+
+<SeQualityAttributes />
+
+- **Maintainability**: it can be changed cheaply as needs evolve. This is the master attribute, because change is the norm (see above).
+- **Dependability and security**: it does not fail dangerously, does not lose or leak data, and resists attack.
+- **Efficiency**: it does not waste CPU, memory, network or power.
+- **Acceptability**: the intended users understand it, can use it, and it is compatible with the systems they already run.
+
+Notice all four are **non-functional**: they say nothing about *what* the program computes, only about how well it lives in the world. As a backend engineer you already trade these off every sprint (a cache is efficiency bought with a maintainability cost). The exam just wants the names.
+
+<Callout type="exam">
+
+The instructor's slides do not use Sommerville's four-attribute list. They group quality as **Operational** (usability, efficiency, correctness, dependability, security, safety), **Transitional** (portability, interoperability, reusability, adaptability) and **Maintenance** (modularity, maintainability, flexibility, scalability). If a question says "characteristics of good software", give the slide's three groups; you can add Sommerville's four essentials as the modern summary. Both are examinable phrasings of the same idea, so write the slide's for the marks and keep the four essentials as your backbone.
+
+</Callout>
+
+<QuickCheck
+  id="attribute-pick"
+  question="A team rewrites a module so that a new developer can add a feature in an afternoon instead of a week, with no change to what the software computes. Which essential attribute did they most improve?"
+  options={["Efficiency", "Maintainability", "Dependability", "Acceptability"]}
+  answer="Maintainability"
+  explanation="Maintainability is exactly the cost of changing the software as needs evolve. Nothing about the computed result or performance changed."
+  feedback={{
+    "Efficiency": "Efficiency is about not wasting CPU, memory or power at runtime. The change here is about the cost of future edits, not runtime cost.",
+    "Dependability": "Dependability is about not failing or leaking data. The rewrite targeted ease of change, not failure behaviour.",
+    "Acceptability": "Acceptability is about end users understanding and using the system. This change was about the developers who maintain it."
+  }}
+/>
+
+<Further links={[
+  {
+    "href": "https://software-engineering-book.com/",
+    "title": "Sommerville, Software Engineering — companion site",
+    "kind": "docs",
+    "why": "The textbook this course follows. The 'introduction' chapter's free slides state the four essential attributes and the FAQs in the exact words the exam rewards."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Non-functional_requirement",
+    "title": "Non-functional requirements",
+    "kind": "docs",
+    "why": "Every attribute of good software is a non-functional requirement. The list of '-ilities' here is a handy checklist when you have to name qualities under exam pressure."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Legacy_system",
+    "title": "Legacy system",
+    "kind": "docs",
+    "why": "Why software rots without wearing out, with real examples (COBOL banking, air-traffic control). Reinforces the lecture's 'why must it change' slide."
+  }
+]} />
