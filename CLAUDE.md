@@ -5,6 +5,7 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 ## Layout
 
 - `courses/<slug>/`: raw materials the owner drops in, one directory per course, same slug as `content/courses/<slug>/`. Subfolders: `lectures/`, `labs/`, `assignments/`, `quizzes/`, `announcements/`, `references/`, plus `course-outline.pdf` at the top. Filenames are kebab-case and keep the instructor's numbering (`lecture-06-07-network-classification.pdf`). Read these before building a week. See `courses/README.md`.
+- `submissions/<course-slug>/<item>/`: the owner's own work that gets handed in — assignment answers, project proposals, paper reviews, drafts and finals. Authored deliverables, distinct from the dropped raw materials (`courses/`) and the lessons (`content/courses/`). One folder per submittable item; keep drafts here as they evolve. Not read by the app. Help the owner prepare this work; never write their submission for them. See `submissions/README.md`.
 - `content/courses/<slug>/course.json`: course metadata and the full 15-week roadmap. Weeks with an empty `lessons` array are not built yet.
 - `content/courses/<slug>/week-NN/<lesson>.mdx`: lesson content. Prose plus the components registered in `lib/mdx-components.tsx`.
 - `components/learning/`: generic learning components (QuickCheck, Predict, OrderCheck, WorkedExample, Deeper, Callout, Term, Timeline, HintLadder, lab controls).
