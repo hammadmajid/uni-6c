@@ -49,7 +49,7 @@
 // One written chunk from a plain string. Every word gets its own tilt, baseline,
 // size and ink shade, and all of it grows as the sheet goes on: neat at the top,
 // sloppier by the last answer. `->` arrow, `^^` / `vv` up / down arrows,
-// `~wrod~` = a misspelling struck out (write the right word after it).
+// `~wro~` = a word abandoned half-way and scribbled out, followed by the right one.
 #let l(indent: 0pt, src) = {
   j.step()
   context {
@@ -70,13 +70,23 @@
       let shade = ink.lighten(rnd(s + 5) * 8%)
       let t = text(font: font, size: base * f * (1 + (rnd(s + 7) - 0.5) * 0.05 * m), fill: shade, w2)
       let body = if struck {
+        // Abandoned half-word, scribbled out hard: a dense zigzag over it, twice.
         let wd = measure(t).width
+        let zig(seed, off) = {
+          let n = calc.max(4, calc.floor(wd / 2.6pt))
+          let pts = range(n + 1).map(q => (
+            -0.5pt + (wd + 3pt) * q / n + (rnd(seed + q) - 0.5) * 3.5pt,
+            if calc.rem(q, 2) == 0 { off - 1pt + rnd(seed + q * 3) * 3pt } else { off + 0.34em + rnd(seed + q * 5) * 3pt }))
+          curve(stroke: (paint: ink, thickness: 1.25pt, cap: "round", join: "round"),
+            curve.move(pts.first()), ..pts.slice(1).map(pt => curve.line(pt)))
+        }
         box({
           t
-          // two quick strokes through the word, the second a bit off
-          place(top + left, dy: 0.36em, box(width: wd, height: 0pt, {
-            wl((-2pt, 1pt), (wd + 2pt, -1pt), seed: s + 20, s: 1pt)
-            wl((-1pt, 4pt), (wd + 3pt, 2.5pt), seed: s + 23, s: 0.9pt)
+          place(top + left, dy: 0.08em, zig(s + 30, 0pt))
+          place(top + left, dy: 0.08em, zig(s + 60, 2pt))
+          place(top + left, dy: 0.2em, box(width: wd, height: 0pt, {
+            wl((-0.5pt, 3pt), (wd + 3pt, 1pt), seed: s + 20, s: 1.4pt)
+            wl((0pt, 7pt), (wd + 2pt, 5pt), seed: s + 23, s: 1.3pt)
           }))
         })
       } else { t }
@@ -103,17 +113,17 @@
 }
 
 #q(1)
-#l(indent: 10pt, "(i) offices use diff devices, OS, vendors. protocols = agreed rules (msg format, order, what to do on send/recieve) so a msg from ISB is ~undrestood~ understood in NY + Tokyo.")
+#l(indent: 10pt, "(i) offices use diff devices, OS, vendors. protocols = agreed rules (msg format, order, what to do on send/recieve) so a msg from ISB is ~uder~ understood in NY + Tokyo.")
 #l(indent: 10pt, "algorithms = how data actually gets there -> routing picks best path (+ reroutes if a link fails), congestion ctrl, error detection.")
 #l(indent: 30pt, "so: protocols = same language, algorithms = fast + reliable delivery -> seamless")
 
-#l(indent: 10pt, "(ii) 1. no modularity -> change one thing (eg wifi -> fibre) = rewrite whole system. diff vendors can't ~interopate~ interoperate.")
+#l(indent: 10pt, "(ii) 1. no modularity -> change one thing (eg wifi -> fibre) = rewrite whole system. diff vendors can't ~interp~ interoperate.")
 #l(indent: 10pt, "2. hard to debug / standardise -> everything in one big block, can't isolate a fault to one layer, no common worldwide standard.")
 
 #q(2)
 #l(indent: 10pt, "throughput + packet (path) loss")
 #l(indent: 20pt, "- throughput < video bitrate -> buffer drains -> buffering")
-#l(indent: 20pt, "- router queue full -> packets ~droped~ dropped -> frames skip")
+#l(indent: 20pt, "- router queue full -> packets ~dopp~ dropped -> frames skip")
 #l(indent: 10pt, "linked: both come from congestion at the bottleneck link. more traffic -> queue fills -> loss ^^ -> resend -> throughput vv")
 
 #block(height: 100pt, width: 100%, breakable: false, {
@@ -131,15 +141,15 @@
 
 #q(3)
 #l(indent: 10pt, "A -> circuit switching -> only 3 users, always on, each gets a dedicated fixed rate, nothing wasted.")
-#l(indent: 10pt, "B -> packet switching -> bursty users share the link on demand (statistical ~multiplxing~ multiplexing), way more users than reserved circuits.")
-#l(indent: 10pt, "C -> Low-Power WAN -> built for long range on low power, tolerates weak/variable ~singal~ signal (trades off data rate).")
+#l(indent: 10pt, "B -> packet switching -> bursty users share the link on demand (statistical ~multpl~ multiplexing), way more users than reserved circuits.")
+#l(indent: 10pt, "C -> Low-Power WAN -> built for long range on low power, tolerates weak/variable ~sing~ signal (trades off data rate).")
 
 #q(4)
 #l(indent: 10pt, "(i) TCP/IP. it's the real implemented model (OSI is just a reference). fewer layers = less overhead on a slow, costly link.")
 #l(indent: 10pt, "but Earth -> Mars delay = 4 to 24 min one way, normal TCP ACKs time out -> add DTN (store + forward) on top of TCP/IP.")
 
 #l(indent: 10pt, "(ii) remove session layer (OSI). its job (dialog ctrl, checkpoints) moves into the app -> less overhead.")
-#l(indent: 20pt, "impact: app must resume transfers itself after a ~blakout~ blackout. never remove transport -> lose ports + reliabilty.")
+#l(indent: 20pt, "impact: app must resume transfers itself after a ~blak~ blackout. never remove transport -> lose ports + reliabilty.")
 
 #block(height: 138pt, width: 100%, breakable: false, {
   let names = ("application", "presentation", "session", "transport", "network", "data link", "physical")
