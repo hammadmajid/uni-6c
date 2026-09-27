@@ -1,23 +1,21 @@
-#import "../../_shared/zabdoc/cover.typ": cover
+#import "../../_shared/zabdoc/cover.typ": cover, body-page-setup
+
+#let course-code = "CSC 3109"
+#let class = "BsCS-5D"
 
 #cover(
   students: ((Name: "Hammad Majid", RegNo: "2312200"),),
-  class: "BsCS-6C",
+  class: class,
   course: "Software Engineering",
-  course-code: "CSC 4301",
-  instructor: "Awais Mehmood",
+  course-code: course-code,
+  instructor: "Awais Mahmood",
   doc-type: "Assignment",
   number: "1",
   date: "27 Sep 2026",
   marks: "3.5",
 )
 
-#set page(paper: "a4", margin: 1in, numbering: "1")
-#set text(font: "Times New Roman", size: 12pt)
-#set par(justify: true, leading: 0.65em, first-line-indent: 0pt)
-#set heading(numbering: none)
-#show heading: set text(size: 13pt, weight: "bold")
-#show heading: it => block(above: 1.4em, below: 0.8em, it)
+#body-page-setup(course-code, class)[
 
 = Title of the Project
 
@@ -55,3 +53,5 @@ Four iterations:
 + *Evaluation* — load test round-robin against the new router, tune the parameters from what the numbers show, finish the dashboard.
 
 Trade-off I am accepting: less upfront documentation than waterfall, and the usual incremental risk of the code getting messier iteration over iteration if I do not clean it up. I am budgeting time for that at the start of iterations 3 and 4.
+
+]

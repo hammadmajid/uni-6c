@@ -183,6 +183,55 @@
   css(14pt, width: auto)[SZABIST-ISB],
 )
 
+// ---------------------------------------------------------------- body pages
+//
+// The cover's border/header/footer live inside its own single scaled block,
+// so they don't repeat automatically. `body-page-setup` gives the pages
+// *after* the cover the same border-and-footer look, repeated on every page
+// via Typst's page header/footer/background, which is how repetition works
+// for page content (unlike the cover, these are normal, unscaled A4 pages).
+#let border-inset = 10mm
+
+#let body-header = block(width: 100%, {
+  grid(
+    columns: (auto, 1fr),
+    align: horizon,
+    image("szabist-logo.png", height: 22pt),
+    css(9pt, al: right)[Shaheed Zulfiqar Ali Bhutto Institute of Science and Technology — Computer Science Department],
+  )
+  v(3pt)
+  rule(px, c-head-rule)
+})
+
+#let body-footer(course-code, class) = block(width: 100%, {
+  rule(px, c-head-rule)
+  v(3pt)
+  footer(course-code, class)
+})
+
+// Takes the body as a parameter (not a bare `set`-and-return) so the styling
+// is guaranteed to apply to it: a `set page`/`set text` left dangling at the
+// end of a function body only styles what follows *inside that same call* —
+// it does not leak out to content the caller writes after the call returns.
+#let body-page-setup(course-code, class, body) = {
+  set page(
+    paper: "a4",
+    numbering: "1",
+    margin: (top: 1.3in, bottom: 1.2in, x: 1in),
+    header-ascent: 20%,
+    footer-descent: 20%,
+    header: body-header,
+    footer: body-footer(course-code, class),
+    background: pad(border-inset, rect(width: 100%, height: 100%, stroke: px + c-border)),
+  )
+  set text(font: "Times New Roman", size: 12pt)
+  set par(justify: true, leading: 0.65em, first-line-indent: 0pt)
+  set heading(numbering: none)
+  show heading: set text(size: 13pt, weight: "bold")
+  show heading: it => block(above: 1.4em, below: 0.8em, it)
+  body
+}
+
 // ------------------------------------------------------------------- page
 
 #let cover(
