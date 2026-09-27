@@ -8,9 +8,16 @@ import numpy as np
 from PIL import Image
 from scipy.ndimage import gaussian_filter, map_coordinates
 
+import os
+
 rng = np.random.default_rng(7)
 PAPER = np.array([255, 255, 255], float)
-INK = np.array([24, 36, 112], float)
+# Knobs for trying variants (env vars): INK_PEN, INK_SLOPE, INK_DEFECTS.
+PEN = os.environ.get("INK_PEN", "blue")          # blue | black | gel | pencil
+SLOPE = float(os.environ.get("INK_SLOPE", "0"))  # 0 = straight lines; 1 = lines tilt and sag like unruled paper
+DEFECTS = os.environ.get("INK_DEFECTS", "0") == "1"  # ballpoint skips and blobs
+INK = {"blue": (24, 36, 112), "black": (28, 28, 34), "gel": (12, 20, 70), "pencil": (52, 52, 60)}[PEN]
+INK = np.array(INK, float)
 
 
 def noise(shape, sigma, lo, hi):
@@ -33,17 +40,49 @@ def page(path, dpi, mess):
     g = np.asarray(Image.open(path).convert("L"), float) / 255
     ink = 1 - g
     h, w = ink.shape
+    if SLOPE:
+        # Unruled paper: each line drifts up or down across the page and sags a little,
+        # and neighbouring lines don't agree on the angle.
+        yy, xx = np.mgrid[0:h, 0:w]
+        xn = xx / w
+        tilt = gaussian_filter(rng.standard_normal(h), 45 * dpi / 150)
+        tilt *= 1 / (np.abs(tilt).max() + 1e-9)
+        sag = gaussian_filter(rng.standard_normal(h), 80 * dpi / 150)
+        sag *= 1 / (np.abs(sag).max() + 1e-9)
+        dy = SLOPE * mess * dpi / 150 * (30 * tilt[:, None] * xn + 16 * sag[:, None] * (xn - 0.5) ** 2 * 4)
+        ink = map_coordinates(ink, [yy + dy, xx], order=1, mode="constant")
     ink = warp(ink, 6, 0.9 * mess * dpi / 150)      # letter-level wobble
     ink = warp(ink, 60, 3 * mess * dpi / 150)       # slow drift across a line
-    ink = gaussian_filter(ink, 0.35 * dpi / 150)   # slight bleed
-    ink = np.clip(ink, 0, 1) ** 1.15               # thin ballpoint line, not marker
-    pressure = noise((h, w), 30 * dpi / 150, 0.78, 1.0)
-    grain = 1 - 0.2 * rng.random((h, w)) ** 3
+    if PEN == "gel":
+        ink = gaussian_filter(ink, 0.6 * dpi / 150)   # gel spreads more, darker and even
+        ink = np.clip(ink * 1.3, 0, 1)
+        pressure = noise((h, w), 30 * dpi / 150, 0.92, 1.0)
+        grain = np.ones((h, w))
+    elif PEN == "pencil":
+        ink = gaussian_filter(ink, 0.45 * dpi / 150)
+        pressure = noise((h, w), 30 * dpi / 150, 0.75, 1.0)
+        tooth = noise((h, w), 0.7, 0, 1)             # graphite catches only the paper's high points
+        grain = np.clip((tooth - 0.15) * 1.8, 0.4, 1)
+    else:
+        ink = gaussian_filter(ink, 0.35 * dpi / 150)   # slight bleed
+        ink = np.clip(ink, 0, 1) ** 1.15               # thin ballpoint line, not marker
+        pressure = noise((h, w), 30 * dpi / 150, 0.78, 1.0)
+        grain = 1 - 0.2 * rng.random((h, w)) ** 3
     ink *= pressure * grain
+    if DEFECTS:
+        # Ballpoint skips: short thin gaps where the ball didn't roll.
+        streak = gaussian_filter(rng.standard_normal((h, w)), (0.8 * dpi / 150, 3.5 * dpi / 150))
+        ink *= np.where(streak > np.quantile(streak, 0.97), 0.15, 1.0)
+        # Blobs: ink pooling where the pen paused.
+        seeds = (rng.random((h, w)) < 0.002) & (ink > 0.5)
+        blob = gaussian_filter(seeds.astype(float), 1.6 * dpi / 150) * 60
+        ink = np.clip(ink + blob, 0, 1)
 
     paper = np.ones((h, w, 3)) * PAPER
 
     ink_rgb = INK * noise((h, w), 80, 0.92, 1.08)[..., None]
+    if PEN == "pencil":
+        ink = ink * 0.92   # graphite never gets fully dark
     out = paper * (1 - ink[..., None]) + ink_rgb * ink[..., None]
     return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
 

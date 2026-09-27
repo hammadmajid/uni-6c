@@ -6,10 +6,13 @@
 #set text(font: "Caveat", size: 23pt, fill: ink, hyphenate: false)
 #set par(leading: 0.55em, spacing: 0.5em, justify: false)
 
+// Knobs for trying variants: typst compile --input letters=1 --input mess=1.5 ...
+#let letters = sys.inputs.at("letters", default: "0") == "1"  // every glyph drawn a bit differently
+#let mess-scale = float(sys.inputs.at("mess", default: "1"))
+
 // Deterministic jitter in [0, 1).
 #let rnd(i) = calc.fract(calc.abs(calc.sin(i * 12.9898 + 78.233) * 43758.5453))
 
-// Handwriting fonts and a size factor each, so they look about the same height.
 // Handwriting fonts and a size factor each, so they look about the same height.
 // Caveat carries most of the sheet; the others only slip in now and then.
 #let hands = (("Caveat", 1.0), ("Nanum Pen", 1.08), ("Covered By Your Grace", 0.92), ("Shadows Into", 0.9))
@@ -54,7 +57,7 @@
   j.step()
   context {
     let i = j.get().first()
-    let m = 0.5 + 1.8 * i / j.final().first()   // messiness: ~0.5 at the start, ~2.3 at the end
+    let m = (0.5 + 1.8 * i / j.final().first()) * mess-scale   // messiness: ~0.5 at the start, ~2.3 at the end
     let main = if rnd(i * 3.1) < 0.2 { 1 } else { 0 }  // an occasional chunk in another hand
     let base = 23pt + rnd(i + 2) * 2pt + m * 0.6pt
     let words = ()
@@ -68,7 +71,17 @@
       let pick = if rnd(s + 3) < 1 - 0.07 * m { main } else { calc.floor(rnd(s + 4) * hands.len()) }
       let (font, f) = hands.at(pick)
       let shade = ink.lighten(rnd(s + 5) * 8%)
-      let t = text(font: font, size: base * f * (1 + (rnd(s + 7) - 0.5) * 0.05 * m), fill: shade, w2)
+      let size = base * f * (1 + (rnd(s + 7) - 0.5) * 0.05 * m)
+      let t = if letters {
+        // A font repeats the exact same "e" every time; a hand never does.
+        w2.clusters().enumerate().map(((ci, c)) => {
+          let r = s * 13 + ci * 5
+          box(move(dy: (rnd(r) - 0.5) * 2.4pt,
+            rotate((rnd(r + 1) - 0.5) * 9deg, reflow: false,
+              scale(x: 88% + rnd(r + 2) * 22%, y: 90% + rnd(r + 3) * 18%, reflow: true, origin: bottom,
+                text(font: font, size: size, fill: shade.lighten(rnd(r + 4) * 10%), c)))))
+        }).join(h(-0.4pt))
+      } else { text(font: font, size: size, fill: shade, w2) }
       let body = if struck {
         // Abandoned half-word, scribbled out hard: a dense zigzag over it, twice.
         let wd = measure(t).width
