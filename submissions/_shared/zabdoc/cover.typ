@@ -195,51 +195,48 @@
 
 // ---------------------------------------------------------------- body pages
 //
-// The cover's border/header/footer live inside its own single scaled block,
-// so they don't repeat automatically. `body-page-setup` gives the pages
-// *after* the cover the same border-and-footer look, repeated on every page
-// via Typst's page header/footer/background, which is how repetition works
-// for page content (unlike the cover, these are normal, unscaled A4 pages).
-#let border-inset = 10mm
+// Pages after the cover repeat the cover's own `header` and `footer` through
+// Typst's native page header/footer/background, drawn at the cover's scale
+// (`shrink`) and in the same frame, so every page looks like the cover.
+// The cover lays out a 210mm box and scales it by `shrink` to fit inside
+// `page-margin`; these constants are that geometry, in page units.
+#let frame = page-margin + (5mm + px) * shrink   // border edge to box content
+#let below-box = page-h - page-margin - box-h * shrink  // the scaled box is shorter than the page
+#let header-h = 60pt * shrink                    // logo height sets the row
+#let header-gap = 18pt * shrink                  // the cover's v(18pt)
+#let footer-h = 14pt * 1.6 * shrink              // one css(14pt) line
+#let body-pad = 12mm                              // body text inset from header edges
 
-#let body-header = block(width: 100%, {
-  grid(
-    columns: (auto, 1fr),
-    align: horizon,
-    column-gutter: 8pt,
-    image("szabist-logo.png", height: 26pt),
-    {
-      css(9pt, bold: true, al: left)[Shaheed Zulfiqar Ali Bhutto Institute of Science and Technology]
-      v(2pt)
-      bordered(border: px, color: c-border, fill: c-box-bg, pad-x: 4pt, pad-y: 1pt,
-        css(8pt, bold: true, al: left, tracking: 0.5pt)[#upper("Computer Science Department")#h(1pt)])
-    },
-  )
-  v(4pt)
-  rule(px, c-head-rule)
-})
+// The cover's text settings, which `header` and `footer` rely on
+// (Times New Roman, zero block spacing, faux bold via css()).
+#let cover-style(body) = {
+  set text(font: "Times New Roman", fill: black, hyphenate: false)
+  set par(spacing: 0pt, justify: false, linebreaks: "simple", first-line-indent: 0pt)
+  set block(spacing: 0pt)
+  set smartquote(enabled: false)
+  body
+}
 
-#let body-footer(course-code, class) = block(width: 100%, {
-  rule(px, c-head-rule)
-  v(3pt)
-  footer(course-code, class)
-})
+#let at-cover-scale(body) = scale(x: shrink * 100%, y: shrink * 100%, origin: top + left, reflow: true,
+  block(width: (page-w - 2 * frame) / shrink, cover-style(body)))
 
 // Takes the body as a parameter (not a bare `set`-and-return) so the styling
 // is guaranteed to apply to it: a `set page`/`set text` left dangling at the
-// end of a function body only styles what follows *inside that same call* —
+// end of a function body only styles what follows *inside that same call*;
 // it does not leak out to content the caller writes after the call returns.
 #let body-page-setup(course-code, class, body) = {
   set page(
-    paper: "a4",
+    width: page-w,
+    height: page-h,
     fill: white,
-    numbering: "1",
-    margin: (top: 1.3in, bottom: 1in, x: 1in),
-    header-ascent: 20%,
-    footer-descent: 0%,
-    header: body-header,
-    footer: body-footer(course-code, class),
-    background: pad(border-inset, rect(width: 100%, height: 100%, stroke: px + c-border)),
+    margin: (top: frame + header-h + header-gap, bottom: below-box + (5mm + px) * shrink + footer-h + header-gap, x: frame),
+    header-ascent: header-gap,
+    footer-descent: header-gap,
+    header: at-cover-scale(header),
+    footer: at-cover-scale(footer(course-code, class)),
+    // Same as the cover's frame: a px stroke drawn inside the scaled box edge.
+    background: place(top + left, dx: page-margin + px * shrink / 2, dy: page-margin + px * shrink / 2,
+      rect(width: (box-w - px) * shrink, height: (box-h - px) * shrink, stroke: px * shrink + black)),
   )
   // Liberation Serif, not Times New Roman: metrically compatible and reads
   // the same, but it ships a real bold face so *strong* text and bold
@@ -250,7 +247,7 @@
   show heading.where(level: 1): set text(size: 14pt, weight: "bold")
   show heading.where(level: 2): set text(size: 12pt, weight: "bold")
   show heading: it => block(above: 1.4em, below: 0.6em, it)
-  body
+  pad(x: body-pad, body)
 }
 
 // ------------------------------------------------------------------- page
