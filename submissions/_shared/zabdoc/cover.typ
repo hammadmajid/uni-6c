@@ -196,10 +196,16 @@
   grid(
     columns: (auto, 1fr),
     align: horizon,
-    image("szabist-logo.png", height: 22pt),
-    css(9pt, al: right)[Shaheed Zulfiqar Ali Bhutto Institute of Science and Technology — Computer Science Department],
+    column-gutter: 8pt,
+    image("szabist-logo.png", height: 26pt),
+    {
+      css(9pt, bold: true, al: left)[Shaheed Zulfiqar Ali Bhutto Institute of Science and Technology]
+      v(2pt)
+      bordered(border: px, color: c-border, fill: c-box-bg, pad-x: 4pt, pad-y: 1pt,
+        css(8pt, bold: true, al: left, tracking: 0.5pt)[#upper("Computer Science Department")#h(1pt)])
+    },
   )
-  v(3pt)
+  v(4pt)
   rule(px, c-head-rule)
 })
 
@@ -224,11 +230,15 @@
     footer: body-footer(course-code, class),
     background: pad(border-inset, rect(width: 100%, height: 100%, stroke: px + c-border)),
   )
-  set text(font: "Times New Roman", size: 12pt)
+  // Liberation Serif, not Times New Roman: metrically compatible and reads
+  // the same, but it ships a real bold face so *strong* text and bold
+  // headings actually render bold instead of silently staying regular.
+  set text(font: "Liberation Serif", size: 12pt)
   set par(justify: true, leading: 0.65em, first-line-indent: 0pt)
   set heading(numbering: none)
-  show heading: set text(size: 13pt, weight: "bold")
-  show heading: it => block(above: 1.4em, below: 0.8em, it)
+  show heading.where(level: 1): set text(size: 14pt, weight: "bold")
+  show heading.where(level: 2): set text(size: 12pt, weight: "bold")
+  show heading: it => block(above: 1.4em, below: 0.6em, it)
   body
 }
 
