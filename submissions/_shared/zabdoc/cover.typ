@@ -283,7 +283,7 @@
     v(if multi { 6 * vh } else { 88pt })
     css(30pt, bold: true, al: center)[#upper(course)]
     v(6pt)
-    css(25pt, bold: true, al: center)[#doc-type \##number]
+    css(25pt, bold: true, al: center)[#doc-type#if number != "" [ \##number]]
     v(4pt)
     css(22pt, al: center)[Submission date: #date]
     v(if multi { 6 * vh } else { 88pt })
