@@ -5,16 +5,26 @@
 // the full commentary on why the metrics below are what they are.
 //
 // Usage from a submission file:
-//   #import "../../_shared/zabdoc/cover.typ": cover
+//   #import "../../_shared/zabdoc/cover.typ": cover, body-page-setup
 //   #cover(students: (...), class: "...", course: "...", course-code: "...",
 //          instructor: "...", doc-type: "...", number: "...", date: "...",
 //          marks: "...")
+//   #body-page-setup(course-code, class)[ = Heading ... body content ... ]
 //
 // Compile with the real Times New Roman metrics (matches the SZABIST portal
-// look exactly): typst compile --font-path /home/bine/Developer/uni/zabdocs <file>.typ
+// look exactly), and with tagged-PDF output disabled:
+//   typst compile --font-path /home/bine/Developer/uni/zabdocs --no-pdf-tags <file>.typ
+// --no-pdf-tags is not optional: without it, some PDF viewers (confirmed:
+// GNOME Papers, Chrome's PDF viewer, Adobe Acrobat) render a solid black bar
+// over the repeating header on every page after the cover. Root cause not
+// fully confirmed (poppler and Ghostscript never reproduced it, and the raw
+// PDF content stream is spec-valid), but the one structural difference
+// between the cover (always fine) and content pages (broken in those apps)
+// is that Typst wraps repeating header/footer/background content in tagged-
+// PDF /Artifact marked-content blocks; --no-pdf-tags removes that wrapping.
 // Without --font-path, Typst falls back to Liberation Serif (metric-compatible,
-// close but not pixel-identical) — fine for a draft, use the real font for the
-// copy you actually submit.
+// close but not pixel-identical) -- fine for a draft, use the real font for
+// the copy you actually submit.
 
 // ---------------------------------------------------------------- constants
 
