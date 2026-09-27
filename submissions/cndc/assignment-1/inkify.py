@@ -6,7 +6,8 @@ then lays the ink on plain white paper. Run through inkify.sh.
 import sys
 import numpy as np
 from PIL import Image
-from scipy.ndimage import gaussian_filter, map_coordinates
+from scipy.ndimage import convolve, gaussian_filter, map_coordinates
+from skimage.morphology import skeletonize
 
 import os
 
@@ -73,9 +74,27 @@ def page(path, dpi, mess):
         # Ballpoint skips: short thin gaps where the ball didn't roll.
         streak = gaussian_filter(rng.standard_normal((h, w)), (0.8 * dpi / 150, 3.5 * dpi / 150))
         ink *= np.where(streak > np.quantile(streak, 0.97), 0.15, 1.0)
-        # Blobs: ink pooling where the pen paused.
-        seeds = (rng.random((h, w)) < 0.002) & (ink > 0.5)
-        blob = gaussian_filter(seeds.astype(float), 1.6 * dpi / 150) * 60
+        # Blobs: ink pools where the pen lands or lifts, so only at stroke ends,
+        # never partway along a stroke. Found as skeleton pixels with one neighbour.
+        skel = skeletonize(ink > 0.45)
+        nb = convolve(skel.astype(int), np.ones((3, 3), int), mode="constant") - skel
+        ends = np.argwhere(skel & (nb == 1))
+        want = 0.7 * 0.002 * (ink > 0.5).sum()          # 30% fewer than before
+        pick = ends[rng.random(len(ends)) < min(1, want / max(1, len(ends)))]
+        blob = np.zeros_like(ink)
+        r = int(6 * dpi / 150)
+        for y, x in pick:
+            # Every blob a little different: size, strength, and a short smear.
+            sig = rng.uniform(0.8, 2.0) * dpi / 150
+            amp = rng.uniform(0.35, 1.0)
+            ang = rng.uniform(0, 2 * np.pi)
+            for step in range(rng.integers(1, 4)):
+                cy = y + np.sin(ang) * step * sig * 0.8
+                cx = x + np.cos(ang) * step * sig * 0.8
+                y0, y1 = max(0, int(cy) - r), min(h, int(cy) + r + 1)
+                x0, x1 = max(0, int(cx) - r), min(w, int(cx) + r + 1)
+                gy, gx = np.mgrid[y0:y1, x0:x1]
+                blob[y0:y1, x0:x1] += amp * np.exp(-((gy - cy) ** 2 + (gx - cx) ** 2) / (2 * sig ** 2)) * (0.8 ** step)
         ink = np.clip(ink + blob, 0, 1)
 
     paper = np.ones((h, w, 3)) * PAPER

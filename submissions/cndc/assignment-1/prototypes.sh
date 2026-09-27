@@ -8,7 +8,7 @@ variant() {  # name, label, typst inputs, env
   local name=$1 label=$2 inputs=$3; shift 3
   typst compile --font-path ../../_shared/fonts $inputs handwritten.typ "$tmp/$name.pdf"
   pdftoppm -r $dpi -f 1 -l 1 -png "$tmp/$name.pdf" "$tmp/$name"
-  env "$@" uv run --quiet --with numpy,scipy,pillow python inkify.py $dpi "$tmp/$name-ink.pdf" "$tmp/$name"-1.png
+  env "$@" uv run --quiet --with numpy,scipy,pillow,scikit-image python inkify.py $dpi "$tmp/$name-ink.pdf" "$tmp/$name"-1.png
   pdftoppm -r $dpi -png "$tmp/$name-ink.pdf" "$tmp/$name-ink"
   echo "$tmp/$name-ink-1.png|$label" >> "$tmp/list"
 }
