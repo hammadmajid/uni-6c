@@ -1,7 +1,7 @@
 # CNDC — Assignment 1 (Answers)
 
 > **Status:** Scaffold. Each question lists the points that earn the marks. Write the prose yourself in the "Your answer" blocks, then I tighten it and move it into `assignment-1.typ`.
-> **Build:** `./inkify.sh` writes `2312200.pdf` (typed cover + handwritten-style answers from `handwritten.typ`). `assignment-1.typ` is the older typed skeleton; compiling it to the same name would overwrite the handwritten PDF.
+> **Build:** `submissions/_shared/handwriting/build.sh cndc/assignment-1 2312200.pdf` writes `2312200.pdf` (typed cover + handwritten-style answers from `handwritten.typ`, see `_shared/handwriting/README.md`). `assignment-1.typ` is the older typed skeleton; compiling it to the same name would overwrite the handwritten PDF.
 > **Due:** 28 September 2026 · **To:** Dr. Maria Zuraiz · **Marks:** 3 · Section BS(CS)-6C
 > **Brief:** `courses/cndc/assignments/assignment-1-layers-switching-performance.pdf`
 > **Concept practice with model answers:** the `cndc/week-02/assignment-1-workshop` lesson (paraphrase, don't copy — the brief marks copied work zero).

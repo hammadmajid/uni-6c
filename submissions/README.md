@@ -29,3 +29,4 @@ submissions/
 - Each item's main file starts with a short **status / next steps** block so you can pick it back up later.
 - Reference the original brief by its path under `courses/<slug>/…` rather than copying it.
 - Drafts are for adapting into your own words before submission — this repo helps you prepare the work, it does not write your submission for you.
+- Exception: **handwritten assignments**. The owner wants a solved copy sheet that looks handwritten, to copy onto paper by hand. Rules, look and build: `_shared/handwriting/README.md`.

@@ -1,7 +1,7 @@
 """Turn the clean typst render into something that looks written with a ballpoint on paper.
 
 Warps strokes (hand wobble), varies pen pressure, adds ink grain and a slight bleed,
-then lays the ink on plain white paper. Run through inkify.sh.
+then lays the ink on plain white paper. Run through build.sh.
 """
 import sys
 import numpy as np
