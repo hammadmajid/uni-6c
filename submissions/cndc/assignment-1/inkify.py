@@ -29,12 +29,12 @@ def warp(a, sigma, amp):
     return map_coordinates(a, [y + dy, x + dx], order=1, mode="nearest")
 
 
-def page(path, dpi):
+def page(path, dpi, mess):
     g = np.asarray(Image.open(path).convert("L"), float) / 255
     ink = 1 - g
     h, w = ink.shape
-    ink = warp(ink, 6, 0.9 * dpi / 150)      # letter-level wobble
-    ink = warp(ink, 60, 3 * dpi / 150)       # slow drift across a line
+    ink = warp(ink, 6, 0.9 * mess * dpi / 150)      # letter-level wobble
+    ink = warp(ink, 60, 3 * mess * dpi / 150)       # slow drift across a line
     ink = gaussian_filter(ink, 0.35 * dpi / 150)   # slight bleed
     ink = np.clip(ink, 0, 1) ** 1.15               # thin ballpoint line, not marker
     pressure = noise((h, w), 30 * dpi / 150, 0.78, 1.0)
@@ -51,5 +51,7 @@ def page(path, dpi):
 if __name__ == "__main__":
     dpi = int(sys.argv[1])
     out = sys.argv[2]
-    pages = [page(p, dpi) for p in sys.argv[3:]]
+    files = sys.argv[3:]
+    # later pages wobble more: the hand gets tired
+    pages = [page(p, dpi, 1 + 0.5 * k / max(1, len(files) - 1)) for k, p in enumerate(files)]
     pages[0].save(out, save_all=True, append_images=pages[1:], resolution=dpi, quality=88)

@@ -46,40 +46,48 @@
 
 #let j = counter("jitter")
 
-// One written chunk from a plain string. Every word gets its own font pick,
-// tilt, baseline, size and ink shade. `*word*` = pressed harder, `->` arrow,
-// `^^` / `vv` up / down arrows.
+// One written chunk from a plain string. Every word gets its own tilt, baseline,
+// size and ink shade, and all of it grows as the sheet goes on: neat at the top,
+// sloppier by the last answer. `->` arrow, `^^` / `vv` up / down arrows,
+// `~wrod~` = a misspelling struck out (write the right word after it).
 #let l(indent: 0pt, src) = {
   j.step()
   context {
     let i = j.get().first()
+    let m = 0.5 + 1.8 * i / j.final().first()   // messiness: ~0.5 at the start, ~2.3 at the end
     let main = if rnd(i * 3.1) < 0.2 { 1 } else { 0 }  // an occasional chunk in another hand
-    let base = 23pt + rnd(i + 2) * 2pt
-    let em = false
+    let base = 23pt + rnd(i + 2) * 2pt + m * 0.6pt
     let words = ()
     for (k, w) in src.split(" ").enumerate() {
       let s = i * 101 + k * 7
       if w == "->" { words.push(ar(s)); continue }
       if w == "^^" { words.push(up(s)); continue }
       if w == "vv" { words.push(dn(s)); continue }
-      let open = w.match(regex("^\W*\*")) != none
-      let close = w.match(regex("\*\W*$")) != none
-      let w2 = w.replace("*", "")
-      if open { em = true }
-      let pick = if rnd(s + 3) < 0.86 { main } else { calc.floor(rnd(s + 4) * hands.len()) }
+      let struck = w.starts-with("~")
+      let w2 = w.replace("~", "")
+      let pick = if rnd(s + 3) < 1 - 0.07 * m { main } else { calc.floor(rnd(s + 4) * hands.len()) }
       let (font, f) = hands.at(pick)
       let shade = ink.lighten(rnd(s + 5) * 8%)
-      words.push(box(move(dy: (rnd(s + 1) - 0.5) * 1.8pt,
-        rotate((rnd(s + 2) - 0.5) * 1.8deg, reflow: false,
-          text(font: font, size: base * f * (0.97 + rnd(s + 7) * 0.06), fill: shade,
-            stroke: if em { 0.3pt + shade } else { none }, w2)))))
-      if close { em = false }
+      let t = text(font: font, size: base * f * (1 + (rnd(s + 7) - 0.5) * 0.05 * m), fill: shade, w2)
+      let body = if struck {
+        let wd = measure(t).width
+        box({
+          t
+          // two quick strokes through the word, the second a bit off
+          place(top + left, dy: 0.36em, box(width: wd, height: 0pt, {
+            wl((-2pt, 1pt), (wd + 2pt, -1pt), seed: s + 20, s: 1pt)
+            wl((-1pt, 4pt), (wd + 3pt, 2.5pt), seed: s + 23, s: 0.9pt)
+          }))
+        })
+      } else { t }
+      words.push(box(move(dy: (rnd(s + 1) - 0.5) * 1.4pt * m,
+        rotate((rnd(s + 2) - 0.5) * 1.4deg * m, reflow: false, body))))
     }
-    let dx = indent + rnd(i) * 10pt
-    block(above: 0.4em + rnd(i + 7) * 0.5em, below: 0.5em,
-      move(dx: dx, rotate((rnd(i + 1) - 0.5) * 1deg,
+    let dx = indent + rnd(i) * 6pt * m
+    block(above: 0.35em + rnd(i + 7) * 0.25em * m, below: 0.45em,
+      move(dx: dx, rotate((rnd(i + 1) - 0.5) * 0.8deg * m,
         block(width: 100% - dx,
-          words.enumerate().map(((k, w)) => w + h(0.18em + rnd(i * 13 + k) * 0.3em)).join()))))
+          words.enumerate().map(((k, w)) => w + h(0.16em + rnd(i * 13 + k) * 0.18em * m)).join()))))
   }
 }
 #let q(n) = {
@@ -88,25 +96,25 @@
     let i = j.get().first()
     block(sticky: true, above: 0.9em + rnd(i) * 0.6em, below: 0.3em, move(dx: rnd(i + 3) * 8pt, rotate((rnd(i + 4) - 0.5) * 2deg, reflow: true, origin: left,
       box(inset: (bottom: 4pt), {
-        text(font: "Caveat", size: 34pt, stroke: 0.35pt + ink)[Q\##n:]
+        text(font: "Caveat", size: 34pt)[Q\##n:]
         place(bottom + left, dy: 2pt, box(width: 70pt, height: 4pt, wl((0pt, 2pt), (66pt, 3pt), seed: i, s: 1pt)))
       }))))
   }
 }
 
 #q(1)
-#l(indent: 10pt, "*(i)* offices use diff devices, OS, vendors. *protocols* = agreed rules (msg format, order, what to do on send/receive) so a msg from ISB is understood in NY + Tokyo.")
-#l(indent: 10pt, "*algorithms* = how data actually gets there -> routing picks best path (+ reroutes if a link fails), congestion ctrl, error detection.")
+#l(indent: 10pt, "(i) offices use diff devices, OS, vendors. protocols = agreed rules (msg format, order, what to do on send/recieve) so a msg from ISB is ~undrestood~ understood in NY + Tokyo.")
+#l(indent: 10pt, "algorithms = how data actually gets there -> routing picks best path (+ reroutes if a link fails), congestion ctrl, error detection.")
 #l(indent: 30pt, "so: protocols = same language, algorithms = fast + reliable delivery -> seamless")
 
-#l(indent: 10pt, "*(ii)* 1. *no modularity* -> change one thing (eg wifi -> fibre) = rewrite whole system. diff vendors can't interoperate.")
-#l(indent: 10pt, "2. *hard to debug / standardise* -> everything in one big block, can't isolate a fault to one layer, no common worldwide standard.")
+#l(indent: 10pt, "(ii) 1. no modularity -> change one thing (eg wifi -> fibre) = rewrite whole system. diff vendors can't ~interopate~ interoperate.")
+#l(indent: 10pt, "2. hard to debug / standardise -> everything in one big block, can't isolate a fault to one layer, no common worldwide standard.")
 
 #q(2)
-#l(indent: 10pt, "*throughput* + *packet (path) loss*")
-#l(indent: 20pt, "- throughput < video bitrate -> buffer drains -> *buffering*")
-#l(indent: 20pt, "- router queue full -> packets dropped -> *frames skip*")
-#l(indent: 10pt, "linked: both come from *congestion* at the bottleneck link. more traffic -> queue fills -> loss ^^ -> resend -> throughput vv")
+#l(indent: 10pt, "throughput + packet (path) loss")
+#l(indent: 20pt, "- throughput < video bitrate -> buffer drains -> buffering")
+#l(indent: 20pt, "- router queue full -> packets ~droped~ dropped -> frames skip")
+#l(indent: 10pt, "linked: both come from congestion at the bottleneck link. more traffic -> queue fills -> loss ^^ -> resend -> throughput vv")
 
 #block(height: 100pt, width: 100%, breakable: false, {
   let y = 30pt
@@ -118,28 +126,28 @@
   warrow((270pt, y + 17pt), (340pt, y + 19pt), seed: 50)
   at(350pt, y + 2pt)[user]
   warrow((205pt, y + 40pt), (215pt, y + 62pt), seed: 60)
-  at(222pt, y + 44pt)[#text(size: 28pt, stroke: 0.3pt + ink)[X] drop = skip]
+  at(222pt, y + 44pt)[#text(size: 28pt)[X] drop = skip]
 })
 
 #q(3)
-#l(indent: 10pt, "*A -> circuit switching* -> only 3 users, always on, each gets a dedicated fixed rate, nothing wasted.")
-#l(indent: 10pt, "*B -> packet switching* -> bursty users share the link on demand (*statistical multiplexing*), way more users than reserved circuits.")
-#l(indent: 10pt, "*C -> Low-Power WAN* -> built for long range on low power, tolerates weak/variable signal (trades off data rate).")
+#l(indent: 10pt, "A -> circuit switching -> only 3 users, always on, each gets a dedicated fixed rate, nothing wasted.")
+#l(indent: 10pt, "B -> packet switching -> bursty users share the link on demand (statistical ~multiplxing~ multiplexing), way more users than reserved circuits.")
+#l(indent: 10pt, "C -> Low-Power WAN -> built for long range on low power, tolerates weak/variable ~singal~ signal (trades off data rate).")
 
 #q(4)
-#l(indent: 10pt, "*(i) TCP/IP.* it's the real implemented model (OSI is just a reference). fewer layers = less overhead on a slow, costly link.")
-#l(indent: 10pt, "but Earth -> Mars delay = 4 to 24 min one way, normal TCP ACKs time out -> add *DTN* (store + forward) on top of TCP/IP.")
+#l(indent: 10pt, "(i) TCP/IP. it's the real implemented model (OSI is just a reference). fewer layers = less overhead on a slow, costly link.")
+#l(indent: 10pt, "but Earth -> Mars delay = 4 to 24 min one way, normal TCP ACKs time out -> add DTN (store + forward) on top of TCP/IP.")
 
-#l(indent: 10pt, "*(ii)* remove *session layer* (OSI). its job (dialog ctrl, checkpoints) moves into the app -> less overhead.")
-#l(indent: 20pt, "impact: app must resume transfers itself after a blackout. never remove transport -> lose ports + reliability.")
+#l(indent: 10pt, "(ii) remove session layer (OSI). its job (dialog ctrl, checkpoints) moves into the app -> less overhead.")
+#l(indent: 20pt, "impact: app must resume transfers itself after a ~blakout~ blackout. never remove transport -> lose ports + reliabilty.")
 
-#block(height: 160pt, width: 100%, breakable: false, {
+#block(height: 138pt, width: 100%, breakable: false, {
   let names = ("application", "presentation", "session", "transport", "network", "data link", "physical")
-  wbox(40pt, 6pt, 140pt, 146pt, seed: 70)
+  wbox(40pt, 4pt, 130pt, 128pt, seed: 70)
   for (k, n) in names.enumerate() {
-    at(54pt + rnd(k) * 6pt, 9pt + k * 19pt)[#text(font: "Caveat", size: 20pt, n)]
+    at(54pt + rnd(k) * 6pt, 6pt + k * 17pt)[#text(font: "Caveat", size: 18pt, n)]
   }
-  let y = 9pt + 2 * 19pt
+  let y = 6pt + 2 * 17pt
   wl((50pt, y + 16pt), (140pt, y + 12pt), seed: 99, s: 1.2pt)
   warrow((250pt, y + 14pt), (160pt, y + 14pt), seed: 101)
   at(260pt, y)[remove]
