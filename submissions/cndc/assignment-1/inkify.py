@@ -1,7 +1,7 @@
 """Turn the clean typst render into something that looks written with a ballpoint on paper.
 
 Warps strokes (hand wobble), varies pen pressure, adds ink grain and a slight bleed,
-then lays the ink on plain paper. Run through inkify.sh.
+then lays the ink on plain white paper. Run through inkify.sh.
 """
 import sys
 import numpy as np
@@ -9,7 +9,7 @@ from PIL import Image
 from scipy.ndimage import gaussian_filter, map_coordinates
 
 rng = np.random.default_rng(7)
-PAPER = np.array([247, 245, 236], float)
+PAPER = np.array([255, 255, 255], float)
 INK = np.array([24, 36, 112], float)
 
 
@@ -42,8 +42,6 @@ def page(path, dpi):
     ink *= pressure * grain
 
     paper = np.ones((h, w, 3)) * PAPER
-    paper *= noise((h, w), 2, 0.975, 1.0)[..., None]     # paper fibre
-    paper *= noise((h, w), 200, 0.975, 1.0)[..., None]    # uneven light
 
     ink_rgb = INK * noise((h, w), 80, 0.92, 1.08)[..., None]
     out = paper * (1 - ink[..., None]) + ink_rgb * ink[..., None]

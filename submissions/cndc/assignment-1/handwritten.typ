@@ -2,7 +2,7 @@
 // Build: ./inkify.sh  (typst renders clean vector text, inkify.py warps it into pen ink on paper)
 
 #let ink = rgb("#16266e")
-#set page(paper: "a4", margin: (left: 14mm, right: 3mm, y: 16mm), fill: white)
+#set page(paper: "a4", margin: (left: 14mm, right: 3mm, y: 9mm), fill: white)
 #set text(font: "Caveat", size: 23pt, fill: ink, hyphenate: false)
 #set par(leading: 0.55em, spacing: 0.5em, justify: false)
 
@@ -10,8 +10,9 @@
 #let rnd(i) = calc.fract(calc.abs(calc.sin(i * 12.9898 + 78.233) * 43758.5453))
 
 // Handwriting fonts and a size factor each, so they look about the same height.
-// One hand for the whole sheet: a real person doesn't switch handwriting mid-line.
-#let hands = (("Caveat", 1.0),)
+// Handwriting fonts and a size factor each, so they look about the same height.
+// Caveat carries most of the sheet; the others only slip in now and then.
+#let hands = (("Caveat", 1.0), ("Nanum Pen", 1.08), ("Covered By Your Grace", 0.92), ("Shadows Into", 0.9))
 
 // A wobbly stroke from a to b.
 #let wl(a, b, seed: 0, s: 0.9pt) = {
@@ -52,7 +53,7 @@
   j.step()
   context {
     let i = j.get().first()
-    let main = 0
+    let main = if rnd(i * 3.1) < 0.2 { 1 } else { 0 }  // an occasional chunk in another hand
     let base = 23pt + rnd(i + 2) * 2pt
     let em = false
     let words = ()
@@ -65,7 +66,7 @@
       let close = w.match(regex("\*\W*$")) != none
       let w2 = w.replace("*", "")
       if open { em = true }
-      let pick = if rnd(s + 3) < 0.72 { main } else { calc.floor(rnd(s + 4) * hands.len()) }
+      let pick = if rnd(s + 3) < 0.86 { main } else { calc.floor(rnd(s + 4) * hands.len()) }
       let (font, f) = hands.at(pick)
       let shade = ink.lighten(rnd(s + 5) * 8%)
       words.push(box(move(dy: (rnd(s + 1) - 0.5) * 1.8pt,
@@ -132,13 +133,13 @@
 #l(indent: 10pt, "*(ii)* remove *session layer* (OSI). its job (dialog ctrl, checkpoints) moves into the app -> less overhead.")
 #l(indent: 20pt, "impact: app must resume transfers itself after a blackout. never remove transport -> lose ports + reliability.")
 
-#block(height: 175pt, width: 100%, breakable: false, {
+#block(height: 160pt, width: 100%, breakable: false, {
   let names = ("application", "presentation", "session", "transport", "network", "data link", "physical")
-  wbox(40pt, 6pt, 140pt, 166pt, seed: 70)
+  wbox(40pt, 6pt, 140pt, 146pt, seed: 70)
   for (k, n) in names.enumerate() {
-    at(54pt + rnd(k) * 6pt, 9pt + k * 22pt)[#text(font: "Caveat", size: 20pt, n)]
+    at(54pt + rnd(k) * 6pt, 9pt + k * 19pt)[#text(font: "Caveat", size: 20pt, n)]
   }
-  let y = 9pt + 2 * 22pt
+  let y = 9pt + 2 * 19pt
   wl((50pt, y + 16pt), (140pt, y + 12pt), seed: 99, s: 1.2pt)
   warrow((250pt, y + 14pt), (160pt, y + 14pt), seed: 101)
   at(260pt, y)[remove]
