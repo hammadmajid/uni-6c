@@ -2,8 +2,6 @@
 
 Some instructors want assignments handwritten. For those, the owner wants a **solved copy sheet**: a PDF of the answers that already looks handwritten, which they copy onto paper by hand. This folder is the engine; each assignment keeps only its own `cover.typ` and `handwritten.typ`. Worked example: `submissions/cndc/assignment-1/`.
 
-This is the one place the repo writes the answers, because the owner asked for it (2026-09-27). Everything else in `submissions/` stays "help prepare, don't write".
-
 ## Build
 
 ```
