@@ -222,10 +222,11 @@
 #let body-page-setup(course-code, class, body) = {
   set page(
     paper: "a4",
+    fill: white,
     numbering: "1",
-    margin: (top: 1.3in, bottom: 1.2in, x: 1in),
+    margin: (top: 1.3in, bottom: 1in, x: 1in),
     header-ascent: 20%,
-    footer-descent: 20%,
+    footer-descent: 0%,
     header: body-header,
     footer: body-footer(course-code, class),
     background: pad(border-inset, rect(width: 100%, height: 100%, stroke: px + c-border)),
