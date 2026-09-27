@@ -1,45 +1,46 @@
 # CNDC Lab — Lab Task 01: Packet Tracer topologies (build guide)
 
-> **Status:** Not started — this is a build guide, not the deliverable. The `.pkt` files are hands-on GUI work in Packet Tracer; I can't produce them. Work through the table below in order, save one `.pkt` per topology (or one file with 9 tabs if your Packet Tracer version supports multiple network tabs), then export screenshots/the file for submission.
-> **Due:** 28 September 2026, 10 marks.
-> **Brief:** `courses/cndc-lab/assignments/lab-task-01-packet-tracer-topologies.pdf`
-> **Submitted to:** Adeel Ahmed
+> **Status:** Build guide, not the deliverable. The `.pkt` and screenshots are your hands-on work.
+> **Due:** Mon 28 September 2026 (lab, 14:00), 10 marks. **Brief:** `courses/cndc-lab/assignments/lab-task-01-packet-tracer-topologies.pdf`. **Submitted to:** Adeel Ahmed.
+> **Budget:** ~60–90 min for all nine. Everything is Layer 2: no routers, no routing protocol.
 
-## What "provide connectivity" means for grading
-For every topology: assign IPs, then prove reachability with either the click-to-test **Simple PDU** tool (P key, click source then destination — green tick = success) or an actual `ping` from a PC's Desktop → Command Prompt. Take one screenshot per topology showing a successful ping/PDU. That screenshot *is* the evidence of "connectivity" — build fast, don't over-decorate.
+## Ground rules (apply to every topology)
 
-## Consistent addressing scheme (reuse this everywhere)
-One `/24` subnet per topology so you never have to think about masks mid-build: **`192.168.<N>.0/24`**, gateway/router or switch management (if you bother) at `.1`, end devices `.2`, `.3`, `.4`… N = the row number below.
+- **Devices:** `PC-PT` for end hosts, `Hub-PT` (6 ports) where the medium must be *shared* (bus), `2960-24TT` switch everywhere else.
+- **Cables:** Automatic (lightning bolt). It picks crossover for hub–hub / switch–switch / PC–PC and straight-through for PC–hub / PC–switch.
+- **Addressing:** topology N uses `192.168.N.0/24`, mask `255.255.255.0`, hosts `.1, .2, .3…` in the order you place them. No gateway needed (single subnet). Set IP in PC → Desktop → IP Configuration.
+- **Proof of connectivity:** from one PC, Desktop → Command Prompt → `ping` the *farthest* PC. Screenshot the topology with the command prompt window beside it. The first reply may time out (ARP); that's normal, the rest must succeed.
+- **Loops (ring, meshes, hybrid):** switches run spanning tree. Links show amber for ~30 s, then one or more go permanently amber (blocking). That is correct: it's how a physical loop is kept loop-free logically. Click **Fast Forward Time** (bottom bar) a few times instead of waiting. Never build a loop out of hubs: hubs don't run STP and it becomes a broadcast storm.
+- **Layout:** one `.pkt` with all nine laid out left-to-right, each labelled with the Note tool (N key) — e.g. "3a Extended star — 192.168.4.0/24". Or nine files; either is fine.
 
-## Devices and how to add extra ports
-- End device: **PC-PT** (default 1 NIC — enough for everything except full/partial mesh nodes if you use PCs there).
-- Shared-medium link: **Hub-PT** (a hub floods every port — this *is* what makes a bus topology behave like a bus in Packet Tracer; there's no literal coax cable device).
-- Switched link: **Switch-2960**.
-- Routed link / mesh node: **Router-1941** (2 onboard GigabitEthernet ports; if a node needs a 3rd link, power it off, open Physical tab, drag in an HWIC-2T or NM-1FE module, power back on).
-- Cabling: use the **Automatic** connection type (lightning-bolt icon) unless a link refuses to come up — then pick the explicit type (crossover between two same-tier devices, straight-through between different tiers).
+## The nine builds
 
-## The 9 topologies
+| # | Topology | Build | Ping (proves the defining property) |
+|---|----------|-------|---------------|
+| 1 | Point-to-point | PC1 — PC2, one cable, nothing in between. | PC1 → `192.168.1.2` |
+| 2 | Linear bus | Hub1—Hub2—Hub3—Hub4 in a straight line (the "backbone cable"), one PC on each hub (the "taps"). | PC1 → `192.168.2.4` (end to end of the bus) |
+| 3 | Distributed bus | Backbone Hub1—Hub2—Hub3, one PC each. Branch off the middle: Hub2—Hub4, and give Hub4 two PCs. The branch is what makes it "distributed" (a bus with branches). | PC on Hub1 → a PC on Hub4 |
+| 4 | Extended star | Central Switch0. Three Switches (S1–S3), each cabled to Switch0 only. Two PCs per S1–S3. | PC on S1 → PC on S3 (goes up through the centre and back down) |
+| 5 | Distributed star | Three stars (Switch + 3 PCs each), chained S1—S2—S3. No single central device. | PC on S1 → PC on S3 |
+| 6 | Ring | S1—S2—S3—S4—S1 (close the loop), one PC per switch. | PC1 → PC3 (opposite side). Point to the blocked (amber) port in your screenshot. |
+| 7 | Full mesh | 4 switches, **every pair linked**: 4×3/2 = **6** switch–switch cables. One PC per switch. | PC1 → PC4 |
+| 8 | Partial mesh | Same 4 switches + PCs, but only **5** links: the ring S1-S2-S3-S4-S1 plus one diagonal S1—S3. S2—S4 is deliberately missing. | PC2 → PC4 (no direct link, still reachable) |
+| 9 | Hybrid | Ring of three switches S1—S2—S3—S1. S1 has 3 PCs (star). S2 connects to Hub1—Hub2 with a PC each (bus). S3 has one PC. Star + ring + bus in one network. | PC on the bus → a PC on S1's star |
 
-| # | Topology | Devices | Layout | Connectivity check |
-|---|----------|---------|--------|---------------------|
-| 1 | Point-to-point | 2× PC | PC1 — PC2, one direct link | Ping PC2 from PC1. |
-| 2 | Linear bus | 1× Hub, 4× PC | All 4 PCs into the one hub | Ping across any two PCs — all share one collision domain. |
-| 3 | Distributed bus | 3× Hub, 6× PC | Hub1–Hub2–Hub3 chained in a line, 2 PCs per hub | Ping from a PC on Hub1 to a PC on Hub3 (crosses two hub segments). |
-| 4 | Extended star | 1× root Switch, 3× leaf Switch, 6× PC | Root switch to each leaf switch (tree, one level), 2 PCs per leaf | Ping between PCs on two *different* leaf switches — traffic must go up through the root. |
-| 5 | Distributed star | 3× Switch, 6× PC | Switches interconnected with each other (triangle) instead of one root, 2 PCs per switch | Ping between PCs on different switches. |
-| 6 | Ring | 4× Switch, 4× PC | Switch1–2–3–4–1, closing the loop; 1 PC per switch | 2960s run PVST by default, so one link goes into blocking automatically — that's correct, not a bug. Ping still succeeds because a spanning path remains. |
-| 7 | Full mesh | 3× Router, 3× Switch, 3× PC | Every router directly linked to both other routers (triangle, uses both onboard Gig ports — no extra modules needed); each router also has a switch+PC LAN | Enable a routing protocol (RIP or OSPF, one `router rip`/`router ospf 1` + `network` statements per router) so LAN-to-LAN pings succeed. |
-| 8 | Partial mesh | 4× Router, 4× Switch, 4× PC | Not every pair linked — e.g. R1–R2, R2–R3, R3–R4, R1–R3 (R2 and R4 have no direct link); each router also has a switch+PC LAN | Same dynamic routing setup. Ping from R4's PC to R2's PC — it must route through R3, proving multi-hop reachability with a link missing. This is the one where routing actually earns its marks (mesh #7 is all direct links, so routing there is almost trivial by comparison). |
-| 9 | Hybrid | reuse pieces above | Simplest honest hybrid: two routers point-to-point (topology 1) at the core, each router roots its own extended star (topology 4) of switches+PCs at the edge | Ping between a PC on one router's star and a PC on the other's — crosses both a star hop and the core P2P link. Any combination of ≥2 topologies from the list above satisfies the brief; this is just the fastest to build from what you already made. |
+IP example for #4 (Extended star, `192.168.4.0/24`): PCs on S1 = `.1, .2`, on S2 = `.3, .4`, on S3 = `.5, .6`. Same pattern everywhere else.
 
-## Order to build in
-Do them in the table's order — 7 and 8 share the routing-protocol setup, so do 7 first and copy the `router ospf`/`router rip` config pattern into 8 rather than re-deriving it. Do 9 last since it reuses 1 and 4.
+## Why these shapes (a viva may ask)
 
-## Router routing config (for #7, #8, #9's core link), one-liner pattern
-On each router, after interface IPs are set:
-```
-router ospf 1
-network 192.168.7.0 0.0.0.255 area 0
-network 192.168.7.4 0.0.0.255 area 0
-```
-(one `network` line per directly-connected subnet on that router; adjust the subnet numbers to whatever you actually assigned). Repeat per router in the mesh; OSPF handles the rest.
+- **Point-to-point:** a dedicated link between exactly two nodes.
+- **Bus:** every node shares one medium, so every frame reaches everyone. Hubs reproduce that in Packet Tracer (one collision domain). Use Simulation mode on #2 to show a ping from PC1 also being delivered to PC2 and PC3. That's the difference from a star built on a switch.
+- **Extended vs distributed star:** extended has a hierarchy (star of stars, one root). Distributed has several stars linked peer-to-peer with no root.
+- **Ring:** every node has exactly two neighbours. The loop gives redundancy, and STP turns it into a logical line.
+- **Mesh:** full mesh needs n(n−1)/2 links (6 for 4 nodes, 45 for 10: why nobody fully meshes big networks). Partial mesh keeps redundancy on the important paths only.
+- **Hybrid:** any combination of two or more of the above. Most real networks are hybrid.
+
+## If a ping fails
+
+1. Red dot on a link → wrong cable type; delete it and use Automatic.
+2. Amber everywhere on a loop → spanning tree still converging; Fast Forward Time.
+3. "Request timed out" on every reply → typo in the IP or the mask on one PC (all must be in the same `192.168.N.x`).
+4. Hub loop built by accident → delete one hub–hub link.
