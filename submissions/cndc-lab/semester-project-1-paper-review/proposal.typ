@@ -16,7 +16,7 @@
   doc-type: "Paper Review Proposal",
   number: "",
   date: "28 Sep 2026",
-  marks: "30",
+  marks: "7.5",
 )
 
 #body-page-setup(course-code, class)[

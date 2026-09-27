@@ -13,7 +13,7 @@
 //
 // Compile with the real Times New Roman metrics (matches the SZABIST portal
 // look exactly), and with tagged-PDF output disabled:
-//   typst compile --font-path /home/bine/Developer/uni/zabdocs --no-pdf-tags <file>.typ
+//   typst compile --font-path /home/bine/Developer/uni/zabdocs --no-pdf-tags <file>.typ <regno>.pdf
 // --no-pdf-tags is not optional: without it, some PDF viewers (confirmed:
 // GNOME Papers, Chrome's PDF viewer, Adobe Acrobat) render a solid black bar
 // over the repeating header on every page after the cover. Root cause not

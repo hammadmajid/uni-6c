@@ -1,6 +1,6 @@
 # SE — Assignment 1 (Project Proposal)
 
-> **Status:** Done, pending you confirming the black-bar fix actually holds (see below). `assignment-1.pdf` is otherwise ready to submit.
+> **Status:** Done, pending you confirming the black-bar fix actually holds (see below). `2312200.pdf` is otherwise ready to submit.
 > **Due:** tonight, 27 Sep 2026.
 > **Submitted to:** Awais Mahmood · **Marks:** 3.5 · Individual, section BsCS-5D.
 > **Brief:** `courses/se/assignments/assignment-01-requirements-engineering-project.pdf`
@@ -12,11 +12,11 @@ GNOME Papers, Chrome's PDF viewer and Adobe Acrobat all showed a solid black bar
 
 The one real structural difference I found between the cover (always fine) and the content pages (broken in those 3 apps): Typst wraps repeating header/footer/background content in tagged-PDF `/Artifact` marked-content blocks for accessibility; the cover's border isn't a page marginal, so it never gets this wrapping. I recompiled with `--no-pdf-tags`, which removes that wrapping entirely (verified byte-for-byte — same paint operators, just no `/Artifact BMC...EMC` around them) and does not change how it looks in poppler/Ghostscript.
 
-**This is a tested hypothesis, not a confirmed fix** — I have no way to open GNOME Papers/Chrome/Acrobat myself in this environment. Please check the current `assignment-1.pdf` in whichever app showed the bar before. If it's gone, great. If it's still there, tell me and I'll stop guessing at the PDF export and instead rebuild the border without Typst's page-marginal machinery at all (e.g. dropping the enclosing box border on content pages, keeping just the header/footer rules).
+**This is a tested hypothesis, not a confirmed fix** — I have no way to open GNOME Papers/Chrome/Acrobat myself in this environment. Please check the current `2312200.pdf` in whichever app showed the bar before. If it's gone, great. If it's still there, tell me and I'll stop guessing at the PDF export and instead rebuild the border without Typst's page-marginal machinery at all (e.g. dropping the enclosing box border on content pages, keeping just the header/footer rules).
 
 ## To recompile after edits
 ```
-typst compile --root /home/bine/Developer/uni/6c --font-path /home/bine/Developer/uni/zabdocs --no-pdf-tags submissions/se/assignment-1/assignment-1.typ
+typst compile --root /home/bine/Developer/uni/6c --font-path /home/bine/Developer/uni/zabdocs --no-pdf-tags submissions/se/assignment-1/assignment-1.typ submissions/se/assignment-1/2312200.pdf
 ```
 `--no-pdf-tags` matters — don't drop it, it's the black-bar mitigation above. Drop `--font-path` and it still compiles, just with Liberation Serif standing in for Times New Roman (close, not pixel-identical).
 
