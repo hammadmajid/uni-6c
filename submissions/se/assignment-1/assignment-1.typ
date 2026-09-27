@@ -17,9 +17,7 @@
 
 #body-page-setup(course-code, class)[
 
-= Title of the Project
-
-*LatencyRoute*: a latency-aware request router.
+= LatencyRoute: a latency-aware request router.
 
 = Problem Statement
 
@@ -27,7 +25,7 @@ Most small self-hosted setups put a handful of app instances behind a reverse pr
 
 = Scope
 
-The router sits in front of N backend workers. Each worker tracks its own recent response time as an exponential moving average, and how many requests it is currently handling. For each incoming request, the router picks a few workers at random, checks their current numbers, and sends the request to the better one. This is the *power of two choices* idea, so it never has to poll every worker on every request.
+The router sits in front of N backend workers. Each worker tracks its own recent response time as an exponential moving average, and how many requests it is currently handling. For each incoming request, the router picks a few workers at random, checks their current numbers, and sends the request to the better one. This is the *power of two choices* idea @mitzenmacher, so it never has to poll every worker on every request. The design is a scaled-down version of Google's Prequal load balancer @prequal, which routes by probed latency and requests in flight instead of CPU load.
 
 == What I Will Build
 
@@ -44,7 +42,7 @@ A backend systems project with a small web dashboard. The router is written in N
 
 = Software Process Model
 
-The requirements are not fully settled: the real tuning (how many workers to probe, how fast the latency average should decay) cannot be picked correctly before there is a running version to test it against. That points at *incremental development* over waterfall: build a working slice, measure it, adjust, repeat.
+The requirements are not fully settled: the real tuning (how many workers to probe, how fast the latency average should decay) cannot be picked correctly before there is a running version to test it against. That points at *incremental development* over waterfall @sommerville[§2.1.2]: build a working slice, measure it, adjust, repeat.
 
 == Iterations
 
@@ -54,5 +52,7 @@ The requirements are not fully settled: the real tuning (how many workers to pro
 + *Evaluation:* load test round-robin against the new router, tune the parameters from what the numbers show, finish the dashboard.
 
 *Trade-off I am accepting:* less upfront documentation than waterfall, and the usual incremental risk of the code getting messier iteration over iteration if I do not clean it up. I am budgeting time for that at the start of iterations 3 and 4.
+
+#bibliography("refs.bib", title: "References", style: "ieee")
 
 ]
