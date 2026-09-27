@@ -2,7 +2,7 @@
 // Build: ./inkify.sh  (typst renders clean vector text, inkify.py warps it into pen ink on paper)
 
 #let ink = rgb("#16266e")
-#set page(paper: "a4", margin: (x: 22mm, y: 18mm), fill: white)
+#set page(paper: "a4", margin: (left: 14mm, right: 3mm, y: 16mm), fill: white)
 #set text(font: "Caveat", size: 23pt, fill: ink, hyphenate: false)
 #set par(leading: 0.55em, spacing: 0.5em, justify: false)
 
@@ -10,13 +10,11 @@
 #let rnd(i) = calc.fract(calc.abs(calc.sin(i * 12.9898 + 78.233) * 43758.5453))
 
 // Handwriting fonts and a size factor each, so they look about the same height.
-#let hands = (
-  ("Caveat", 1.0), ("Nanum Pen", 1.22), ("Covered By Your Grace", 0.92),
-  ("Shadows Into", 0.88), ("Caveat", 1.0), ("Reenie Beanie", 1.18),
-)
+// One hand for the whole sheet: a real person doesn't switch handwriting mid-line.
+#let hands = (("Caveat", 1.0),)
 
 // A wobbly stroke from a to b.
-#let wl(a, b, seed: 0, s: 1.3pt) = {
+#let wl(a, b, seed: 0, s: 0.9pt) = {
   let mx = (a.at(0) + b.at(0)) / 2 + (rnd(seed) - 0.5) * 5pt
   let my = (a.at(1) + b.at(1)) / 2 + (rnd(seed + 1) - 0.5) * 5pt
   place(curve(stroke: (paint: ink, thickness: s, cap: "round"),
@@ -54,8 +52,8 @@
   j.step()
   context {
     let i = j.get().first()
-    let main = calc.floor(rnd(i * 3.1) * 3)  // this chunk's dominant hand
-    let base = 21pt + rnd(i + 2) * 5pt
+    let main = 0
+    let base = 23pt + rnd(i + 2) * 2pt
     let em = false
     let words = ()
     for (k, w) in src.split(" ").enumerate() {
@@ -69,17 +67,17 @@
       if open { em = true }
       let pick = if rnd(s + 3) < 0.72 { main } else { calc.floor(rnd(s + 4) * hands.len()) }
       let (font, f) = hands.at(pick)
-      let shade = ink.lighten(rnd(s + 5) * 18%).darken(rnd(s + 6) * 15%)
-      words.push(box(move(dy: (rnd(s + 1) - 0.5) * 4pt,
-        rotate((rnd(s + 2) - 0.5) * 5deg, reflow: false,
-          text(font: font, size: base * f * (0.92 + rnd(s + 7) * 0.16), fill: shade,
-            stroke: if em { 0.55pt + shade } else { 0.12pt + shade }, w2)))))
+      let shade = ink.lighten(rnd(s + 5) * 8%)
+      words.push(box(move(dy: (rnd(s + 1) - 0.5) * 1.8pt,
+        rotate((rnd(s + 2) - 0.5) * 1.8deg, reflow: false,
+          text(font: font, size: base * f * (0.97 + rnd(s + 7) * 0.06), fill: shade,
+            stroke: if em { 0.3pt + shade } else { none }, w2)))))
       if close { em = false }
     }
-    let dx = indent + rnd(i) * 22pt
+    let dx = indent + rnd(i) * 10pt
     block(above: 0.4em + rnd(i + 7) * 0.5em, below: 0.5em,
-      move(dx: dx, rotate((rnd(i + 1) - 0.5) * 2deg,
-        block(width: 100% - dx - 10pt,
+      move(dx: dx, rotate((rnd(i + 1) - 0.5) * 1deg,
+        block(width: 100% - dx,
           words.enumerate().map(((k, w)) => w + h(0.18em + rnd(i * 13 + k) * 0.3em)).join()))))
   }
 }
@@ -87,10 +85,10 @@
   j.step()
   context {
     let i = j.get().first()
-    block(sticky: true, above: 0.9em + rnd(i) * 0.6em, below: 0.3em, move(dx: rnd(i + 3) * 8pt, rotate((rnd(i + 4) - 0.5) * 4deg, reflow: true, origin: left,
+    block(sticky: true, above: 0.9em + rnd(i) * 0.6em, below: 0.3em, move(dx: rnd(i + 3) * 8pt, rotate((rnd(i + 4) - 0.5) * 2deg, reflow: true, origin: left,
       box(inset: (bottom: 4pt), {
-        text(font: hands.at(calc.floor(rnd(i + 5) * 3)).at(0), size: 36pt, stroke: 0.7pt + ink)[Q\##n:]
-        place(bottom + left, dy: 2pt, box(width: 70pt, height: 4pt, wl((0pt, 2pt), (66pt, 3pt), seed: i, s: 1.6pt)))
+        text(font: "Caveat", size: 34pt, stroke: 0.35pt + ink)[Q\##n:]
+        place(bottom + left, dy: 2pt, box(width: 70pt, height: 4pt, wl((0pt, 2pt), (66pt, 3pt), seed: i, s: 1pt)))
       }))))
   }
 }
@@ -119,7 +117,7 @@
   warrow((270pt, y + 17pt), (340pt, y + 19pt), seed: 50)
   at(350pt, y + 2pt)[user]
   warrow((205pt, y + 40pt), (215pt, y + 62pt), seed: 60)
-  at(222pt, y + 44pt)[#text(size: 28pt, stroke: 0.8pt + ink)[X] drop = skip]
+  at(222pt, y + 44pt)[#text(size: 28pt, stroke: 0.3pt + ink)[X] drop = skip]
 })
 
 #q(3)
@@ -138,10 +136,10 @@
   let names = ("application", "presentation", "session", "transport", "network", "data link", "physical")
   wbox(40pt, 6pt, 140pt, 166pt, seed: 70)
   for (k, n) in names.enumerate() {
-    at(54pt + rnd(k) * 6pt, 9pt + k * 22pt)[#text(font: hands.at(calc.floor(rnd(k + 9) * 3)).at(0), size: 20pt, n)]
+    at(54pt + rnd(k) * 6pt, 9pt + k * 22pt)[#text(font: "Caveat", size: 20pt, n)]
   }
   let y = 9pt + 2 * 22pt
-  wl((50pt, y + 16pt), (140pt, y + 12pt), seed: 99, s: 2pt)
+  wl((50pt, y + 16pt), (140pt, y + 12pt), seed: 99, s: 1.2pt)
   warrow((250pt, y + 14pt), (160pt, y + 14pt), seed: 101)
   at(260pt, y)[remove]
 })
