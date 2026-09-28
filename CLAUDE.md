@@ -22,6 +22,17 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 3. If slides show the instructor's emphasis differs from the outline, follow the slides for exam scope. Note the discrepancy in the lesson's exam callout.
 4. Run `pnpm build`. It compiles every MDX file, so it catches content errors.
 
+## Fetching slides from Google Classroom
+
+When the owner asks to "download the slides", pull them yourself with Claude in Chrome. This worked on 2026-09-29.
+
+- **Profile.** Use the Chrome profile named "School", signed in as `2312200@szabist-isb.pk` (the extension calls it "Hammad Uni"). Other connected browsers are the personal Gmail profile, which has no classes. Verify with `find` for the Google Account avatar button, whose label contains the account email. If it is wrong, call `switch_browser` and have the owner click Connect in the School profile.
+- **Chrome setup (done once).** The School profile skips "Ask where to save", uses `~/Downloads` as the location, and downloads PDFs instead of opening them. A save dialog blocks automation, so if one appears, check `chrome://settings/downloads`.
+- **Find the files.** Open the class's Stream at `classroom.google.com/c/<classId>`, open each material post, then `find` the attachment links and `read_page` each one with its `ref_id` to get the `href` (`drive.google.com/file/d/<fileId>/view`). JavaScript cannot read these hrefs, because the extension redacts query strings. The Classwork page (`/w/<classId>/t/all`) sometimes hangs on "Loading"; the Stream loads reliably. The "Class Drive folder" link shows nothing to students. Database (BSCS-4A) is class `ODI2NDAwNjY2MzI3`.
+- **Download.** Instructors turn off downloads in Classroom's inline preview, but the full Drive viewer at `drive.google.com/file/d/<fileId>/view?authuser=0` still has a download icon in its toolbar (about x=192, y=88 at 1366 px wide). Wait about 4 s after navigating, click it, then confirm with `ls -t ~/Downloads`. If nothing arrives, the page had not loaded: screenshot and click again.
+- **Text without downloading.** `get_page_text` on the Drive viewer returns slide text, but only for pages already rendered, so scroll to the last page first.
+- **File them.** Convert `.pptx` with `soffice --headless --convert-to pdf` in the scratchpad. Compare page counts and first-page text with what is already in `courses/<slug>/lectures/` so repeats are not filed twice (instructors re-post lecture 1 under new names). Copy the result in as `lecture-NN-<topic>.pdf`. Leave the originals in `~/Downloads`, and ignore files there that you did not download. Close your tab when done.
+
 ## Lesson rules
 
 - Open with a `Predict` (prediction gap) before any explanation.
@@ -55,7 +66,7 @@ Interactive Next.js app that teaches every course the owner takes this semester,
 | `web-tech` | CSC 4717 Web Technologies I (instructor: Zubair Ahmed Chatta). Java stack: JDK 26, Servlets on Tomcat 11, PostgreSQL, JDBC, IntelliJ, DBeaver. Slides so far: TCP/IP and ports, HTTP request/response, URLs, Tomcat directory layout, WAR and webapp structure, servlet GET/POST. A separate 160-page Java basics deck (classes, abstract classes, interfaces, singletons, JDBC) is a reference, not lecture order. | No outline yet. Weeks 1 to 2 built from lecture 01 (go-ahead 2026-09-24); course.json lists only built weeks. Quiz 1 on 2026-09-28, scope announced: Java basics deck pages 1 to 50, up to abstract classes (`courses/web-tech/quizzes/quiz-1-notes.md`); lessons `week-02/java-basics-to-abstract` and `week-02/quiz-1-revision`. The Java deck is now quiz material, not just a reference. |
 | `ai` | CSC 4101 Artificial Intelligence (Awais Nawaz). Russell & Norvig AIMA 4th ed. | No theory outline. Weeks 1 to 2 built from lectures 01 to 02 (go-ahead 2026-09-24); course.json lists only built weeks. |
 | `ai-lab` | CSCL 4101 AI Lab (Muhammad Ishfaq), separate course with its own grade. The outline PDF says CSCL 3206 and "Semester 3"; that is a stale header, the owner confirmed CSCL 4101. No lab manuals; Classroom tasks go in `courses/ai-lab/assignments/` with a `.md` transcript. | Outline in hand, full 15-week roadmap. Labs 01 to 04 built (weeks 1 to 4). `components/ai-lab/search.ts` is built so greedy and A* (weeks 5, 6) are one `STRATEGIES` entry each. |
-| `db` | CSC 2203 Database Systems (Saira Shaheen). Taken with section BS(CS)-4A. Elmasri & Navathe. | No outline. Week 1 built from lecture 01 (go-ahead 2026-09-24); course.json lists only built weeks. |
+| `db` | CSC 2203 Database Systems (Saira Shaheen). Taken with section BS(CS)-4A. Elmasri & Navathe. | No outline. Week 1 built from lecture 01 (go-ahead 2026-09-24); course.json lists only built weeks. Lectures 01 to 03 in `courses/db/lectures/` (02: data models, three-schema, architectures; 03: ER model in Chen notation, attribute types, keys, car-sales case study). Quiz 1 on 2026-10-02, scope all lectures so far, owner expects an ERD question. |
 | `se` | CSC 3109 Software Engineering (Awais Mahmood). Taken with section BS(CS)-5D. | No materials, no outline. Do not build until the owner says so. |
 | `tbw` | CSC 1205 Technical and Business Writing (Sana Jaffery). | No materials, no outline. Do not build until the owner says so. |
 
