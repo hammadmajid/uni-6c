@@ -1,0 +1,256 @@
+Lecture 2 follows Elmasri chapter 2. This lesson covers its first half: what a data model is, the three categories, and the difference between a database's description and the database itself. Week 1 already taught the three-schema architecture; here you only see it again through the lecture's own example.
+
+<Predict
+  id="schema-or-state"
+  prompt="The STUDENT table has columns Name, StdNo, Level, Field and holds 5,000 rows. The registrar inserts 200 new students. A classmate says 'the database changed'. The DBA says 'the database did not change'. Who is right, and what does each of them mean by 'the database'?"
+  answer="Both. The classmate means the database state (the data at this moment), which changed with every insert. The DBA means the database schema (the description: tables, columns, constraints), which did not change. Only ALTER-style changes touch the schema."
+>
+
+**Both are right, because they mean different things.** Your classmate means the **database state**: the data in the database at this moment. Every insert produces a new state, so 200 inserts produced 200 new states. The DBA means the **database schema**: the description of the database (which tables, which columns, which types and constraints). Nobody touched that.
+
+Keeping these two apart is the whole second half of this lesson. The exam words are **intension** for the schema and **extension** for the state.
+
+</Predict>
+
+## 1. What a data model is
+
+The slide's definition, which is Elmasri's: a **data model** is *a collection of concepts that can be used to describe the structure of a database*. "Structure" means three things:
+
+- **data types**: what kind of values are stored,
+- **relationships**: how the pieces connect,
+- **constraints**: rules the data must obey (every student has a StdNo, no two share one).
+
+A data model is the tool for **data abstraction**: it hides the details of how data is stored and keeps only what matters for understanding it. Most data models also include **basic operations** for retrieval and update, and many let you define **user-defined operations** on top. The slide's examples are *Calculate GPA* and *Update Inventory*.
+
+In systems terms: a data model is the vocabulary a schema is written in. The relational model's vocabulary is tables, columns, keys. The ER model's is entities, attributes, relationships. Your STUDENT table is not a data model; it is a schema written using one.
+
+## 2. Three categories, by how close to the user
+
+<DbDataModelLadder />
+
+| Category | Also called | Concepts it uses | Lecture's examples |
+|---|---|---|---|
+| **High-level** | conceptual | entities, attributes, relationships | ER model, object-oriented |
+| **Representational** | implementation, logical | records: rows and columns, or linked records | relational, network, hierarchical |
+| **Low-level** | physical | record formats, record orderings, access paths | files, indexes, B-trees |
+
+**Conceptual models** use concepts close to how users see data. An **entity** is a real-world object or concept (an employee, a project). An **attribute** is a property of interest that describes an entity (the employee's name). A **relationship** is an interaction among entities (an employee works on a project). You meet all three properly in week 3.
+
+**Representational models** are "in between": an end user can understand them, and they are close enough to storage to be implemented directly. They represent data using **record structures**, which is why they are also called record-based models. The relational model is the one used most today; network and hierarchical models are the older ones.
+
+**Physical models** describe how data is stored as files: record formats, the order records are kept in, and **access paths** (an index is an access path: a structure that makes finding a record fast).
+
+<QuickCheck
+  id="dm-category-er"
+  question="A designer draws a diagram of STUDENT, COURSE and ENROLLS_IN with their attributes, to show the registrar. Which category of data model is the designer using?"
+  options={["High-level (conceptual)", "Representational (implementation)", "Low-level (physical)", "External view"]}
+  answer="High-level (conceptual)"
+  explanation="Entities, attributes and relationships, drawn for a non-technical user: that is a conceptual model, the ER model. It says nothing about tables or files yet."
+  feedback={{
+    "Representational (implementation)": "Representational models use record structures such as tables. A diagram of entities and relationships comes before the tables exist.",
+    "Low-level (physical)": "Physical models describe files, record formats and access paths. Nothing here is about storage.",
+    "External view": "An external view is a level of the three-schema architecture, not a category of data model. It is one of the lecture's mix-ups; see the callout below."
+  }}
+/>
+
+<QuickCheck
+  id="dm-category-physical"
+  question="Which of these is described by a low-level (physical) data model?"
+  options={[
+    "The STUDENT file is sorted by StdNo and has a B-tree index on Name",
+    "STUDENT has columns Name, StdNo, Level and Field",
+    "A student enrolls in many courses",
+    "The Finance office sees only fee columns"
+  ]}
+  answer="The STUDENT file is sorted by StdNo and has a B-tree index on Name"
+  explanation="Record ordering (sorted by StdNo) and an access path (the index) are the physical model's concepts, exactly as the slide lists them."
+  feedback={{
+    "STUDENT has columns Name, StdNo, Level and Field": "Columns in a table are a record structure: the representational (relational) model.",
+    "A student enrolls in many courses": "A relationship between entities is a conceptual (ER) concept.",
+    "The Finance office sees only fee columns": "That is an external view, a level of the three-schema architecture, not a physical model."
+  }}
+/>
+
+### The lecture's four "types of data models"
+
+Slides 12 to 14 then list four types: **relational**, **entity-relationship**, **object-oriented** and **semi-structured**. These are specific models, and they sit on different rungs of the ladder:
+
+| Model | What it is | Rung |
+|---|---|---|
+| Relational | Data in tables (relations) of rows and columns | representational |
+| Entity-relationship | Entities, their attributes, and relationships among them; a set of same-type entities is an **entity set**, of same-type relationships a **relationship set** | conceptual |
+| Object-oriented | ER plus functions (methods), encapsulation and object identity; rich types including structured and collection types | conceptual, close to implementation |
+| Semi-structured | Data with tags or markers that separate fields and nest them, without a fixed table shape: XML, JSON | representational, self-describing |
+
+The semi-structured model is the one you use daily. A JSON document carries its field names with each record, so two records can have different fields:
+
+```json
+[
+  { "name": "Saman", "stdNo": "040342", "phones": ["0300-1234567", "051-7654321"] },
+  { "name": "Dinesh", "stdNo": "030231", "field": "ENT" }
+]
+```
+
+Postgres stores this directly in a `jsonb` column, next to ordinary relational columns.
+
+<Callout type="exam" title="Three places the slides mix up the categories">
+- **Slide 13** calls the ER model "the **logical** representation of data as objects and relationships". Reproduce that line if asked for the lecture's definition, but the ER model is a **conceptual** (high-level) model. "Logical" is the usual name for the representational level, where the relational model sits.
+- **Slide 12** calls relational, ER, object-oriented and semi-structured "four data models used for understanding the structure of the database", as if they were one list of alternatives. They are models from different categories. If a question asks for the **categories**, answer high-level, representational, low-level; if it asks for **types** "according to the lecture", give the four.
+- **Lecture 3's recap slide** lists "External Views (customer, manager, auditor)" as a fourth category of data model. External views belong to the **three-schema architecture**; they are not a kind of data model.
+</Callout>
+
+<QuickCheck
+  id="dm-semistructured"
+  question="An online shop stores each product as a JSON document. Phones have a battery field, shirts have size and colour, and no two categories share a fixed set of columns. Which data model is this?"
+  options={["Semi-structured", "Relational", "Hierarchical", "Physical"]}
+  answer="Semi-structured"
+  explanation="Tags (field names) separate the elements and records need not share a structure: the slide's definition of semi-structured data."
+  feedback={{
+    "Relational": "The relational model forces every row of a table to have the same columns. Here each product has its own fields.",
+    "Hierarchical": "JSON can nest, but the hierarchical model is a record-based model from the 1960s with fixed record types, not self-describing documents.",
+    "Physical": "Nothing here is about files, ordering or access paths."
+  }}
+/>
+
+## 3. Schema versus database state
+
+It is important to distinguish between the **description** of a database and the **database itself**.
+
+- The **database schema** is the description. It is specified during design and is **not expected to change frequently**. Elmasri also calls it the **intension**.
+- A **schema diagram** is the conventional way a data model displays a schema: each table's name and its columns, no data.
+- Each object in the schema, such as STUDENT or COURSE, is a **schema construct**.
+- The **database state** is the data in the database at a particular moment. It is also called the **extension**, a **snapshot**, or the current set of **instances** (occurrences).
+
+Step through what happens to the lecture's STUDENT table.
+
+<DbSchemaVsState />
+
+The vocabulary the stepper walked through, in the order it happens:
+
+| Term | Meaning |
+|---|---|
+| **Empty state** | Schema defined to the DBMS, no data yet |
+| **Initial state** | The database first populated or loaded with data |
+| **Current state** | The state at this moment; every insert, delete or update produces a new one |
+| **Valid state** | A state that satisfies the structure and constraints in the schema. The DBMS guarantees every state is valid, by rejecting writes that would break a constraint |
+| **Schema evolution** | A change to the schema itself, made only when requirements change (a new data item to store for each record) |
+
+<Callout type="key-idea" title="A memory hook from your own work">
+A migration file is schema evolution. The rows your app writes all day are state changes. Your team reviews migrations carefully because they are rare and change the intension; nobody reviews an INSERT.
+</Callout>
+
+<QuickCheck
+  id="schema-state-which"
+  question="The registrar's office runs ALTER TABLE student ADD COLUMN email. What has happened, in the lecture's terms?"
+  options={["Schema evolution", "A new database state, with the schema unchanged", "The database has returned to the empty state", "A new schema construct was added to the external level only"]}
+  answer="Schema evolution"
+  explanation="Adding a data item to be stored for each record changes the schema (the intension). The slide's own example of schema evolution is exactly this: we may decide another data item needs to be stored for each record."
+  feedback={{
+    "A new database state, with the schema unchanged": "The schema did change: STUDENT now has a column it did not have. Inserts and deletes change only the state.",
+    "The database has returned to the empty state": "The existing rows are still there; they just get NULL for the new column.",
+    "A new schema construct was added to the external level only": "STUDENT is a table in the conceptual schema, so every view built on it is affected, not only one external view."
+  }}
+/>
+
+<QuickCheck
+  id="schema-state-extension"
+  type="true-false"
+  question="The database schema is also called the extension, and the database state is also called the intension."
+  answer="False"
+  explanation="The other way round. Schema = intension (the definition, like the intension of a word: what it means). State = extension (the actual members at a moment). Mnemonic: the extension extends as you insert rows."
+/>
+
+<QuickCheck
+  id="schema-state-valid"
+  question="StdNo is declared unique. An application tries to insert a second student with StdNo 040342. The DBMS rejects the insert. Which idea from the slides explains why?"
+  options={[
+    "The DBMS ensures every database state is a valid state",
+    "Schema evolution",
+    "The schema is not expected to change frequently",
+    "The initial state must be empty"
+  ]}
+  answer="The DBMS ensures every database state is a valid state"
+  explanation="A valid state satisfies the structure and constraints in the schema. Accepting the duplicate would move the database into an invalid state, so the DBMS refuses the write and the current state stays as it was."
+  feedback={{
+    "Schema evolution": "Nothing about the schema changed; the rule was already in it.",
+    "The schema is not expected to change frequently": "True, but it is about how often the description changes, not about rejecting data.",
+    "The initial state must be empty": "The empty state comes before the initial state; neither is relevant to rejecting one insert."
+  }}
+/>
+
+## 4. The three levels again, through the lecture's example
+
+Week 1's lesson on the database approach taught the three-schema architecture and both kinds of data independence. Slide 18 shows the same idea with one employee:
+
+| Level | What it holds for Fatima Abdullah |
+|---|---|
+| **External** (two views) | *Employee Data*: first name Fatima, last name Abdullah, DOB 12 Sept 1980. *Workers*: name F. Abdullah, age 34 Y 10 d, department Sales |
+| **Conceptual** | One table row: Name, DOB, Dependent (5), Dep. Id (D019) |
+| **Internal** | A stored record with a header: RH, Fatima Abdullah 12081980 5 D019 |
+| Below the DBMS | The operating system's bits on disk |
+
+Two things to see. First, the two external views show the **same stored fact differently**: one splits the name, the other abbreviates it, and "Age 34 Y, 10 d" is not stored anywhere; it is computed from DOB when the view is read. Second, the arrows between levels are **mappings**: external/conceptual and conceptual/internal. Changing one level means updating a mapping, not the levels on either side of it. That is data independence.
+
+The slide also labels which kind of data model describes each level: a **conceptual** model at the external level, a **representational** model at the conceptual level, a **physical** model at the internal level. Elmasri's version is that external and conceptual schemas are usually implemented in a representational model, often designed first in a high-level one.
+
+<QuickCheck
+  id="tsa-age"
+  question="In slide 18, the Workers view shows 'Age: 34 Y, 10 d'. At which level is this value stored?"
+  options={[
+    "It is not stored; the view computes it from DOB through the external/conceptual mapping",
+    "The conceptual level, in the Age column",
+    "The internal level, in the stored record",
+    "The external level, in the Workers file"
+  ]}
+  answer="It is not stored; the view computes it from DOB through the external/conceptual mapping"
+  explanation="The conceptual table has Name, DOB, Dependent and Dep. Id, and no age. The Workers view derives age from DOB each time it is read. Views need not be stored: that is exactly what makes multiple views cheap."
+  feedback={{
+    "The conceptual level, in the Age column": "Look at the conceptual table on the slide: its columns are Name, DOB, Dependent, Dep. Id. There is no Age.",
+    "The internal level, in the stored record": "The stored record holds 12081980, the date of birth, not an age.",
+    "The external level, in the Workers file": "External views are not files. They are descriptions the DBMS maps onto the conceptual schema when a user reads them."
+  }}
+/>
+
+<Deeper kind="exam" title="Model answer: differentiate between a data model, a schema and an instance, with examples (5 marks)">
+
+- A **data model** is a collection of concepts used to describe the structure of a database: its data types, relationships and constraints, usually with basic retrieval and update operations. It is the vocabulary, not a particular database. *Example: the relational model (tables, columns, keys); the ER model (entities, attributes, relationships).*
+- A **schema** (intension) is the description of one particular database, written in a data model's concepts. It is specified at design time, shown as a schema diagram, and rarely changes; a change is called schema evolution. *Example: STUDENT(Name, StdNo, Level, Field), COURSE(Name, Code, Credits, Department).*
+- An **instance** or **database state** (extension, snapshot) is the data in the database at a particular moment. Every insert, delete or update produces a new state, and the DBMS ensures each one is valid against the schema. *Example: the two rows (Saman, 040342, 3, CSE) and (Dinesh, 030231, 4, ENT).*
+
+One line to finish: the schema is fixed while the state changes constantly, and one data model can describe many different schemas.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: explain the categories of data models (5 marks)">
+
+Data models are categorised by the concepts they use to describe the database structure.
+
+1. **High-level or conceptual** models use concepts close to how users perceive data: entities (real-world objects such as EMPLOYEE), attributes (properties such as the employee's name) and relationships (such as WORKS_ON). Example: the ER model.
+2. **Representational or implementation** models are understood by end users but are close to how data is organised in the computer. They hide some storage details but can be implemented directly, and represent data with record structures. Examples: relational (most used), network and hierarchical.
+3. **Low-level or physical** models describe how data is stored in files: record formats, record orderings and access paths such as indexes.
+
+A labelled ladder (users at the top, disk at the bottom) earns the diagram mark.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=RJ9TpkWKyU0",
+    "title": "DataAcademy: Conceptual, Logical & Physical Data Models",
+    "kind": "video",
+    "why": "One example carried down all three rungs of the ladder, drawn as it goes. Industry calls the middle rung 'logical'; the lecture calls it representational."
+  },
+  {
+    "href": "https://www.postgresql.org/docs/current/datatype-json.html",
+    "title": "PostgreSQL: JSON types",
+    "kind": "docs",
+    "why": "The semi-structured model living inside a relational DBMS. Read the jsonb section and try the containment operator on the JSON example above."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Database_schema",
+    "title": "Database schema",
+    "kind": "blog",
+    "time": "5 min",
+    "why": "Schema versus instance in general terms, including how the word shifts meaning between Elmasri and Postgres, where a 'schema' is also a namespace."
+  }
+]} />

@@ -1,0 +1,322 @@
+Entities and attributes describe the things. This lesson covers the lines between them, how many of each can sit at the ends of a line, and which attributes identify an entity. That is the second half of lecture 3 (slides 21–22, 51 and 53–64), plus two ideas the lecture's learning outcomes promise but the slides only sketch: participation and weak entities.
+
+<Predict
+  id="where-is-the-one"
+  prompt="A teacher teaches many sections; each section is taught by exactly one teacher. In a Chen diagram TEACHER — TEACHES — SECTION, you write a 1 and an N on the two lines. Which line gets the 1: the one touching TEACHER, or the one touching SECTION?"
+  answer="The 1 goes on the TEACHER side and the N on the SECTION side. Read each label as: for one entity at the other end, this many of me."
+>
+
+**TEACHER 1, SECTION N.** A label sits next to the entity it counts. Hold one SECTION and ask how many TEACHERs it can have: one, so write 1 beside TEACHER. Hold one TEACHER and ask how many SECTIONs: many, so write N beside SECTION.
+
+If you put the 1 next to SECTION, the diagram says each teacher teaches one section and a section can have many teachers, which is the opposite rule. This is the most common way to lose the cardinality mark, and it is easy to check: read the diagram back as two sentences.
+
+</Predict>
+
+## 1. Relationships, relationship types and relationship sets
+
+A **relationship** is an association among entities: Ali ENROLLS_IN Databases. The slides draw it as a **diamond**, named with a verb in capitals, joined by lines to the entity types it links.
+
+The same three-way split you learned for entities applies here:
+
+| Entity side | Relationship side | Example |
+|---|---|---|
+| Entity type (rectangle) | **Relationship type** (diamond) | ENROLLS_IN between STUDENT and COURSE |
+| Entity instance | **Relationship instance** | Ali enrolled in Databases |
+| Entity set | **Relationship set** | every enrollment that exists right now |
+
+Slide 22 defines a relationship set as a "collection of similar relationships", for example all enrollments in different courses. Each instance links exactly one entity from each participating type: one enrollment is one student plus one course. The number of entity types a relationship links is its **degree**. Almost everything you draw this term is **binary** (degree 2). A ternary relationship, such as SUPPLIER supplies PART to PROJECT, links three.
+
+A relationship can have attributes of its own. **Grade** belongs to neither STUDENT (Ali has a different grade in every course) nor COURSE (every student gets a different grade), so in Elmasri it hangs off the ENROLLS_IN diamond as an oval.
+
+<QuickCheck
+  id="rel-set"
+  question="Ali is enrolled in Databases and in AI. Sara is enrolled in Databases. How many relationship instances does the ENROLLS_IN relationship set contain?"
+  options={["3", "2", "1", "4"]}
+  answer="3"
+  explanation="One instance per student–course pair: Ali–Databases, Ali–AI, Sara–Databases. The relationship type ENROLLS_IN is drawn once; the set holds every pair that exists."
+  feedback={{
+    "2": "Two is the number of students (or courses). Count the pairs instead: each enrollment is one instance.",
+    "1": "One is the relationship type, the single diamond. The set holds its instances.",
+    "4": "Four would be every student paired with every course. Sara is not enrolled in AI, so that pair is not in the set."
+  }}
+/>
+
+<QuickCheck
+  id="rel-attr"
+  question="Where does the attribute Grade belong in a university ER diagram?"
+  options={["On the ENROLLS_IN relationship", "On STUDENT", "On COURSE", "On a separate GRADE entity, always"]}
+  answer="On the ENROLLS_IN relationship"
+  explanation="A grade describes the pairing of one student with one course. It has no meaning for a student alone or a course alone, so it is an attribute of the relationship."
+  feedback={{
+    "On STUDENT": "Then Ali would have one grade for all his courses. A grade depends on the course too.",
+    "On COURSE": "Then everyone in Databases would share a grade. A grade depends on the student too.",
+    "On a separate GRADE entity, always": "Grade has no identity of its own and nothing else refers to it. It is a property of the enrollment."
+  }}
+/>
+
+## 2. Cardinality ratios: 1:1, 1:N, M:N
+
+The **cardinality ratio** of a binary relationship is the maximum number of relationship instances an entity can take part in. There are three:
+
+- **1:1** — a PERSON holds one PASSPORT, a PASSPORT belongs to one PERSON.
+- **1:N** — a TEACHER teaches many SECTIONs, a SECTION has one TEACHER.
+- **M:N** — a STUDENT enrolls in many COURSEs, a COURSE has many STUDENTs.
+
+The explorer draws the Chen labels and, underneath, a set of real instances that obeys them. Switch the ratio and watch which dots are allowed more than one line.
+
+<ErCardinalityExplorer />
+
+What to notice: in **1:N** every dot on the N side has at most one line, and dots on the 1 side can fan out. In **M:N** both sides fan out. In **1:1** nobody fans out. The ratio is a statement about **maxima** only. It says nothing about whether an entity may have zero lines; that is the next section.
+
+<Callout type="exam" title="1:M, M:M and 1:N, M:N are the same thing">
+Slide 51 writes the ratios as **1:1, 1:M, M:M** ("A Teacher teaches many Students", "A Student enrolls in many Courses"). Slide 22 and Elmasri write **1:1, 1:N, M:N**. They mean the same. Use 1:N and M:N on your diagram: M:N makes clear that the two "many" sides are independent numbers, which M:M hides.
+</Callout>
+
+<QuickCheck
+  id="ratio-dept"
+  question="Each employee works for exactly one department; a department has many employees. What is the cardinality ratio of DEPARTMENT — WORKS_FOR — EMPLOYEE, and where does the N go?"
+  options={[
+    "1:N, with the N next to EMPLOYEE",
+    "1:N, with the N next to DEPARTMENT",
+    "M:N, because a department has many employees",
+    "1:1, because each employee has one department"
+  ]}
+  answer="1:N, with the N next to EMPLOYEE"
+  explanation="Hold one department: many employees, so N beside EMPLOYEE. Hold one employee: one department, so 1 beside DEPARTMENT. This is Elmasri's own COMPANY example."
+  feedback={{
+    "1:N, with the N next to DEPARTMENT": "Read it back: that says one employee works for many departments. The label counts the entity it sits next to.",
+    "M:N, because a department has many employees": "M:N needs many on both sides. An employee works for only one department.",
+    "1:1, because each employee has one department": "That is only one direction. A department has many employees, so the other side is many."
+  }}
+/>
+
+<QuickCheck
+  id="ratio-borrow"
+  question="In a library, a member can borrow many books over time, and a book is borrowed by many members over time. The system keeps the full borrowing history. What is the cardinality ratio of MEMBER — BORROWS — BOOK?"
+  options={["M:N", "1:N", "1:1", "It depends on the number of copies"]}
+  answer="M:N"
+  explanation="With history kept, one book has been borrowed by many members and one member has borrowed many books. The date borrowed is an attribute of BORROWS, just as Grade is of ENROLLS_IN."
+  feedback={{
+    "1:N": "That is true only of current loans (a copy is out with at most one member at a time). With history kept, a book has many borrowers.",
+    "1:1": "Neither side is limited to one.",
+    "It depends on the number of copies": "Copies matter for current loans, not for history. Over time any copy is borrowed by many members."
+  }}
+/>
+
+## 3. Participation: total or partial
+
+Cardinality gives the maximum. **Participation** gives the minimum: must every entity take part in the relationship, or may some sit out?
+
+- **Total participation** (also called **existence dependency**): every entity of that type must take part in at least one relationship instance. Drawn as a **double line** between the entity and the diamond.
+- **Partial participation**: some entities may take part in none. Drawn as a **single line**.
+
+Every SECTION must have a teacher, so SECTION's line is double. A teacher on sabbatical teaches nothing this term, so TEACHER's line is single. Go back to the explorer and toggle the two switches: an amber dot is an entity with no line at all, and it appears only on a partial side.
+
+Cardinality ratio and participation together are what Elmasri calls the **structural constraints** of a relationship, the phrase on the lecture's summary slide.
+
+<Callout type="pitfall" title="On the outcomes, barely on the slides">
+Lecture 3's learning outcome 3 is "explain relationship types and multiplicity (1:1, 1:N, M:N) **and participation constraints**", and the summary slide lists "structural constraints on relationships". No slide shows the double-line notation. This section follows Elmasri chapter 3. Expect it on an ERD question even though it was not drawn in class.
+</Callout>
+
+<QuickCheck
+  id="participation"
+  question="Every employee must work for a department, but a newly created department may have no employees yet. How do you draw EMPLOYEE — WORKS_FOR — DEPARTMENT?"
+  options={[
+    "Double line from EMPLOYEE, single line from DEPARTMENT",
+    "Single line from EMPLOYEE, double line from DEPARTMENT",
+    "Double lines on both sides",
+    "Single lines on both sides, because participation is not part of Chen notation"
+  ]}
+  answer="Double line from EMPLOYEE, single line from DEPARTMENT"
+  explanation="The double line goes on the side that must participate. Every employee must, so EMPLOYEE's line is double. A department may have zero employees, so its line is single."
+  feedback={{
+    "Single line from EMPLOYEE, double line from DEPARTMENT": "That says every department must have an employee and employees may be unassigned: the opposite of the rule.",
+    "Double lines on both sides": "Only if every department also had to have at least one employee. The new empty department breaks that.",
+    "Single lines on both sides, because participation is not part of Chen notation": "Participation is part of Elmasri's Chen notation: the double line."
+  }}
+/>
+
+<Deeper kind="formal" title="The (min, max) alternative">
+
+Elmasri also gives a more precise notation: write a pair **(min, max)** on each line, meaning each entity of that type takes part in at least min and at most max relationship instances. min = 0 is partial participation and min ≥ 1 is total. The explorer prints both notations under the diagram.
+
+Watch the direction: (min, max) is written on the entity's **own** line and counts that entity's participation. For TEACHER — TEACHES — SECTION, TEACHER gets (0, N) and SECTION gets (1, 1). That puts the "many" on the TEACHER side, the opposite of where the 1:N labels go. Use one notation per diagram and say which.
+
+</Deeper>
+
+## 4. Weak entities and identifying relationships
+
+Slide 36 shows two symbols, a regular entity type and a **weak entity type** (a double rectangle), with the examples EMPLOYEE / DEPENDENTS and BOOK / BOOKCOPY. Slide 32 adds that a weak entity "depends on a strong entity", like an Order Item depending on its Order.
+
+Elmasri's definition is sharper. A **weak entity type** has **no key attribute of its own**. Its entities are identified by being related to an entity of another type, the **owner** (or identifying) entity type, combined with some of their own attribute values.
+
+<ErIdentifyingRelFigure />
+
+Three symbols go with it, and a full-mark diagram uses all three:
+
+1. **Double rectangle** for the weak entity (DEPENDENT).
+2. **Double diamond** for the **identifying relationship** that ties it to its owner (DEPENDENTS_OF).
+3. **Dashed underline** for the **partial key**, the attribute that tells two dependents of the same employee apart (Dependent_name).
+
+A weak entity always has **total participation** in its identifying relationship: a dependent cannot exist without the employee it depends on. Its full identifier is the owner's key plus the partial key: Ssn and Dependent_name together.
+
+<QuickCheck
+  id="weak-bookcopy"
+  question="A library tracks books (key: ISBN) and physical copies. Copies are numbered 1, 2, 3 within each book, so every book has a copy 1. Which is right?"
+  options={[
+    "BOOKCOPY is a weak entity, identified by ISBN plus copy number; copy number is its partial key",
+    "BOOKCOPY is a strong entity with key copy number",
+    "BOOK is the weak entity, because it has many copies",
+    "BOOKCOPY is a multivalued attribute of BOOK, not an entity"
+  ]}
+  answer="BOOKCOPY is a weak entity, identified by ISBN plus copy number; copy number is its partial key"
+  explanation="Copy number 1 exists for every book, so it cannot identify a copy on its own. Combined with the owner's key (ISBN) it can. That is exactly slide 36's BOOK / BOOKCOPY example, drawn as a double rectangle joined by a double diamond."
+  feedback={{
+    "BOOKCOPY is a strong entity with key copy number": "Copy number repeats across books, so it is not unique. A key must be unique across every copy in the library.",
+    "BOOK is the weak entity, because it has many copies": "Having many related entities does not make an entity weak. BOOK has its own key, ISBN.",
+    "BOOKCOPY is a multivalued attribute of BOOK, not an entity": "Copies have their own attributes (shelf, condition) and take part in their own relationships (a member borrows a copy), so they are entities."
+  }}
+/>
+
+## 5. Keys
+
+A **key** is an attribute, or set of attributes, whose values identify each entity uniquely. In a Chen diagram the key attribute's name is **underlined** (the slide says "highlighted"). Slides 53 to 64 build a hierarchy of six kinds. Work through the lab before reading the definitions: the lab gives you the rules and the rows, and it is quicker to feel the difference than to memorise it.
+
+<DbKeyFinderLab id="key-finder" />
+
+Now the definitions, in the slides' order:
+
+| Key | Definition | In the lab |
+|---|---|---|
+| **Super key** | Any set of attributes whose combined values uniquely identify each entity. May contain extra attributes. | reg_no and name together |
+| **Candidate key** | A **minimal** super key: remove any attribute and it stops being unique. | reg_no, cnic, email |
+| **Primary key** | The candidate key the designer chooses. Never NULL. | reg_no |
+| **Alternate key** | A candidate key that was not chosen as primary. | cnic, email |
+| **Foreign key** | Attribute(s) in one table that reference the primary key of another. | section referencing a SECTION table |
+| **Composite key** | A key made of two or more attributes. | ISBN and copy number for BOOKCOPY |
+
+<DbKeyHierarchyFigure />
+
+The lab also showed the trap that costs the most marks: **name and section together are unique in the six rows shown, and they are still not a key.** Uniqueness in the current data is evidence; a key is a promise the business rules make about every state the table can ever be in. Rule 4 breaks that promise.
+
+<QuickCheck
+  id="ssn-email"
+  question="Slide 56: a Customer table has SSN, Name and Email, and only SSN is guaranteed unique. Why is the set SSN and Email a super key but not a candidate key?"
+  options={[
+    "Email can be removed and SSN alone is still unique, so the set is not minimal",
+    "Email may be NULL, and candidate keys cannot contain NULLs",
+    "A candidate key can only have one attribute",
+    "It is a candidate key; any super key with two attributes is minimal"
+  ]}
+  answer="Email can be removed and SSN alone is still unique, so the set is not minimal"
+  explanation="Minimality test: try dropping each attribute. Drop Email and the rest (SSN) still identifies every customer, so Email was redundant. A candidate key has no redundant attribute."
+  feedback={{
+    "Email may be NULL, and candidate keys cannot contain NULLs": "The NULL rule applies to the primary key. The reason this set fails is minimality, not NULLs.",
+    "A candidate key can only have one attribute": "Candidate keys can be composite: ISBN plus copy number is a two-attribute candidate key for BOOKCOPY.",
+    "It is a candidate key; any super key with two attributes is minimal": "Size does not decide minimality. What matters is whether some attribute can be dropped without losing uniqueness."
+  }}
+/>
+
+<QuickCheck
+  id="empid-cnic"
+  question="Slide 58's exercise: an Employee table has two attributes, EMP_ID and CNIC, and both are unique. Which answer lists exactly the candidate keys?"
+  options={[
+    "EMP_ID; CNIC",
+    "EMP_ID only",
+    "EMP_ID; CNIC; EMP_ID and CNIC together",
+    "EMP_ID and CNIC together, only"
+  ]}
+  answer="EMP_ID; CNIC"
+  explanation="Super keys: EMP_ID, CNIC, and EMP_ID with CNIC (three sets). Candidate keys are the minimal ones: EMP_ID and CNIC separately. The pair is a super key but not minimal: drop either attribute and it is still unique."
+  feedback={{
+    "EMP_ID only": "CNIC is unique too, so it is also a candidate key. Choosing EMP_ID as primary key makes CNIC an alternate key, not a non-key.",
+    "EMP_ID; CNIC; EMP_ID and CNIC together": "That is the list of super keys. The pair is not minimal, so it is not a candidate key.",
+    "EMP_ID and CNIC together, only": "The pair has redundant attributes: either one alone is already unique."
+  }}
+/>
+
+### Foreign keys, and how they meet participation
+
+Slide 63's foreign key rules connect back to section 3. A foreign key value must match an existing primary key value, or be NULL (**referential integrity**). A foreign key may be NULL **if the relationship is optional**, which is partial participation. If every employee must work for a department (total participation), the dept_no foreign key in EMPLOYEE is declared NOT NULL. And if the referenced primary key is composite, the foreign key must include **all** of its attributes.
+
+<QuickCheck
+  id="fk-null"
+  question="EMPLOYEE has a foreign key dept_no referencing DEPARTMENT. Every employee must belong to a department. What should the column allow?"
+  options={[
+    "Only values that exist in DEPARTMENT, and never NULL",
+    "Any value, as long as it is unique",
+    "Only values that exist in DEPARTMENT, or NULL",
+    "Only NULL until the department is created"
+  ]}
+  answer="Only values that exist in DEPARTMENT, and never NULL"
+  explanation="Referential integrity means the value must exist in DEPARTMENT. Total participation (every employee has a department) removes the NULL option, so declare it NOT NULL."
+  feedback={{
+    "Any value, as long as it is unique": "A foreign key is not unique: many employees share a dept_no. And it must match an existing department.",
+    "Only values that exist in DEPARTMENT, or NULL": "NULL is allowed only when participation is partial. Here every employee must belong to a department.",
+    "Only NULL until the department is created": "The department must exist first; the employee then references it."
+  }}
+/>
+
+<Callout type="exam" title="The deck uses “secondary key” in two different senses">
+Slide 62 says: "**An Alternative Key (also called a Secondary Key)** is a candidate key that is not chosen as the primary key." The same deck's summary slide says: "**Secondary Keys: We access on something not necessarily unique.**"
+
+Those contradict each other, and the summary slide is Elmasri's meaning: a **secondary key** is an attribute you search or index on that need not be unique (looking students up by name). An **alternate key** is always unique. If a question says "according to the lecture", write "alternate (secondary) key: a candidate key not chosen as primary". Otherwise say **alternate key** and never call it secondary.
+</Callout>
+
+<Callout type="exam" title="“A Composite Key is a Primary Key of two or more columns”">
+Slide 64 defines a composite key as a primary key with two or more columns. More precisely, **any** key (super, candidate, primary or foreign) with more than one attribute is composite; the slide's own next line admits "a composite key can also act as a foreign key". Reproduce the slide's sentence if asked for the lecture's definition, and add "any key made of two or more attributes" for the general case.
+
+Do not confuse it with a **composite attribute** (Name made of First and Last, drawn as an oval with child ovals). A composite key is several attributes used together to identify; a composite attribute is one attribute made of parts.
+</Callout>
+
+<Deeper kind="exam" title="Model answer: define the types of keys with an example (6 marks)">
+
+Take STUDENT(reg_no, cnic, email, name, section), where reg_no, cnic and email are each unique.
+
+1. **Super key:** any set of attributes that uniquely identifies each student, possibly with extra attributes. Example: reg_no and name.
+2. **Candidate key:** a minimal super key; removing any attribute destroys uniqueness. Here reg_no, cnic and email are each candidate keys.
+3. **Primary key:** the candidate key chosen by the designer to identify entities; it cannot be NULL. Here reg_no.
+4. **Alternate key:** a candidate key not chosen as primary. Here cnic and email.
+5. **Foreign key:** an attribute in one table referencing another table's primary key, enforcing referential integrity. Example: ENROLLMENT.reg_no references STUDENT.reg_no.
+6. **Composite key:** a key of two or more attributes. Example: reg_no and course_code in ENROLLMENT.
+
+Close with the hierarchy in one line: primary ⊂ candidate ⊂ super.
+
+</Deeper>
+
+<Deeper kind="exam" title="Model answer: explain cardinality ratio and participation with examples (5 marks)">
+
+The **cardinality ratio** of a binary relationship gives the maximum number of relationship instances an entity can participate in: **1:1** (PERSON holds PASSPORT), **1:N** (DEPARTMENT has many EMPLOYEEs, each employee in one department), **M:N** (STUDENT enrolls in many COURSEs, each course has many students). In Chen notation the numbers are written on the lines, each beside the entity it counts.
+
+**Participation** gives the minimum. **Total** participation (existence dependency) means every entity must take part, drawn as a double line: every SECTION must have a TEACHER. **Partial** means some may not, drawn as a single line: a TEACHER may teach no section this term.
+
+Together they are the **structural constraints** of the relationship. Draw one small diagram showing both, and label the double line.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=QpdhBUYk7Kk",
+    "title": "Lucid Software: Entity Relationship Diagram (ERD) Tutorial, Part 1",
+    "kind": "video",
+    "why": "Animated walk-through of entities, relationships and cardinality. It uses crow's foot instead of Chen; the ideas map one to one, and it is the notation you will meet at work."
+  },
+  {
+    "href": "https://www.youtube.com/watch?v=-CuY5ADwn24",
+    "title": "Lucid Software: ERD Tutorial, Part 2",
+    "kind": "video",
+    "why": "Builds a full diagram from a requirements paragraph, the same skill as the car-sales case study, including where the minimums (participation) go."
+  },
+  {
+    "href": "https://www.postgresql.org/docs/current/ddl-constraints.html",
+    "title": "PostgreSQL: Constraints",
+    "kind": "docs",
+    "why": "Primary keys, UNIQUE (how alternate keys are declared), foreign keys with ON DELETE, and NOT NULL, in the DBMS you already deploy."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Candidate_key",
+    "title": "Candidate key",
+    "kind": "blog",
+    "why": "Short and precise on super key versus candidate key minimality, with a worked example of finding all candidate keys."
+  }
+]} />

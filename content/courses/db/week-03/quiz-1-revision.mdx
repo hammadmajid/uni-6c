@@ -1,0 +1,595 @@
+<Callout type="exam" title="Scope: every lecture so far">
+Quiz 1 is on Friday 2 October, in the 17:00 class. The owner relayed the scope as every lecture so far, which is lectures 01 to 03: introduction to databases, data models and architectures, and the ER model with keys. It has not been announced on Classroom. Expect an ERD question. The notation is Chen, as on the lecture 03 slides.
+</Callout>
+
+Aim for 35 minutes. Answer the one-liners from memory. For the long answers, write your answer on paper before you reveal the model answer. The car-sales case study from lecture 03 has its own lesson (the ERD lab this week). Do that one as well; it is the likeliest ERD question.
+
+## Lecture 01: databases and the DBMS
+
+<QuickCheck
+  id="q1-dbms-def"
+  question="According to Elmasri, a DBMS is a general-purpose software system that facilitates which processes?"
+  options={[
+    "Defining, constructing, manipulating and sharing databases",
+    "Storing, indexing, backing up and encrypting files",
+    "Designing, normalizing, querying and reporting data",
+    "Creating, reading, updating and deleting records"
+  ]}
+  answer="Defining, constructing, manipulating and sharing databases"
+  explanation="Define (specify types, structures, constraints), construct (store the data), manipulate (query and update) and share (many users at once). Those four verbs are the textbook's definition, and the lecture slide repeats them."
+  feedback={{
+    "Storing, indexing, backing up and encrypting files": "These are things a DBMS does along the way, but they are not the four processes in the definition. Storing is part of constructing.",
+    "Designing, normalizing, querying and reporting data": "Designing and normalizing are done by the database designer, not by the DBMS software.",
+    "Creating, reading, updating and deleting records": "CRUD covers only manipulation. The definition also includes defining the database and sharing it among users."
+  }}
+/>
+
+<QuickCheck
+  id="q1-miniworld"
+  type="short-answer"
+  question="A database represents some aspect of the real world. What does the lecture call that part of the real world? (One word, or the three-word alternative.)"
+  answer={["Miniworld", "Mini-world", "Mini world", "Universe of discourse", "UoD"]}
+  explanation="The miniworld, also called the universe of discourse (UoD). A change in the miniworld, such as a student changing their phone number, has to be reflected in the database."
+/>
+
+<QuickCheck
+  id="q1-metadata-where"
+  question="Where does a DBMS keep metadata (data about data)?"
+  options={["In the DBMS catalog, also called the data dictionary", "Inside each application program", "In the transaction log", "In the external views"]}
+  answer="In the DBMS catalog, also called the data dictionary"
+  explanation="The catalog holds the complete definition of the database: types, constraints, relationships and indexes. That is what makes a database self-describing."
+  feedback={{
+    "Inside each application program": "That is file processing. Keeping the definition in every program is what causes program–data dependence.",
+    "In the transaction log": "The log records changes so they can be undone or redone after a failure. It holds data changes, not the database's structure.",
+    "In the external views": "Views are defined in the catalog, but they describe what one user group sees, not the whole database."
+  }}
+/>
+
+<QuickCheck
+  id="q1-fps-problems"
+  question="The exam cell and the library keep separate student files, and Ali's address differs between them. Which pair of file-processing problems does this show?"
+  options={["Redundancy and inconsistency", "Program–data dependence and concurrency", "Atomicity and durability failures", "Lack of multiple views and security"]}
+  answer="Redundancy and inconsistency"
+  explanation="The same fact is stored twice (redundancy). The two copies were updated separately and now disagree (inconsistency)."
+  feedback={{
+    "Program–data dependence and concurrency": "Program–data dependence is about the record layout being coded into programs. Nobody here is changing the layout.",
+    "Atomicity and durability failures": "Those are transaction properties. There is no half-finished transaction and no crash here.",
+    "Lack of multiple views and security": "Separate files do cause security gaps, but two different addresses for the same student is the classic redundancy and inconsistency example."
+  }}
+/>
+
+<QuickCheck
+  id="q1-self-describing"
+  question="The same PostgreSQL software runs both a hospital database and a university database without any change to its code. Which characteristic of the database approach makes that possible?"
+  options={["Self-describing nature (the catalog)", "Multiple views", "Concurrency control", "Backup and recovery"]}
+  answer="Self-describing nature (the catalog)"
+  explanation="The DBMS reads each database's structure from that database's catalog, so its code stays general-purpose."
+  feedback={{
+    "Multiple views": "Views give each user group its own window onto one database. They are not what lets one DBMS handle many different databases.",
+    "Concurrency control": "Concurrency control handles many simultaneous users. It says nothing about different database structures.",
+    "Backup and recovery": "Recovery restores data after a failure. It is unrelated to running different databases."
+  }}
+/>
+
+<QuickCheck
+  id="q1-acid-isolation"
+  question="Two customers both read stock = 1 and both buy the last phone. Which ACID property failed?"
+  options={["Isolation", "Atomicity", "Durability", "Self-description"]}
+  answer="Isolation"
+  explanation="Each transaction was correct on its own. They went wrong because they interleaved. Isolation makes each transaction behave as if it ran alone, and the DBMS enforces it with concurrency control (for example a row lock)."
+  feedback={{
+    "Atomicity": "Both transactions completed; neither was left half-done. Atomicity is about all-or-nothing.",
+    "Durability": "No committed work was lost after a failure.",
+    "Self-description": "Self-description is a characteristic of the database approach, not one of the ACID properties."
+  }}
+/>
+
+<QuickCheck
+  id="q1-casual"
+  question="A dean runs a different enrollment report through a query tool about once a month. Which kind of end user is the dean?"
+  options={["Casual end user", "Naive (parametric) end user", "Sophisticated end user", "Database administrator"]}
+  answer="Casual end user"
+  explanation="Casual users access the database occasionally and need different information each time. Elmasri says they are typically middle or high-level managers."
+  feedback={{
+    "Naive (parametric) end user": "Naive users run the same canned transactions constantly, like a bank teller. The dean asks something different each time.",
+    "Sophisticated end user": "Sophisticated users (engineers, scientists, analysts) write complex requests themselves and know the DBMS well. Once a month through a tool is casual.",
+    "Database administrator": "The DBA manages access, backup and tuning. Reading reports is not administering the database."
+  }}
+/>
+
+<QuickCheck
+  id="q1-designer"
+  question="Who interviews users and chooses the structures (entities, tables, keys) before any data is stored?"
+  options={["Database designer", "Database administrator", "Application programmer", "Tool developer"]}
+  answer="Database designer"
+  explanation="Designers identify the data to be stored and choose the structures to represent it, working from users' requirements. Drawing the ERD is their job."
+  feedback={{
+    "Database administrator": "The DBA runs the database once it exists: authorising access, monitoring use, backup, tuning.",
+    "Application programmer": "Programmers implement the canned transactions against a schema someone else designed.",
+    "Tool developer": "Tool developers are workers behind the scene. They build software packages, not a particular organisation's database."
+  }}
+/>
+
+<QuickCheck
+  id="q1-not-dbms"
+  type="true-false"
+  question="A single-user embedded device with a small, fixed data structure and tight real-time limits is a case where Elmasri says a DBMS may not be worth it."
+  answer="True"
+  explanation="Elmasri's reasons not to use a DBMS: simple and well-defined data not expected to change, stringent real-time requirements, embedded systems with limited storage, and no multi-user access. This device has all four."
+/>
+
+<Predict
+  id="q1-long-characteristics"
+  prompt="Explain four characteristics of the database approach that distinguish it from file processing, with one example each. (8 marks)"
+  answer="Self-describing (catalog); insulation between programs and data (program–data independence through the three-schema architecture); multiple views; sharing with multi-user transaction processing (concurrency control, ACID)."
+>
+
+**Model answer.**
+
+1. **Self-describing nature.** The database stores its own definition (metadata) in the DBMS catalog. Example: the column `phone varchar(15) NOT NULL` is recorded in the catalog, not hard-coded in every program.
+2. **Insulation between programs and data (data abstraction).** Programs do not depend on how data is stored, so storage can change underneath them. Example: adding an index changes no program (physical independence), and adding a column changes none that name their columns (logical independence).
+3. **Multiple views.** Each user group sees only the subset it needs. Example: finance sees fee records, a student sees only their own grades.
+4. **Sharing and multi-user transaction processing.** Concurrency control keeps simultaneous updates correct, and transactions are ACID. Example: an ATM withdrawal and a mobile deposit on the same account do not overwrite each other.
+
+Two marks per point: one for the idea, one for the example.
+
+</Predict>
+
+<Predict
+  id="q1-long-scenario"
+  prompt="A pharmacy chain with 12 branches keeps each branch's stock in its own spreadsheet. Head office cannot tell how many units of a medicine exist in total, and two branches sometimes promise the same delivery. Would a DBMS help? Justify with three features. (4 marks)"
+  answer="Yes: one shared database removes redundancy and inconsistency, concurrency control and transactions stop double-promising, and queries over the whole database give totals; add views and security per branch."
+>
+
+**Model answer.** Yes, a DBMS is justified: many users, shared data, and the structure will keep growing.
+
+- **One shared database** replaces 12 copies, which removes the **redundancy and inconsistency**. Head office gets the total with one query.
+- **Concurrency control and transactions** (isolation) stop two branches from reserving the same stock at the same moment.
+- **Multiple views and access control** let each branch see its own stock while head office sees everything.
+- Also credit **backup and recovery**, and **integrity constraints** such as stock never going below zero.
+
+Three justified features plus a verdict is full marks.
+
+</Predict>
+
+## Lecture 02: data models, schemas and architectures
+
+<QuickCheck
+  id="q2-model-def"
+  question="According to the lecture, a data model is:"
+  options={[
+    "A collection of concepts used to describe the structure of a database: data types, relationships and constraints",
+    "The data stored in the database at a particular moment",
+    "The physical file layout of a table on disk",
+    "A diagram of the user interface of a database application"
+  ]}
+  answer="A collection of concepts used to describe the structure of a database: data types, relationships and constraints"
+  explanation="A data model gives the concepts for describing structure, and most models also include basic operations for retrieval and update. It is how data abstraction is achieved."
+  feedback={{
+    "The data stored in the database at a particular moment": "That is the database state (instance, extension), not the model.",
+    "The physical file layout of a table on disk": "That is described by one category of model, the physical model. It is not the definition of a data model in general.",
+    "A diagram of the user interface of a database application": "Data models describe data, not screens."
+  }}
+/>
+
+<QuickCheck
+  id="q2-categories"
+  question="Which category of data model is the relational model?"
+  options={["Representational (implementation) data model", "High-level (conceptual) data model", "Low-level (physical) data model", "External data model"]}
+  answer="Representational (implementation) data model"
+  explanation="Representational models sit between the two extremes: end users can understand them, and they can be implemented directly. Relational, network and hierarchical models are all representational. ER is conceptual."
+  feedback={{
+    "High-level (conceptual) data model": "Conceptual models use entities, attributes and relationships. The ER model is the example; the relational model is one level down.",
+    "Low-level (physical) data model": "Physical models describe record formats, record ordering and access paths. Tables of rows and columns are above that level.",
+    "External data model": "The lecture's three categories are conceptual, representational and physical. External is a level of the three-schema architecture, not a category of data model."
+  }}
+/>
+
+<QuickCheck
+  id="q2-er-level"
+  question="According to the lecture slides, the ER model is described as a 'logical representation' of data. In Elmasri's categories, which kind of data model is ER?"
+  options={["High-level (conceptual)", "Representational (logical)", "Physical", "Semi-structured"]}
+  answer="High-level (conceptual)"
+  explanation="ER uses concepts close to how users see data (entities, attributes, relationships), so it is a conceptual model. The slide's word 'logical' is loose: the logical design step is when the ER diagram is mapped to the relational model. If a question asks for the slide's wording, write 'logical representation', but use conceptual whenever the three categories are being compared."
+  feedback={{
+    "Representational (logical)": "The slide's wording suggests this, but the representational level is the relational, network and hierarchical models. ER is drawn before mapping to that level.",
+    "Physical": "Physical models describe storage: record formats and access paths. ER says nothing about storage.",
+    "Semi-structured": "Semi-structured data uses tags or markers (JSON, XML). It is a separate type of model on the lecture's list."
+  }}
+/>
+
+<QuickCheck
+  id="q2-schema-state"
+  question="Which pair of terms means the same as 'database schema'?"
+  options={["Intension; description of the database", "Extension; database state", "Instance; snapshot", "Schema construct; record"]}
+  answer="Intension; description of the database"
+  explanation="Schema = intension = the description, specified at design time and rarely changed. State = extension = instance = the data at one moment, which changes with every insert and delete."
+  feedback={{
+    "Extension; database state": "Extension is the database state, the other side of the pair.",
+    "Instance; snapshot": "An instance is the data at one moment, which is the state, not the schema.",
+    "Schema construct; record": "A schema construct is one object in the schema (such as STUDENT or COURSE), not a synonym for the whole schema."
+  }}
+/>
+
+<QuickCheck
+  id="q2-evolution"
+  question="The university decides every student record must also store an emergency contact, so a column is added to STUDENT. What is this change to the schema called?"
+  options={["Schema evolution", "A new database state", "Physical data independence", "Data abstraction"]}
+  answer="Schema evolution"
+  explanation="Changing the schema because requirements changed is schema evolution. Inserting a student only moves the database to a new state; the schema stays the same."
+  feedback={{
+    "A new database state": "A new state comes from an insert, delete or update of data. Here the description itself changed.",
+    "Physical data independence": "Physical independence is about changing the internal schema without touching the conceptual one. Adding an attribute changes the conceptual schema.",
+    "Data abstraction": "Abstraction is hiding storage detail. It is not the name for changing a schema."
+  }}
+/>
+
+<QuickCheck
+  id="q2-empty-state"
+  type="true-false"
+  question="When a new database is first defined to the DBMS, only its schema exists, and its database state is the empty state."
+  answer="True"
+  explanation="Defining the database specifies only the schema, so the state is empty. Loading the first data gives the initial state, and every later operation gives a new state. The DBMS keeps every state valid, meaning it satisfies the schema's structure and constraints."
+/>
+
+<OrderCheck
+  id="q2-levels"
+  prompt="Order the three-schema levels from the one closest to the users down to the one closest to the disk."
+  items={["External level (user views)", "Conceptual level (whole database, no storage detail)", "Internal level (physical storage structure)"]}
+  explanation="External at the top, with one schema per user group. Conceptual in the middle, the whole database for the community of users. Internal at the bottom, with record layouts and access paths. The DBMS keeps an external/conceptual mapping and a conceptual/internal mapping between them."
+  topLabel="Closest to users"
+  bottomLabel="Closest to storage"
+/>
+
+<QuickCheck
+  id="q2-which-level"
+  question="In the lecture's employee example, one clerk sees 'Name: F. Abdullah, Age: 34 Y, Department: Sales', while the stored record holds date of birth 12-08-1980. At which level is the age shown?"
+  options={["External level", "Conceptual level", "Internal level", "Operating-system level"]}
+  answer="External level"
+  explanation="The age is computed for one user group's view. The conceptual level stores Name and DOB for everyone, and the internal level stores the bytes and record headers."
+  feedback={{
+    "Conceptual level": "The conceptual schema holds DOB for the whole organisation. A formatted age for one group of users is a view.",
+    "Internal level": "The internal level is the record layout (the RH record headers and packed fields on the slide), not a user-facing age.",
+    "Operating-system level": "The OS layer on the slide is the raw bits. Nobody reads an age there."
+  }}
+/>
+
+<QuickCheck
+  id="q2-logical-indep"
+  question="A new attribute is added to the conceptual schema, and a finance view that does not use it keeps working with no change. Which property is this?"
+  options={["Logical data independence", "Physical data independence", "Schema evolution only", "Multiple views"]}
+  answer="Logical data independence"
+  explanation="The conceptual schema changed while the external schemas and programs did not have to. The external/conceptual mapping absorbed the change."
+  feedback={{
+    "Physical data independence": "Physical independence concerns changes to the internal schema, such as indexes or file organisation. An attribute is conceptual.",
+    "Schema evolution only": "The change is schema evolution, but the question asks why the view survived it. That is logical data independence.",
+    "Multiple views": "The view exists because of multiple views, but what protected it from the change is logical independence."
+  }}
+/>
+
+<QuickCheck
+  id="q2-ddl"
+  question="Which statement is DDL?"
+  options={["CREATE TABLE course (code char(7) PRIMARY KEY, title text)", "INSERT INTO course VALUES ('CSC2203', 'Database Systems')", "SELECT title FROM course", "DELETE FROM course WHERE code = 'CSC2203'"]}
+  answer="CREATE TABLE course (code char(7) PRIMARY KEY, title text)"
+  explanation="DDL (data definition language) defines schemas. DML (data manipulation language) retrieves, inserts, deletes and modifies data. SQL combines both."
+  feedback={{
+    "INSERT INTO course VALUES ('CSC2203', 'Database Systems')": "Inserting data is DML: it changes the state, not the schema.",
+    "SELECT title FROM course": "Retrieval is DML.",
+    "DELETE FROM course WHERE code = 'CSC2203'": "Deleting rows is DML. DROP TABLE, which removes the definition, would be DDL."
+  }}
+/>
+
+<QuickCheck
+  id="q2-three-tier"
+  question="A student portal runs in the browser, business rules run on an application server, and the database server accepts connections only from that application server. Which architecture is this, and what is its security benefit?"
+  options={[
+    "Three-tier: clients cannot reach the database server directly",
+    "Two-tier: the client talks to the database server directly",
+    "Centralized: everything runs on one machine",
+    "Three-tier: the database runs inside the browser"
+  ]}
+  answer="Three-tier: clients cannot reach the database server directly"
+  explanation="Presentation in the client, business logic in the middle tier (application or web server), data in the database server. The lecture's security point: the database is reachable only through the middle tier."
+  feedback={{
+    "Two-tier: the client talks to the database server directly": "In two-tier the client connects to the database server itself. Here an application server sits between them.",
+    "Centralized: everything runs on one machine": "Centralized means the DBMS, application programs and user interface all run on one machine. Here there are three.",
+    "Three-tier: the database runs inside the browser": "The browser is the presentation tier. The data stays on the database server."
+  }}
+/>
+
+<QuickCheck
+  id="q2-client-server"
+  type="true-false"
+  question="In the client/server architecture, a client is typically a user machine that provides the user interface and local processing, and a server provides services to the clients."
+  answer="True"
+  explanation="That is the lecture's definition. Two-tier splits the software over a client and a server. The Web led to three-tier, which adds an application or web server in the middle. Splitting the bottom layer again gives four-tier or n-tier."
+/>
+
+<Predict
+  id="q2-long-three-schema"
+  prompt="With the lecture's employee example, explain the three levels of the three-schema architecture and what the two mappings buy you. (5 marks)"
+  answer="External: per-group views (e.g. a workers view with name, age, department). Conceptual: the whole database for all users, no storage detail (Name, DOB, Dependents, DeptId). Internal: physical storage (record headers, packed bytes). External/conceptual mapping gives logical data independence; conceptual/internal mapping gives physical data independence."
+>
+
+**Model answer.**
+
+| Level | Describes | In the employee example |
+|---|---|---|
+| External (view) | The part of the database one user group needs, hiding the rest | A workers view: "F. Abdullah, 34 years, Sales" |
+| Conceptual | The whole database for all users: entities, relationships, constraints, with no storage detail | Employee(Name, DOB, Dependents, Dept Id) |
+| Internal | Physical storage: record formats, access paths | Record header RH, then "Fatima Abdullah 12081980 5 D019" as bytes |
+
+The DBMS keeps two mappings. The **external/conceptual mapping** gives **logical data independence**: the conceptual schema can change without changing views or programs. The **conceptual/internal mapping** gives **physical data independence**: storage can change without changing the conceptual schema.
+
+</Predict>
+
+## Lecture 03: the ER model and keys
+
+<QuickCheck
+  id="q3-type-set-instance"
+  question="'Ali Khan' is to STUDENT as:"
+  options={["An entity instance is to its entity type", "An entity type is to its entity set", "An attribute is to its entity", "A relationship is to its entity"]}
+  answer="An entity instance is to its entity type"
+  explanation="The entity type is the category with its attributes (STUDENT). An entity instance is one occurrence (Ali Khan). The entity set is all the instances at a given time (every student at SZABIST now), which becomes the table."
+  feedback={{
+    "An entity type is to its entity set": "Ali Khan is not a type. He is one member of the set.",
+    "An attribute is to its entity": "An attribute would be his Name or Age, not Ali himself.",
+    "A relationship is to its entity": "A relationship links entities, such as Ali ENROLLED-IN Databases."
+  }}
+/>
+
+<QuickCheck
+  id="q3-attr-derived"
+  question="EMPLOYEE stores dateHired, and experience is calculated from it and today's date. What kind of attribute is experience, and how is it drawn in Chen notation?"
+  options={["Derived: a dashed oval", "Multivalued: a double oval", "Composite: an oval with sub-ovals", "Key: an oval with the name underlined"]}
+  answer="Derived: a dashed oval"
+  explanation="A derived attribute is calculated from stored ones (age from DOB, experience from dateHired). The stored attribute it comes from, dateHired, is drawn as a normal oval."
+  feedback={{
+    "Multivalued: a double oval": "Multivalued means several values per entity, such as hobbies. Experience has one value.",
+    "Composite: an oval with sub-ovals": "Composite means it splits into parts, such as address into street and houseNo. Experience does not split.",
+    "Key: an oval with the name underlined": "Keys identify an entity. Two employees can have the same experience."
+  }}
+/>
+
+<QuickCheck
+  id="q3-attr-multivalued"
+  question="A person can have several phone numbers. In Chen notation, phoneNumbers is drawn as:"
+  options={["A double oval (multivalued)", "A dashed oval (derived)", "A double rectangle", "A diamond"]}
+  answer="A double oval (multivalued)"
+  explanation="Multivalued attributes hold several values per entity instance and are drawn as double ovals."
+  feedback={{
+    "A dashed oval (derived)": "Phone numbers are stored, not calculated.",
+    "A double rectangle": "A double rectangle is a weak entity type, not an attribute.",
+    "A diamond": "Diamonds are relationships."
+  }}
+/>
+
+<QuickCheck
+  id="q3-attr-composite"
+  question="Address split into street, city and zip code is which kind of attribute?"
+  options={["Composite", "Multivalued", "Derived", "Complex"]}
+  answer="Composite"
+  explanation="Composite attributes divide into meaningful sub-parts, drawn as sub-ovals attached to the parent oval. Simple (atomic) attributes such as age cannot be divided."
+  feedback={{
+    "Multivalued": "Multivalued means several values of the same attribute, such as several phones. One address with three parts is composite.",
+    "Derived": "Nothing here is calculated.",
+    "Complex": "Complex means composite and multivalued nested together, such as several qualifications each with a degree, university and year. A single address is just composite."
+  }}
+/>
+
+<QuickCheck
+  id="q3-complex"
+  type="short-answer"
+  question="The lecture calls an attribute that combines composite and multivalued parts, such as educational qualifications (several degrees, each with a university and year), what kind of attribute? (One word.)"
+  answer={["Complex", "Complex attribute"]}
+  explanation="Complex attribute: multivalued (several qualifications) with each value composite (degree, university, year)."
+/>
+
+<QuickCheck
+  id="q3-null"
+  type="true-false"
+  question="A person with no middle name can have NULL in a MiddleName attribute, but a primary key attribute can never be NULL."
+  answer="True"
+  explanation="NULL means not applicable or unknown. The primary key identifies every entity instance, so none of its attributes may be NULL."
+/>
+
+<QuickCheck
+  id="q3-weak-symbol"
+  question="DEPENDENT cannot be identified without the EMPLOYEE it belongs to. How is DEPENDENT drawn in Chen notation?"
+  options={["A double rectangle, linked to EMPLOYEE by a double diamond (identifying relationship)", "A single rectangle with a double oval", "A dashed rectangle", "A single rectangle linked by a dashed line"]}
+  answer="A double rectangle, linked to EMPLOYEE by a double diamond (identifying relationship)"
+  explanation="A weak entity type has no key of its own. It is identified through its owner by an identifying relationship (double diamond), and it takes part in that relationship totally (double line). Its partial key, such as dependent name, is underlined with a dashed line."
+  feedback={{
+    "A single rectangle with a double oval": "A double oval marks a multivalued attribute. It says nothing about whether the entity is weak.",
+    "A dashed rectangle": "Dashed is used for derived attributes (ovals), not for entities.",
+    "A single rectangle linked by a dashed line": "A single rectangle is a regular (strong) entity. Weak entities are double."
+  }}
+/>
+
+<QuickCheck
+  id="q3-cardinality"
+  question="Each student enrolls in many courses and each course has many students. What is the cardinality ratio of ENROLLS?"
+  options={["M:N", "1:N", "1:1", "N:1"]}
+  answer="M:N"
+  explanation="Ask the question in both directions. One student has many courses, and one course has many students, so it is many on both sides: M:N. When mapped to tables this becomes its own table with a composite key (student id, course code)."
+  feedback={{
+    "1:N": "1:N would mean each course has only one student, or each student takes only one course.",
+    "1:1": "1:1 is person and passport: one on each side.",
+    "N:1": "N:1 is 1:N read the other way. It still leaves one side at one."
+  }}
+/>
+
+<QuickCheck
+  id="q3-cardinality-2"
+  question="A department employs many employees, and each employee works for exactly one department. Which labels go on the WORKS_FOR lines in Chen notation?"
+  options={["N on the EMPLOYEE side, 1 on the DEPARTMENT side", "1 on the EMPLOYEE side, N on the DEPARTMENT side", "M and N", "1 and 1"]}
+  answer="N on the EMPLOYEE side, 1 on the DEPARTMENT side"
+  explanation="In Chen notation the number next to an entity says how many of that entity one instance on the other side relates to. One department has N employees, so N sits by EMPLOYEE. One employee has 1 department, so 1 sits by DEPARTMENT."
+  feedback={{
+    "1 on the EMPLOYEE side, N on the DEPARTMENT side": "That is reversed: it would say one department has one employee, and one employee has many departments.",
+    "M and N": "M:N needs employees to work for several departments. Here each works for one.",
+    "1 and 1": "A department has many employees, so one side must be N."
+  }}
+/>
+
+<QuickCheck
+  id="q3-participation"
+  question="Every employee must work for a department, but a department may exist with no employees yet. How is this shown in Elmasri's notation?"
+  options={["Double line between EMPLOYEE and WORKS_FOR, single line between DEPARTMENT and WORKS_FOR", "Double line on both sides", "Single line on both sides", "Double line between DEPARTMENT and WORKS_FOR only"]}
+  answer="Double line between EMPLOYEE and WORKS_FOR, single line between DEPARTMENT and WORKS_FOR"
+  explanation="Participation says whether every instance must take part. Total participation (every employee) is a double line, and partial participation (some departments) is a single line. Cardinality (1:N) and participation are two separate constraints: together Elmasri calls them the structural constraints."
+  feedback={{
+    "Double line on both sides": "That would force every department to have at least one employee, which the scenario does not require.",
+    "Single line on both sides": "That would allow an employee with no department, but the scenario says every employee must have one.",
+    "Double line between DEPARTMENT and WORKS_FOR only": "That is reversed. The double line goes on the side whose every instance must take part: EMPLOYEE."
+  }}
+/>
+
+<QuickCheck
+  id="q3-superkey"
+  question="Customer(SSN, Name, Email), where only SSN is unique. Which set is a super key but NOT a candidate key?"
+  options={["SSN and Name", "SSN", "Name and Email", "Name"]}
+  answer="SSN and Name"
+  explanation="Any set containing SSN identifies a customer, so it is a super key. A candidate key must also be minimal: drop Name from SSN and Name and the rest (SSN) is still unique, so SSN and Name is not minimal. SSN alone is both a super key and the candidate key."
+  feedback={{
+    "SSN": "SSN is a super key, but it is also minimal, so it is a candidate key. The question asks for one that is not.",
+    "Name and Email": "Neither is guaranteed unique, so this may not identify a customer. It is not a super key at all.",
+    "Name": "Two customers can share a name. Not a super key."
+  }}
+/>
+
+<Predict
+  id="q3-emp-cnic"
+  prompt="The lecture's exercise: an Employee table has two attributes, EMP_ID and CNIC. Each is unique. List the super keys, the candidate keys, a primary key and the alternate key. (4 marks)"
+  answer="Super keys: EMP_ID; CNIC; EMP_ID with CNIC. Candidate keys: EMP_ID; CNIC. Primary key: EMP_ID (a choice). Alternate key: CNIC."
+>
+
+**Model answer.**
+
+| Kind | Keys | Why |
+|---|---|---|
+| Super keys | EMP_ID · CNIC · the pair EMP_ID and CNIC | Each identifies an employee on its own, and adding the other attribute keeps it unique |
+| Candidate keys | EMP_ID · CNIC | Minimal: neither can lose an attribute and stay unique. The pair is not minimal. |
+| Primary key | EMP_ID | The candidate key chosen by the designer, and never NULL. CNIC would also be a valid choice. |
+| Alternate key | CNIC | The candidate key not chosen |
+
+The hierarchy: every primary key is a candidate key, and every candidate key is a super key, but not the other way round.
+
+</Predict>
+
+<QuickCheck
+  id="q3-alt-secondary"
+  question="According to the lecture slides, what is another name for an alternate key (a candidate key not chosen as primary)?"
+  options={["Secondary key", "Foreign key", "Composite key", "Super key"]}
+  answer="Secondary key"
+  explanation="The key-types slide says alternate (secondary) key, so write that if asked for the slide's term. Know that it is imprecise: in Elmasri, and even on the lecture's own summary slide ('we access on something not necessarily unique'), a secondary key is any attribute used to look records up, and it need not be unique. An alternate key must be unique."
+  feedback={{
+    "Foreign key": "A foreign key references a primary key in another table. It is not an unused candidate key.",
+    "Composite key": "Composite means the key has two or more attributes. That is about size, not about being chosen.",
+    "Super key": "Every alternate key is a super key, but super key is the broader term, not its other name."
+  }}
+/>
+
+<QuickCheck
+  id="q3-fk"
+  question="ENROLLMENT(StudentID, CourseCode, Grade) has the primary key StudentID with CourseCode. Which statement is true?"
+  options={[
+    "The key is composite, and StudentID is also a foreign key referencing STUDENT",
+    "StudentID alone must be unique in ENROLLMENT",
+    "A foreign key value can be any value, even one missing from the referenced table",
+    "CourseCode cannot be a foreign key because it is part of the primary key"
+  ]}
+  answer="The key is composite, and StudentID is also a foreign key referencing STUDENT"
+  explanation="Composite key: two or more columns that are unique together, typical of an M:N relationship. Each part also references its own table. Referential integrity means every foreign key value must exist in the referenced primary key (or be NULL, if the relationship is optional and the column is not part of a primary key)."
+  feedback={{
+    "StudentID alone must be unique in ENROLLMENT": "A student appears once per course, so StudentID repeats. Only the combination is unique.",
+    "A foreign key value can be any value, even one missing from the referenced table": "That breaks referential integrity. A foreign key must match an existing primary key value.",
+    "CourseCode cannot be a foreign key because it is part of the primary key": "A column can be both. Here both parts of the composite key are foreign keys."
+  }}
+/>
+
+<QuickCheck
+  id="q3-design-order"
+  question="In the lecture's design process, which step comes directly after drawing the ER diagram (conceptual design)?"
+  options={["Map the conceptual model to a logical (relational) model", "Choose indexes and file organisation", "Collect and analyse requirements", "Test the system"]}
+  answer="Map the conceptual model to a logical (relational) model"
+  explanation="Requirements, then conceptual design (ER), then logical design (data model mapping to tables and keys), then physical design (storage, indexes), then implementation and testing."
+  feedback={{
+    "Choose indexes and file organisation": "That is physical design, one step later.",
+    "Collect and analyse requirements": "Requirements come before the ER diagram.",
+    "Test the system": "Testing comes after implementation, at the end."
+  }}
+/>
+
+<QuickCheck
+  id="q3-naming"
+  question="Following the lecture's naming conventions, which entity type name is best?"
+  options={["STUDENT", "Students", "student table", "SELECT"]}
+  answer="STUDENT"
+  explanation="Singular, capital letters, no spaces or special characters, and no SQL reserved words."
+  feedback={{
+    "Students": "Entity type names are singular, and the lecture writes them in capitals.",
+    "student table": "Spaces are to be avoided, and it is an entity type, not a table, at this stage.",
+    "SELECT": "Reserved SQL keywords are to be avoided as names."
+  }}
+/>
+
+## Draw an ERD
+
+The car-sales case study from lecture 03 is worked step by step in this week's ERD lab. The two below use the same format. Write your answer on paper as a list or a quick sketch before you reveal the model answer.
+
+<Predict
+  id="q-erd-library"
+  prompt="SZABIST library. A member has a unique member ID, a name, a department and one or more phone numbers. A book has a unique ISBN, a title, one or more authors and a year. The library holds several copies of a book; a copy is identified by its copy number within that book and has a shelf location. A member can borrow many copies, and a copy is borrowed by at most one member at a time; each loan records the issue date and due date. A member may have no loans. Give the entities, attributes (with types and keys), relationships, cardinality ratios and participation."
+  answer="MEMBER(MemberID key, Name, Department, Phone multivalued); BOOK(ISBN key, Title, Author multivalued, Year); COPY weak (CopyNo partial key, ShelfLocation). BOOK HAS COPY: identifying, 1:N, COPY total. MEMBER BORROWS COPY: 1:N, relationship attributes IssueDate and DueDate, both sides partial."
+>
+
+**Model answer (Chen).**
+
+| Entity | Attributes |
+|---|---|
+| MEMBER | **MemberID** (key, underlined), Name, Department, Phone (multivalued, double oval) |
+| BOOK | **ISBN** (key), Title, Author (multivalued), Year |
+| COPY (weak, double rectangle) | CopyNo (partial key, dashed underline), ShelfLocation |
+
+| Relationship | Between | Ratio | Participation | Notes |
+|---|---|---|---|---|
+| HAS (identifying, double diamond) | BOOK and COPY | 1:N (1 by BOOK, N by COPY) | COPY total (double line), BOOK partial | A copy is identified by ISBN plus CopyNo |
+| BORROWS | MEMBER and COPY | 1:N (1 by MEMBER, N by COPY) | Both partial | IssueDate and DueDate are attributes of the relationship, in ovals attached to the diamond |
+
+Marks usually go to: every entity with its key, the weak entity with its identifying relationship, the multivalued attributes drawn correctly, cardinality on every relationship, and the dates placed on BORROWS rather than on MEMBER or COPY.
+
+</Predict>
+
+<HintLadder
+  id="q-erd-hospital-hints"
+  hints={[
+    "Nouns with their own identifier become entities: doctor, patient. Is an appointment a thing with its own ID and data, or just a link?",
+    "The brief gives an appointment its own number, date and time, so model APPOINTMENT as an entity. Then ask, for each appointment, how many doctors and how many patients it involves.",
+    "Each appointment has exactly one doctor and one patient (total participation on the APPOINTMENT side). A doctor or patient can have many appointments, or none yet (partial)."
+  ]}
+/>
+
+<Predict
+  id="q-erd-hospital"
+  prompt="A clinic keeps doctors (unique doctor ID, name, specialisation) and patients (unique MR number, name, date of birth, age, address made of house, street and city). A patient books appointments; each appointment has a unique appointment number, a date and a time, and is with exactly one doctor for exactly one patient. A doctor may have no appointments yet. List entities, attributes with their types, relationships, cardinality and participation."
+  answer="DOCTOR(DoctorID key, Name, Specialisation); PATIENT(MRNo key, Name, DOB, Age derived, Address composite of House, Street, City); APPOINTMENT(ApptNo key, Date, Time). PATIENT BOOKS APPOINTMENT 1:N, APPOINTMENT total; DOCTOR ATTENDS APPOINTMENT 1:N, APPOINTMENT total, DOCTOR partial."
+>
+
+**Model answer (Chen).**
+
+| Entity | Attributes |
+|---|---|
+| DOCTOR | **DoctorID** (key), Name, Specialisation |
+| PATIENT | **MRNo** (key), Name, DOB, Age (derived from DOB, dashed oval), Address (composite: House, Street, City as sub-ovals) |
+| APPOINTMENT | **ApptNo** (key), Date, Time |
+
+| Relationship | Between | Ratio | Participation |
+|---|---|---|---|
+| BOOKS | PATIENT and APPOINTMENT | 1:N (1 by PATIENT, N by APPOINTMENT) | APPOINTMENT total, PATIENT partial |
+| WITH | DOCTOR and APPOINTMENT | 1:N (1 by DOCTOR, N by APPOINTMENT) | APPOINTMENT total, DOCTOR partial (the brief says a doctor may have none) |
+
+Also acceptable: an M:N relationship HAS_APPOINTMENT between DOCTOR and PATIENT, with Date and Time on the diamond. Because the brief gives every appointment its own unique number, an APPOINTMENT entity is the better reading. If you choose the M:N version, say in one line why.
+
+</Predict>

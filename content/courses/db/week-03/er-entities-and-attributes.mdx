@@ -1,0 +1,297 @@
+Lecture 3 opens the design half of the course. Before you can write a single `CREATE TABLE`, you draw what the organisation cares about as an **ER diagram**. This lesson covers the "things" and their properties. Relationships and keys come in the next one.
+
+<Predict
+  id="one-row"
+  prompt="SZABIST wants to store, for every student: registration number, full name (first and last), all their phone numbers, date of birth, and age. You have to fit each student into ONE row of ONE table. Which of those five things cause trouble, and what trouble?"
+  answer="Phone numbers: a student can have several, and one cell cannot hold a set cleanly. Age: it can be computed from date of birth, so a stored copy goes stale every birthday. Full name: it has parts, so you must decide whether to keep one column or two. Registration number and date of birth fit fine."
+>
+
+Three of the five have a problem, and each one is a different **attribute type**:
+
+- **Phone numbers** are **multivalued**: one student, a set of values. A single cell cannot hold a set cleanly.
+- **Age** is **derived**: it can always be computed from date of birth. A stored copy is wrong after the next birthday.
+- **Full name** is **composite**: one value made of parts (first, last). You have to decide whether the parts matter on their own.
+
+The ER model marks each of these with its own symbol, so the problem shows on the diagram long before it causes a bug in a table. When you map the diagram to tables later, each symbol tells you what to do: a multivalued attribute becomes its own table, and a derived one is usually not stored.
+
+</Predict>
+
+## 1. Where the ER diagram fits
+
+Database design runs in stages. The lecture lists them on slide 7. Put them in order before reading on.
+
+<OrderCheck
+  id="design-stages"
+  prompt="Arrange the database design stages in the order the lecture gives them."
+  items={["Analyze user requirements", "Develop conceptual model", "Map conceptual to logical model", "Choose DBMS", "Develop physical design", "Implement system", "Test system", "Operational maintenance"]}
+  explanation="Requirements first, then the conceptual model (the ER diagram), then mapping it to a logical model (tables), then the DBMS-specific physical design (indexes, storage), then implement, test and maintain. The ER diagram is stage 2: it depends on the requirements and on nothing about any DBMS."
+  topLabel="First"
+  bottomLabel="Last"
+/>
+
+The four stages that matter for the exam, with the running university example from the slides:
+
+| Stage | Output | University example |
+|---|---|---|
+| Requirements collection and analysis | Data requirements and functional requirements | "Track students, courses, instructors" |
+| **Conceptual design** | Conceptual schema, drawn as an **ER diagram** | STUDENT, ENROLLS, COURSE |
+| Logical design (data model mapping) | Database schema in the DBMS's data model: tables and keys | `student`, `course`, `enrollment` tables |
+| Physical design | Storage structures, indexes, access paths | An index on `enrollment(course_id)` |
+
+A **conceptual data model** describes *what* data is needed, not *how* it is stored. The slide's analogy: it is the blueprint of a house, not the bricks. That is why it is **DBMS-independent**. The same ER diagram can become a Postgres, MySQL or Oracle schema. It is also readable by non-technical users, so the registrar can check it before anything is built.
+
+The ER model was introduced by **Peter Chen in 1976**. The notation you will draw is his, as extended in Elmasri: rectangles, ovals and diamonds.
+
+<QuickCheck
+  id="stage-er"
+  question="In which design stage is the ER diagram produced?"
+  options={["Conceptual design", "Requirements collection and analysis", "Logical design (data model mapping)", "Physical design"]}
+  answer="Conceptual design"
+  explanation="The ER diagram is the conceptual schema. It turns the data requirements into entities, attributes and relationships, with no DBMS detail. Logical design comes next and converts it to tables."
+  feedback={{
+    "Requirements collection and analysis": "That stage produces the written data requirements: interview notes, forms, a requirements paragraph. The ER diagram is drawn from them in the next stage.",
+    "Logical design (data model mapping)": "Logical design takes the finished ER diagram and maps it to tables and keys. It is the input, not the output, of that stage.",
+    "Physical design": "Physical design is DBMS-specific: indexes, file organisation, partitions. The ER diagram knows nothing about those."
+  }}
+/>
+
+<Callout type="key-idea" title="ERD versus UML class diagram">
+The slides pair them. Use an **ERD** to design a database schema: entities, attributes, relationships. Use a **UML class diagram** to design software: classes with methods, inheritance, interactions. A class diagram can model the same data, and developers often convert one into the other. As a backend developer you already read class diagrams. The ERD is the same idea without methods, and with its own symbols.
+</Callout>
+
+## 2. Entities: type, instance, set
+
+An **entity** is a real-world object or concept with an independent existence that the organisation wants to store data about: a student, a course, an employee, a car. It can be physical (a car) or conceptual (a course, a job).
+
+Three words that the exam separates:
+
+| Term | Definition | University | Car rental |
+|---|---|---|---|
+| **Entity type** | The category: a set of entities that share the same attributes | STUDENT | CAR |
+| **Entity instance** | One specific entity of that type | Ali Khan, 2312200 | Toyota Corolla 2020, LEA-1234 |
+| **Entity set** | All instances of the type in the database at one moment | Every SZABIST student today | Every car in the fleet today |
+
+The entity type is the design; it stays the same. The entity set changes every time a student joins or leaves. That is the same split as schema versus state from lecture 2.
+
+<Callout type="exam" title="“Entity set is equivalent to a table”: which part of the table?">
+Slide 34 says an entity set is "equivalent to a table in a relational database". Slide 33 says entity types are "used to define database tables". Both are half right, and they are not the same half:
+
+- The **entity type** becomes the table's **definition**: its name and columns (`CREATE TABLE student`).
+- The **entity set** becomes the table's **rows** at a given moment.
+
+If the question says "according to the lecture", write the slide's line. Otherwise write "an entity type maps to a table, and the entity set is the set of rows in it at a given time". That answer is correct for either marker.
+</Callout>
+
+### Strong and weak entities
+
+A **strong** (regular) entity type has a key of its own: STUDENT has RegNo. A **weak** entity type does not. It is identified only through its relationship to an **owner** entity. The slide's pairs:
+
+- **EMPLOYEE → DEPENDENT.** A dependent is identified by the employee plus the dependent's name. Two employees can both have a daughter named Fatima.
+- **BOOK → BOOKCOPY.** Copy number 3 means nothing until you say which book.
+- **ORDER → ORDER ITEM.** Line 2 means nothing without the order.
+
+A weak entity is drawn as a **double rectangle**. It is linked to its owner by an **identifying relationship** (a double diamond). The attribute that tells one weak entity apart from the others with the same owner is its **partial key**, underlined with a dashed line.
+
+<Callout type="exam" title="The slide's definition of a weak entity, and the precise one">
+The slide says a strong entity "can exist independently" and a weak one "depends on a strong entity". Write that if asked for the lecture's words. Elmasri's definition is sharper: a weak entity type **does not have key attributes of its own**. It is identified by its owner's key plus its partial key. Existence dependence follows from that, but it is not the definition. An ORDER ITEM depends on an ORDER *because* "item 2" identifies nothing on its own.
+
+One more trap: the lecture PDF shows the weak entity box and the multivalued oval with one thick border. The original slides use **double** lines, and the thick line is an artefact of the file conversion. Draw two clearly separate lines on paper.
+</Callout>
+
+<QuickCheck
+  id="weak-which"
+  question="Which of these is best modelled as a weak entity type?"
+  options={["Installment of a student's fee (1st, 2nd, 3rd installment of a given student's semester fee)", "COURSE, identified by course code CSC 2203", "INSTRUCTOR, identified by employee number", "ROOM, identified by room code like NB-204"]}
+  answer="Installment of a student's fee (1st, 2nd, 3rd installment of a given student's semester fee)"
+  explanation="“2nd installment” identifies nothing until you say whose fee and which semester. The installment number is only a partial key, unique within its owner. Draw it as a double rectangle with an identifying relationship to the owner."
+  feedback={{
+    "COURSE, identified by course code CSC 2203": "CSC 2203 identifies the course on its own, so it is a key and COURSE is a strong entity.",
+    "INSTRUCTOR, identified by employee number": "The employee number is unique across the university. A key of its own means a strong entity.",
+    "ROOM, identified by room code like NB-204": "The room code already includes the building (NB), so it is unique on its own. If rooms were numbered only 101, 102 in every building, ROOM would become weak, owned by BUILDING."
+  }}
+/>
+
+### Naming entity types
+
+The slide's conventions, which examiners do check on a hand-drawn ERD:
+
+- **Singular** names: STUDENT, not STUDENTS. The box names the type, and each instance is one student.
+- **Capital letters** for entity types, so they stand apart from attribute names.
+- Use the **organisation's own word**: CUSTOMER or CLIENT, whichever they use.
+- Abbreviate consistently if at all (EMP, CUST, PROD). Use no spaces or special characters, and avoid SQL keywords such as TABLE, INDEX, SELECT and ORDER.
+
+Watch that last rule: ORDER is a reserved word in SQL, so real schemas often call the entity ORDERS or SALES_ORDER. It is fine to draw ORDER in the ERD.
+
+## 3. The whole notation on one sheet
+
+Keep this figure open for the rest of the week. Every symbol the quiz can ask you to draw is on it.
+
+<ErChenSymbols />
+
+## 4. Attributes: four pairs and two extras
+
+An **attribute** is a property that describes an entity: a student's name, CNIC, date of birth. Each is an oval joined to its entity by a line. The lecture classifies attributes along independent axes, so one attribute has several labels at once. Age, for example, is simple, single-valued *and* derived.
+
+| Axis | One side | Other side | Symbol for the marked side |
+|---|---|---|---|
+| Has parts? | **Simple (atomic)**: Age, Salary, Gender | **Composite**: Name (First, Last), Address (Street, City, Zip) | Sub-ovals hanging off the oval |
+| How many values? | **Single-valued**: RegNo, DOB | **Multivalued**: Phone numbers, Emails | Double oval |
+| Stored or computed? | **Stored**: DOB | **Derived**: Age from DOB, Total salary from base plus bonus | Dashed oval |
+| Identifies the entity? | Ordinary attribute | **Key attribute**: RegNo | Name underlined |
+
+Two more from the slides:
+
+- **NULL values.** Some attributes have no value for some entities. A person with no middle name has NULL for MiddleName. An optional emergency contact is NULL if it was not given. NULL means *not applicable* or *unknown*. It does not mean zero or an empty string.
+- **Complex attributes.** Composite and multivalued nested together. The slide's example is Educational Qualifications: many degrees (multivalued), each with DegreeName, University and Year (composite).
+
+<QuickCheck
+  id="attr-age"
+  question="An EMPLOYEE entity has Salary and Bonus stored, and TotalPay which is always Salary plus Bonus. How is TotalPay drawn in Chen notation?"
+  options={["A dashed oval joined to EMPLOYEE", "A double oval joined to EMPLOYEE", "An oval with two sub-ovals, Salary and Bonus", "An oval with its name underlined"]}
+  answer="A dashed oval joined to EMPLOYEE"
+  explanation="TotalPay can always be computed from other attributes, so it is derived: a dashed oval. The slides' own example is Total Salary derived from Base Salary plus Bonuses."
+  feedback={{
+    "A double oval joined to EMPLOYEE": "A double oval is multivalued: several values per entity. An employee has one TotalPay.",
+    "An oval with two sub-ovals, Salary and Bonus": "Sub-ovals mean TotalPay is made of those parts as stored components, like Street and City inside Address. TotalPay is computed from them, which is derivation, not composition.",
+    "An oval with its name underlined": "Underlining marks a key. Many employees can have the same TotalPay, so it cannot identify one."
+  }}
+/>
+
+<QuickCheck
+  id="attr-composite-vs-multi"
+  question="A STUDENT has one permanent address (house, street, city) and several phone numbers. Which statement is right?"
+  options={["Address is composite and single-valued; phone numbers are simple and multivalued", "Address is multivalued; phone numbers are composite", "Both are composite, because both hold more than one piece of data", "Both are multivalued, because both hold more than one piece of data"]}
+  answer="Address is composite and single-valued; phone numbers are simple and multivalued"
+  explanation="Composite means one value made of parts. Multivalued means several values of the same kind. One address with three parts is composite. Three phone numbers, each atomic, is multivalued. This is the distinction examiners test most."
+  feedback={{
+    "Address is multivalued; phone numbers are composite": "Swapped. The student has one address (single-valued) with parts (composite), and many phone numbers (multivalued), each without parts.",
+    "Both are composite, because both hold more than one piece of data": "“More than one piece” hides the difference. The address is one value made of parts. The phones are several whole values.",
+    "Both are multivalued, because both hold more than one piece of data": "There is only one permanent address, so Address is single-valued. Its three parts make it composite."
+  }}
+/>
+
+Now sort ten attributes yourself. Some are chosen to catch the usual confusions.
+
+<ErAttributeSort id="attr-sort" />
+
+<Callout type="exam" title="“Primary key → highlighted”">
+Slide 17 says the primary key is "highlighted". In Chen notation, highlighting means the attribute name is **underlined** inside its oval, with a solid underline. The dashed underline is reserved for a weak entity's partial key. Do not shade or colour the oval on a quiz: underline the name.
+</Callout>
+
+## 5. Reading a full example
+
+Here is the lecture's slide-50 EMPLOYEE example, redrawn so every label is readable. Before you look at the tags, name the type of each oval.
+
+<ErEmployeeDiagram />
+
+<QuickCheck
+  id="emp-derived-from"
+  question="In the EMPLOYEE diagram, experience is derived. Which stored attribute is it most likely computed from?"
+  options={["dateHired", "empId", "hobbies", "address"]}
+  answer="dateHired"
+  explanation="Experience equals today minus dateHired. The pattern is the same as Age from DateOfBirth: a derived attribute that depends on the current date is drawn dashed and usually not stored, because a stored copy would go stale."
+  feedback={{
+    "empId": "empId is an identifier. It carries no information about time on the job.",
+    "hobbies": "Hobbies is a multivalued set of interests; it has nothing to count years from.",
+    "address": "Address is where the employee lives, not how long they have worked."
+  }}
+/>
+
+<QuickCheck
+  id="emp-count"
+  type="numeric"
+  unit="ovals"
+  question="Count the ovals in the EMPLOYEE diagram, including the sub-ovals of the composite attribute. How many ovals are there? (Count a double oval as one.)"
+  answer={8}
+  explanation="empId, empName, experience, dateHired, hobbies, address, street, houseNo: eight. The trap is the double oval for hobbies. It is one multivalued attribute drawn with two borders, not two attributes. Count street and houseNo, because a composite attribute's parts are attributes too."
+/>
+
+### The COMPANY preliminary design
+
+Slide 52 is Elmasri's Figure 3.8: the COMPANY database's four entity types before relationships exist. Every connection between entities is written as an attribute for now:
+
+| Entity type | Attributes as drawn on the slide |
+|---|---|
+| EMPLOYEE | Name (composite: Fname, Minit, Lname), Ssn (key), Sex, Address, Salary, Birth_date, **Department**, **Supervisor**, **Works_on** (multivalued, composite: Project, Hours) |
+| DEPARTMENT | Name (key), Number (key), **Locations** (multivalued), **Manager**, Manager_start_date |
+| PROJECT | Name (key), Number (key), Location, **Controlling_department** |
+| DEPENDENT | **Employee**, Dependent_name, Sex, Birth_date, Relationship |
+
+Two details to notice. DEPARTMENT and PROJECT each have **two** key attributes, both underlined, because both Name and Number are unique. DEPENDENT has no key at all. It is a weak entity waiting to be recognised.
+
+<Predict
+  id="company-refine"
+  prompt="The figure's caption says some of these attributes “will be refined into relationships”. Which ones? Name at least four, and say what each one really connects."
+  answer="EMPLOYEE.Department (employee works for department), EMPLOYEE.Supervisor (employee supervises employee), EMPLOYEE.Works_on (employee works on project, with Hours), DEPARTMENT.Manager (employee manages department), PROJECT.Controlling_department (department controls project), DEPENDENT.Employee (employee has dependents, which makes DEPENDENT weak)."
+>
+
+**Rule of thumb:** an attribute whose value *is another entity* is a relationship in disguise.
+
+| Attribute | Becomes relationship | Connects |
+|---|---|---|
+| EMPLOYEE.Department | WORKS_FOR | EMPLOYEE, DEPARTMENT |
+| DEPARTMENT.Manager (+ Manager_start_date) | MANAGES, with attribute StartDate | EMPLOYEE, DEPARTMENT |
+| PROJECT.Controlling_department | CONTROLS | DEPARTMENT, PROJECT |
+| EMPLOYEE.Supervisor | SUPERVISION | EMPLOYEE, EMPLOYEE (a recursive relationship) |
+| EMPLOYEE.Works_on (Project, Hours) | WORKS_ON, with attribute Hours | EMPLOYEE, PROJECT |
+| DEPENDENT.Employee | DEPENDENTS_OF (identifying) | EMPLOYEE, DEPENDENT (weak) |
+
+Hours moves onto the relationship because it describes the *pair* (this employee on this project), not either entity alone. The next lesson draws these as diamonds.
+
+</Predict>
+
+<Deeper kind="exam" title="Model answer: explain the types of attributes with examples and ER notation (5 marks)">
+
+An attribute is a property that describes an entity type, drawn as an oval joined to its entity.
+
+1. **Simple (atomic) vs composite.** A simple attribute cannot be divided (Age, Gender). A composite attribute has component attributes (Name → FirstName, LastName; Address → Street, City). Draw sub-ovals joined to the composite oval.
+2. **Single-valued vs multivalued.** Single-valued: one value per entity (DateOfBirth). Multivalued: a set of values (PhoneNumbers). Draw a **double oval**.
+3. **Stored vs derived.** Derived values are computed from other attributes (Age from DateOfBirth). Draw a **dashed oval**.
+4. **Key attribute.** Its value is unique for each entity (StudentID). **Underline** the name.
+5. **NULL.** The value is missing or not applicable (MiddleName).
+6. **Complex.** Composite and multivalued nested (Qualifications: several degrees, each with DegreeName, University, Year).
+
+Sketch one small entity showing all the symbols, for example the EMPLOYEE example above. A diagram earns marks that prose alone does not.
+
+</Deeper>
+
+<Deeper kind="formal" title="Elmasri's text notation for complex attributes">
+
+Elmasri writes attribute structure in text as well. Parentheses group the parts of a composite attribute, braces mark a multivalued one, and commas separate components. The textbook's example is a person with several residences, each with several phones:
+
+```text
+{AddressPhone( {Phone(AreaCode, PhoneNumber)},
+               Address(StreetAddress(Number, Street, ApartmentNumber),
+                       City, State, Zip) )}
+```
+
+Read it from outside in: many AddressPhone values. Each one has a set of phones (each phone composite) and one composite address, whose StreetAddress is itself composite. The lecture does not use this notation, so it is unlikely on the quiz. It is the precise answer to "what is a complex attribute".
+
+</Deeper>
+
+<Deeper kind="why" title="Why the model distinguishes multivalued and derived at all">
+
+Both are warnings about the table you will get. A **multivalued** attribute cannot sit in one column of a relational table without breaking first normal form, which you meet later in the course. Mapping moves it into a separate table keyed by the owner plus the value, for example `student_phone(reg_no, phone)`. A **derived** attribute is usually not stored at all. It is computed in a query or a view, so it cannot drift out of sync. In Postgres, `GENERATED ALWAYS AS (…) STORED` is the one case where the DBMS stores it and keeps it correct for you. That only works for expressions of the same row, not "years since hiring", which depends on today's date.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.vertabelo.com/blog/chen-erd-notation/",
+    "title": "Vertabelo: Chen notation",
+    "kind": "blog",
+    "why": "Every Chen symbol in this lesson, weak entities and derived attributes included, with a worked diagram. The same notation your instructor draws."
+  },
+  {
+    "href": "https://www.youtube.com/watch?v=QpdhBUYk7Kk",
+    "title": "Lucidchart: Entity Relationship Diagram (ERD) tutorial, part 1",
+    "kind": "video",
+    "why": "A short animated walk through entities, attributes and keys. It draws in crow's foot notation, not Chen, so use it for the concepts and this lesson's sheet for the symbols."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Entity%E2%80%93relationship_model",
+    "title": "Entity–relationship model",
+    "kind": "blog",
+    "why": "Chen's 1976 origin, and side-by-side pictures of Chen, crow's foot and min-max notation, so you can recognise all three."
+  }
+]} />

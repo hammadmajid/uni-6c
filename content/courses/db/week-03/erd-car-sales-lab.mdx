@@ -1,0 +1,281 @@
+Lecture 3 ends on one slide with no answer: a car-sales company, a paragraph of requirements, and "find the entities, their attributes and relationships". It is the likeliest ERD question on Friday's quiz. This lab solves it in the order you should solve any ERD question on paper, so the procedure is what you take into the exam.
+
+<Predict
+  id="cs-count"
+  prompt="Skim the case below once. How many entity types does it need, and what are they? Commit before you read on."
+  answer="Five: CUSTOMER, REPLACEMENT_SCHEME, CAR, SALE, SALESPERSON. Not COMPANY, not COMMISSION, and not one entity per payment plan."
+>
+
+**Five: CUSTOMER, REPLACEMENT_SCHEME, CAR, SALE, SALESPERSON.** Each one is given a *unique* identifier in the text, and that is the quickest test there is: if the case says "a unique X number", X is an entity.
+
+The usual wrong answers are the three traps this lab keeps returning to. **COMPANY** owns the database and is not stored in it. **COMMISSION** is a value recorded per sale, not a thing with its own identity. **"1, 2, 3, 4, 5 years"** are five rows of REPLACEMENT_SCHEME, not five entities.
+
+</Predict>
+
+## The case, as the slide gives it
+
+> A car sales company offers to its customers the option of purchasing a new car using replacement scheme of over 1 year, 2 years, 3 years, 4 years and 5 years. A customer may choose one of the replacement scheme options for each purchase or may pay the whole amount in one go, meaning a replacement scheme option may be selected by one or more customers or may not be selected by at all. A customer will have a unique customer number, a name and address and a phone number. A replacement scheme will have a unique replacement scheme number, a name and the number of years for payment. A car will have a unique car code, a make a model, year of manufacturing and a price.
+>
+> The company pays commission on sale of cars to its sales people and therefore it will also keep information about each sale which includes a unique sale id and commission to be paid on that sale. The company will also want to know who made the sale and the car involved in that transaction so that the commission can be determined. A sale person will have a unique salesperson id, a name, a name a phone number and email address.
+
+The last sentence says "a name, a name a phone number": a typo on the slide. The salesperson has **one** Name attribute. If you copy the case onto your answer sheet, do not draw two.
+
+## The five-step procedure
+
+Every ERD question can be solved with the same five passes over the text. Doing them in order stops you from drawing a diamond before you know what it connects.
+
+1. **Nouns.** Underline every noun. Each one is an entity, an attribute, a synonym of something you already have, a value (a row), or not stored at all.
+2. **Keys.** For each entity, find the attribute the text calls unique. It is underlined in Chen notation.
+3. **Verbs.** Each verb that links two entities ("made the sale", "the car involved") becomes a relationship diamond.
+4. **Numbers.** For each relationship, read the wording for how many (1 or N on each side) and whether participation is compulsory (a double line) or optional (a single line).
+5. **Draw.** Entities first, then attributes, then diamonds and lines, then the 1 and N labels last.
+
+## Step 1: nouns
+
+<ErCarSalesNounPicker id="cs-nouns" />
+
+Two tags need a word more than the feedback gives.
+
+**Synonyms.** The case says *purchase*, *sale* and *transaction*. It is one event seen from the customer's side, from the company's side, and from an accountant's. Name the entity after the noun the text gives an identifier to (a unique **sale** id), so it is SALE.
+
+**Values.** "1 year, 2 years, … 5 years" is not a design decision; it is data. Those five options are five rows of REPLACEMENT_SCHEME with NoOfYears = 1 to 5. If you draw them as five attributes or five entities, adding a 6-year plan would mean changing the schema instead of inserting a row.
+
+<QuickCheck
+  id="cs-commission"
+  question="Where does commission go in the ER diagram?"
+  options={[
+    "An attribute of SALE",
+    "An attribute of SALESPERSON",
+    "A separate entity COMMISSION linked to SALE",
+    "An attribute of the MAKES relationship, but never of an entity"
+  ]}
+  answer="An attribute of SALE"
+  explanation="The text says the company keeps information about each sale, which includes a unique sale id and the commission to be paid on that sale. One commission value per sale, so it describes SALE."
+  feedback={{
+    "An attribute of SALESPERSON": "A salesperson earns a different commission on every sale. On SALESPERSON you could store only one value, so you would lose the per-sale amounts. A total per salesperson is derived by adding up their sales.",
+    "A separate entity COMMISSION linked to SALE": "Commission has no identifier of its own and no attributes. It is one number per sale, which is exactly what an attribute is.",
+    "An attribute of the MAKES relationship, but never of an entity": "Relationship attributes exist in Chen notation, but because MAKES is 1:N, an attribute on it can always move to the N side, SALE. The case says commission is part of the information kept about each sale, so put it on SALE."
+  }}
+/>
+
+## Step 2: keys
+
+Every entity in this case is handed its key in so many words: "a **unique** customer number", "a **unique** replacement scheme number", "a **unique** car code", "a **unique** sale id", "a **unique** salesperson id". Underline each one inside its oval.
+
+<ErCarSalesDiagram stage="entities" />
+
+Two small decisions are visible here. **Names are singular and in capitals** (SALESPERSON, not "sales people"), following the slide's naming rules. And **Address stays one simple oval**: you may draw it as a composite (street, city) only if the text splits it, and this text does not.
+
+<QuickCheck
+  id="cs-key-car"
+  question="Which attribute is the key of CAR?"
+  options={["CarCode", "Model", "(Make, Model)", "(Make, Model, YearOfManufacture)"]}
+  answer="CarCode"
+  explanation="The text says a car has a unique car code. That is the key; underline it."
+  feedback={{
+    "Model": "Many cars share a model: two white Corollas are different cars. Model is not unique.",
+    "(Make, Model)": "Every 2025 Toyota Corolla on the lot has the same make and model. Not unique, so not a key.",
+    "(Make, Model, YearOfManufacture)": "Two identical cars built in the same year would still clash. Only the car code is stated as unique."
+  }}
+/>
+
+## Step 3: verbs become relationships
+
+Read the text again for verbs that link two of your five entities:
+
+| Wording in the case | Relationship |
+|---|---|
+| a customer … **for each purchase** | CUSTOMER **BUYS** SALE |
+| **who made the sale** | SALESPERSON **MAKES** SALE |
+| **the car involved** in that transaction | SALE **FOR** CAR |
+| **may choose** one of the replacement scheme options **for each purchase** | SALE **PAID_UNDER** REPLACEMENT_SCHEME |
+
+Notice that all four touch SALE. When an event (a sale, an order, an enrolment) has its own identifier, it becomes the hub, and the things it involves hang off it.
+
+<QuickCheck
+  id="cs-scheme-link"
+  question="A classmate links REPLACEMENT_SCHEME to CUSTOMER with an M:N relationship CHOOSES, instead of to SALE. What is the strongest objection?"
+  options={[
+    "The scheme is chosen for each purchase, so a customer who buys two cars on different schemes needs the scheme attached to each sale",
+    "M:N relationships are not allowed in Chen notation",
+    "REPLACEMENT_SCHEME should be an attribute of CUSTOMER",
+    "There is no objection: the two designs store exactly the same facts"
+  ]}
+  answer="The scheme is chosen for each purchase, so a customer who buys two cars on different schemes needs the scheme attached to each sale"
+  explanation="The text says a customer may choose a scheme for each purchase. With CUSTOMER CHOOSES SCHEME you know a customer used the 3-year and the 5-year plans, but not which car was on which plan. Attaching the scheme to SALE records it per purchase. The M:N design is not absurd and some markers accept it, but put the reason for yours in one sentence on the paper."
+  feedback={{
+    "M:N relationships are not allowed in Chen notation": "They are allowed: Students and Courses is the slides' own M:N example.",
+    "REPLACEMENT_SCHEME should be an attribute of CUSTOMER": "The scheme has a unique number and two attributes of its own, so it is an entity. And a customer can use different schemes on different purchases.",
+    "There is no objection: the two designs store exactly the same facts": "They do not. With CHOOSES on CUSTOMER you lose which purchase used which scheme."
+  }}
+/>
+
+## Step 4: cardinality and participation from the wording
+
+Cardinality asks "how many at most": one sale has **one** customer, and a customer can have **many** sales, so BUYS is 1:N. Participation asks "must every instance take part?": every sale must have a customer (total, drawn as a double line), but a customer does not have to be in the database through a purchase (partial, a single line).
+
+| Relationship | Ratio | Participation | The words that decide it |
+|---|---|---|---|
+| CUSTOMER BUYS SALE | 1:N | SALE total, CUSTOMER partial | each purchase is by one customer; a customer may make many |
+| SALESPERSON MAKES SALE | 1:N | SALE total, SALESPERSON partial | "who made the sale": one person per sale, needed for commission |
+| SALE FOR CAR | 1:1 | SALE total, CAR partial | a unique car code identifies one physical car, sold once; unsold cars are in stock |
+| SALE PAID_UNDER REPLACEMENT_SCHEME | N:1 | both partial | "may pay the whole amount in one go"; a scheme "may not be selected at all" |
+
+Two of those rows deserve an honest note.
+
+- **CUSTOMER partial or total?** Partial is the safer reading: a customer record can exist before its first purchase. If you argue that the company only records someone once they buy, total is defensible. Either way, **write your assumption next to the diagram**. Markers reward a stated assumption far more often than they punish it.
+- **SALE FOR CAR, 1:1 or N:1?** 1:1 assumes a car code names one physical car, which a unique code, a year and a price suggest. If you read CAR as a catalogue model ("Corolla 2025") that is sold many times, it is N:1. State which you mean.
+
+<QuickCheck
+  id="cs-oneGo"
+  question="How does the diagram show that a customer may pay the whole amount in one go?"
+  options={[
+    "SALE has partial participation in PAID_UNDER: a single line from SALE to the diamond",
+    "SALE has total participation in PAID_UNDER: a double line",
+    "An extra entity CASH_PAYMENT linked to SALE",
+    "A multivalued attribute PaymentMethod on CUSTOMER"
+  ]}
+  answer="SALE has partial participation in PAID_UNDER: a single line from SALE to the diamond"
+  explanation="Paying in one go means that particular sale has no scheme. Some sales take part in PAID_UNDER and some do not: that is partial participation. In the table it becomes a nullable SchemeNo on SALE."
+  feedback={{
+    "SALE has total participation in PAID_UNDER: a double line": "Total would mean every sale must be on a scheme, which the text explicitly contradicts.",
+    "An extra entity CASH_PAYMENT linked to SALE": "Paying outright is the absence of a scheme, not a thing with its own identifier and attributes.",
+    "A multivalued attribute PaymentMethod on CUSTOMER": "The choice is per purchase, not per customer, and the case never asks you to store a payment method."
+  }}
+/>
+
+<QuickCheck
+  id="cs-scheme-partial"
+  question="Why is REPLACEMENT_SCHEME's side of PAID_UNDER also partial?"
+  options={[
+    "The case says a scheme option may not be selected at all",
+    "Because a scheme can be chosen by many sales",
+    "Because the relationship is N:1",
+    "Because REPLACEMENT_SCHEME is a weak entity"
+  ]}
+  answer="The case says a scheme option may not be selected at all"
+  explanation="The text says a replacement scheme option may be selected by one or more customers or may not be selected at all. A scheme with no sales is allowed, so its participation is partial."
+  feedback={{
+    "Because a scheme can be chosen by many sales": "That is cardinality (the N), not participation. Participation asks whether every scheme must be used at least once.",
+    "Because the relationship is N:1": "Cardinality and participation are independent. An N:1 relationship can have total or partial participation on either side.",
+    "Because REPLACEMENT_SCHEME is a weak entity": "It has its own key, the scheme number, so it is a strong entity. Weak entities are drawn with a double rectangle."
+  }}
+/>
+
+## Step 5: draw it
+
+This is the part you do on the quiz paper, so do it on paper now. Put SALE in the middle and the four other entities in the corners, then draw the lines. Give yourself eight minutes.
+
+<HintLadder
+  id="cs-draw-hints"
+  hints={[
+    "Put SALE in the centre of the page. Every relationship touches it, so the diamonds end up on the four diagonals and no lines cross.",
+    "Draw the five rectangles and their attributes first. Only SALE has just two ovals: SaleId (underlined) and Commission.",
+    "Four diamonds: BUYS (CUSTOMER), MAKES (SALESPERSON), FOR (CAR), PAID_UNDER (REPLACEMENT_SCHEME). The double lines all run from SALE to BUYS, MAKES and FOR.",
+    "Labels: 1 beside CUSTOMER, SALESPERSON and REPLACEMENT_SCHEME; N beside SALE on BUYS, MAKES and PAID_UNDER; 1 on both sides of FOR. Only PAID_UNDER has single lines on both sides."
+  ]}
+/>
+
+<Predict
+  id="cs-draw"
+  prompt="Draw the full Chen ER diagram on paper: five entities with attributes and keys, four relationships, 1 and N labels, and double lines for total participation. Then list anything you are unsure of."
+  answer="Five rectangles, keys underlined; SALE in the middle; BUYS 1:N, MAKES 1:N, FOR 1:1 and PAID_UNDER N:1; double lines from SALE into BUYS, MAKES and FOR; single lines everywhere else."
+>
+
+First the skeleton: relationships and constraints only, so you can check the lines before the clutter of ovals.
+
+<ErCarSalesDiagram stage="relationships" />
+
+Then the complete answer:
+
+<ErCarSalesDiagram stage="full" />
+
+**Mark yourself.** One mark each for: five correct entities with no extras; every key underlined; commission on SALE; four relationships, each connected to SALE; correct 1 and N labels; double lines on SALE's side of BUYS, MAKES and FOR; single lines on both sides of PAID_UNDER. Seven of seven is full marks on a typical 5 to 7 mark question.
+
+</Predict>
+
+<Callout type="exam" title="What the slide asks for, and what to hand in">
+The slide says: "Carefully analyze the above case study and find the entities, their attributes and relationships between the entities." That is three lists, not only a picture. Write the lists first (one line per entity with its attributes, key underlined; one line per relationship with its ratio), then draw the diagram. If you run out of time, the lists alone still earn most of the marks, while half a diagram with no lists is hard to mark kindly.
+</Callout>
+
+<OrderCheck
+  id="cs-procedure"
+  prompt="Put the five passes over an ERD case in the order this lab used."
+  items={[
+    "Underline nouns: entity, attribute, synonym, value or not stored",
+    "Find each entity's unique attribute and underline it as the key",
+    "Turn linking verbs into relationship diamonds",
+    "Read the wording for 1 or N and for total or partial participation",
+    "Draw: rectangles, ovals, diamonds and lines, then the labels"
+  ]}
+  explanation="Nouns, keys, verbs, numbers, draw. Each pass needs the one before it: you cannot choose a key for something you have not yet decided is an entity, or label a diamond you have not drawn."
+  topLabel="First pass"
+  bottomLabel="Last pass"
+/>
+
+<Deeper kind="exam" title="Model answer in written form (7 marks)">
+
+**Entities and attributes** (keys underlined on paper, marked "key" here):
+
+- CUSTOMER (CustomerNo key, Name, Address, Phone)
+- REPLACEMENT_SCHEME (SchemeNo key, Name, NoOfYears)
+- CAR (CarCode key, Make, Model, YearOfManufacture, Price)
+- SALE (SaleId key, Commission)
+- SALESPERSON (SalespersonId key, Name, Phone, Email)
+
+**Relationships:**
+
+- CUSTOMER BUYS SALE, 1:N. Every sale has exactly one customer (total on SALE); a customer may have many sales.
+- SALESPERSON MAKES SALE, 1:N. Every sale is made by one salesperson (total on SALE), which is how commission is determined.
+- SALE FOR CAR, 1:1. Every sale is for one car (total on SALE); a car is sold at most once, and unsold cars exist (partial on CAR). Assumption: a car code identifies one physical car.
+- SALE PAID_UNDER REPLACEMENT_SCHEME, N:1. Partial on both sides: a sale may be paid in one go, and a scheme may never be chosen.
+
+**Assumptions stated:** customer participation in BUYS is partial (a customer can be registered before a purchase); the five payment periods are rows of REPLACEMENT_SCHEME.
+
+</Deeper>
+
+<Deeper kind="beyond" title="The same design as tables (the lecture's outcome 6, next lecture)">
+
+Lecture 3's learning outcomes end with "map an ER model to a relational schema". The rule for a 1:N relationship is: put the key of the 1 side into the table of the N side as a foreign key. Every relationship here has SALE on its N (or total) side, so every foreign key lands in SALE:
+
+```sql
+CREATE TABLE sale (
+  sale_id        integer PRIMARY KEY,
+  commission     numeric(10,2) NOT NULL,
+  customer_no    integer NOT NULL REFERENCES customer,          -- BUYS, total
+  salesperson_id integer NOT NULL REFERENCES salesperson,       -- MAKES, total
+  car_code       text    NOT NULL UNIQUE REFERENCES car,        -- FOR, 1:1
+  scheme_no      integer          REFERENCES replacement_scheme -- PAID_UNDER, partial
+);
+```
+
+Read the constraints back against the diagram. **NOT NULL** is total participation. **UNIQUE** on car_code is the "1" on SALE's side of FOR: no car can appear in two sales. The one nullable column, scheme_no, is the single line for "paid in one go". The diagram and the DDL are the same decisions written twice.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=QpdhBUYk7Kk",
+    "title": "Lucid Software: Entity Relationship Diagram (ERD) Tutorial, Part 1",
+    "kind": "video",
+    "why": "Animated walk through entities, attributes, keys and cardinality. It uses crow's foot notation, so translate its symbols to the Chen diamonds and 1/N labels your instructor uses."
+  },
+  {
+    "href": "https://www.youtube.com/watch?v=-CuY5ADwn24",
+    "title": "Lucid Software: Entity Relationship Diagram (ERD) Tutorial, Part 2",
+    "kind": "video",
+    "why": "Builds a full diagram from a written business scenario, exactly the skill this lab drills."
+  },
+  {
+    "href": "https://app.diagrams.net/",
+    "title": "diagrams.net (draw.io)",
+    "kind": "docs",
+    "why": "Free, runs in the browser, and has a Chen “Entity Relation” shape library. Redraw this case from memory the night before the quiz."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Entity%E2%80%93relationship_model",
+    "title": "Entity–relationship model",
+    "kind": "blog",
+    "why": "Chen's 1976 notation side by side with crow's foot and min–max, so you can read any textbook's diagrams."
+  }
+]} />

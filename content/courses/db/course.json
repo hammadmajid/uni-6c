@@ -38,6 +38,59 @@
           "objective": "answer the lecture's scenario questions and the week's definitions without notes."
         }
       ]
+    },
+    {
+      "slug": "week-02",
+      "week": 2,
+      "title": "Data models, schemas and DBMS architectures",
+      "outline": "Lecture 2 (Elmasri chapter 2). Categories of data models (conceptual, representational, physical) and the four types the lecture names (relational, ER, object-oriented, semi-structured). Schema (intension) versus database state (extension, instance), schema constructs and schema evolution. The three-schema architecture revisited with the lecture's employee example. DDL, DML and SQL. DBMS component modules. Centralized, two-tier and three-tier client/server architectures.",
+      "lessons": [
+        {
+          "slug": "data-models-and-schemas",
+          "title": "Data models, schemas and database states",
+          "minutes": 40,
+          "objective": "classify a data model as conceptual, representational or physical, and tell a schema from a database state in any example."
+        },
+        {
+          "slug": "languages-and-architectures",
+          "title": "DBMS languages and client/server architectures",
+          "minutes": 35,
+          "objective": "classify a statement as DDL or DML, name the DBMS component modules, and compare centralized, two-tier and three-tier architectures with a scenario."
+        }
+      ]
+    },
+    {
+      "slug": "week-03",
+      "week": 3,
+      "title": "The Entity-Relationship model",
+      "outline": "Lecture 3 (Elmasri chapter 3). The database design process and where conceptual modelling fits. Chen's ER notation: entity types, entity sets and instances, strong and weak entities; simple, composite, single-valued, multivalued, stored, derived, NULL and complex attributes; relationships and cardinality ratios (1:1, 1:N, M:N) with participation. Keys: super, candidate, primary, alternate, foreign, composite. The car-sales case study. Quiz 1 on Friday 2 October covers lectures 01 to 03.",
+      "lessons": [
+        {
+          "slug": "er-entities-and-attributes",
+          "title": "Entities and attributes in Chen notation",
+          "minutes": 40,
+          "objective": "draw any entity with its attributes in Chen notation and classify every attribute as simple or composite, single or multivalued, stored or derived."
+        },
+        {
+          "slug": "relationships-and-keys",
+          "title": "Relationships, cardinality and keys",
+          "minutes": 45,
+          "objective": "read and write 1:1, 1:N and M:N relationships with participation, and list the super, candidate, primary and alternate keys of a table."
+        },
+        {
+          "slug": "erd-car-sales-lab",
+          "title": "ERD lab: the car-sales case study",
+          "minutes": 45,
+          "objective": "turn a requirements paragraph into a complete Chen ER diagram: entities, attributes, keys, relationships and cardinalities."
+        },
+        {
+          "slug": "quiz-1-revision",
+          "title": "Quiz 1 revision",
+          "minutes": 35,
+          "kind": "checkpoint",
+          "objective": "drill lectures 01 to 03 in quiz format before quiz 1 on Friday 2 October: definitions, schema levels, attribute and key types, and an ERD from a scenario."
+        }
+      ]
     }
   ]
 }

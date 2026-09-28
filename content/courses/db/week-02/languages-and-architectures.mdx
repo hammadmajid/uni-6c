@@ -1,0 +1,219 @@
+The second half of lecture 2: the languages you talk to a DBMS in, what is inside a DBMS, and where the pieces run. You already build three-tier systems for a living; this lesson gives you the textbook's names for them.
+
+<Predict
+  id="tiers-why"
+  prompt="Your Web Tech servlet runs on Tomcat and reads Postgres over JDBC. Browsers only ever talk to Tomcat. Why not let the browser's JavaScript open a connection to Postgres directly and skip Tomcat? Give two reasons."
+  answer="Security: the database would have to be reachable from the internet and every client would hold database credentials, so anyone could run any SQL. Business rules: validation, access checks and logic would live in code the user controls. The middle tier keeps the DB server private and enforces the rules in one place."
+>
+
+**Two reasons, and the lecture names both.** First, **security**: to let browsers connect, Postgres would have to be exposed to the internet, and every client would need database credentials. Anyone could open the dev tools, copy them, and run any SQL they like. Second, **business rules**: checks such as "a student can only see their own grades" would run on a machine the user controls, so they could be switched off.
+
+A middle tier fixes both. The database server is reachable **only from the middle tier**, and the rules run there, once. That is the three-tier architecture, the last section of this lesson.
+
+</Predict>
+
+## 1. Database languages
+
+Lecture 2 names three:
+
+- **Data Definition Language (DDL)**: used to **define schemas**. `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`, `CREATE VIEW`.
+- **Data Manipulation Language (DML)**: used to **retrieve, insert, delete and modify** data. `SELECT`, `INSERT`, `DELETE`, `UPDATE`.
+- **Structured Query Language (SQL)**: a comprehensive language that **combines both** DDL and DML (and more: constraints, views, transactions, security).
+
+The test for any statement: does it change the **schema** or the **state**? Last lesson's vocabulary is the whole trick.
+
+<DbLanguageSort />
+
+<QuickCheck
+  id="lang-drop-delete"
+  question="What is the difference between DROP TABLE student and DELETE FROM student?"
+  options={[
+    "DROP is DDL and removes the table's definition from the schema; DELETE is DML and removes rows, leaving an empty table",
+    "Both are DML; DROP is just faster",
+    "DROP is DML and DELETE is DDL",
+    "There is none; both leave an empty STUDENT table"
+  ]}
+  answer="DROP is DDL and removes the table's definition from the schema; DELETE is DML and removes rows, leaving an empty table"
+  explanation="After DELETE FROM student the table still exists (an empty state). After DROP TABLE student the construct is gone from the schema and any query naming it fails."
+  feedback={{
+    "Both are DML; DROP is just faster": "DROP changes the schema, so it cannot be DML. (TRUNCATE is the fast way to empty a table.)",
+    "DROP is DML and DELETE is DDL": "Reversed. Ask: which one changes the schema?",
+    "There is none; both leave an empty STUDENT table": "After DROP there is no STUDENT table at all. Try SELECT on it and the DBMS reports that the relation does not exist."
+  }}
+/>
+
+<Deeper kind="beyond" title="Elmasri's fuller list: SDL, VDL, and procedural versus declarative DML">
+
+The textbook splits definition further. The **storage definition language (SDL)** specifies the internal schema; the **view definition language (VDL)** specifies external schemas. In real DBMSs there is no separate SDL (storage is set by parameters and statements like `CREATE INDEX` or tablespaces), and SQL's DDL covers views, so the lecture's two-way split is what you need.
+
+DML also comes in two kinds. A **high-level or nonprocedural (declarative)** DML such as SQL says *what* to retrieve, in one statement that may return many records (set-at-a-time). A **low-level or procedural** DML retrieves one record at a time and needs loops in a host language (record-at-a-time), which is what network and hierarchical systems used. When DML statements are embedded in a general-purpose language like Java, that language is the **host language** and the DML is the **data sublanguage**. JDBC is the modern version: SQL strings inside Java.
+
+</Deeper>
+
+## 2. What is inside a DBMS
+
+A DBMS is a complex software system. Slide 21 (Elmasri's Figure 2.3) splits it into two halves: the **top half** is the users of the database system and the tools they work through, the **bottom half** is the internals that store the data and process transactions. Follow each kind of user through it.
+
+<DbModulesDiagram />
+
+| Module | Job |
+|---|---|
+| **DDL compiler** | Processes schema definitions and stores them in the catalog |
+| **System catalog / data dictionary** | The metadata: names, types, constraints, storage details, statistics. Read by nearly every other module |
+| **Query compiler** | Parses and validates an interactive query |
+| **Query optimizer** | Rearranges the query and picks the cheapest execution plan, using catalog statistics |
+| **Precompiler** | Pulls DML commands out of an application program written in a host language |
+| **DML compiler** | Compiles those DML commands into object code for database access |
+| **Host language compiler** | Compiles the rest of the program; linked with the DML part into a **canned (compiled) transaction** |
+| **Runtime database processor** | Executes everything: privileged commands, query plans, canned transactions |
+| **Stored data manager** | Controls access to data on disk; works with the OS and the buffers |
+| **Concurrency control, backup, recovery** | Integrated with the runtime processor to give transactions their ACID properties |
+
+These are the actors from week 1 again. The DBA uses DDL and privileged commands. **Casual users** type interactive queries. **Application programmers** write the programs. **Parametric (naive) users** only run the canned transactions the programmers built: the bank teller pressing "withdraw".
+
+<QuickCheck
+  id="mod-optimizer"
+  question="A casual user types a query joining three tables. Which module decides the order of the joins and whether to use an index?"
+  options={["Query optimizer", "Query compiler", "DDL compiler", "Stored data manager"]}
+  answer="Query optimizer"
+  explanation="The optimizer rearranges and reorders operations, removes redundancies, and chooses efficient search algorithms, using statistics from the catalog. In Postgres, EXPLAIN shows you the plan it picked."
+  feedback={{
+    "Query compiler": "The compiler parses the query and checks that its tables and columns exist. Choosing how to run it is the next step, the optimizer's.",
+    "DDL compiler": "The DDL compiler handles schema definitions, not queries.",
+    "Stored data manager": "The stored data manager fetches the blocks it is asked for. It does not decide the plan."
+  }}
+/>
+
+<QuickCheck
+  id="mod-parametric"
+  question="A PIA reservation agent books a seat by filling in a flight number and passenger name on a fixed screen. Which path through the DBMS does the request take?"
+  options={[
+    "Compiled (canned) transaction → runtime database processor",
+    "Interactive query → query compiler → query optimizer",
+    "DDL statements → DDL compiler → catalog",
+    "Precompiler → DML compiler"
+  ]}
+  answer="Compiled (canned) transaction → runtime database processor"
+  explanation="Parametric users supply parameters to canned transactions that were compiled in advance by application programmers. Their request goes straight to the runtime processor."
+  feedback={{
+    "Interactive query → query compiler → query optimizer": "That is the casual user's path. The agent never writes a query.",
+    "DDL statements → DDL compiler → catalog": "That is the DBA defining the schema. Booking a seat changes the state, not the schema.",
+    "Precompiler → DML compiler": "That happened once, when the programmer built the booking program. The agent only runs the result."
+  }}
+/>
+
+<Deeper kind="beyond" title="The summary slide also lists DBMS interfaces and classification criteria">
+
+Lecture 2's summary names two topics that have no slides of their own. In case either appears, here is Elmasri's list in one line each.
+
+**Interfaces:** menu-based (web browsing), apps for mobile devices, forms-based (fill in a form to insert or query), graphical (point and click on a schema diagram), natural-language and keyword search, speech, **interfaces for parametric users** (a small set of commands or keys for canned transactions), and **interfaces for the DBA** (privileged commands).
+
+**Classification criteria:** by **data model** (relational, object, document, graph, key-value…), by **number of users** (single-user or multi-user), by **number of sites** (centralized or distributed; homogeneous or heterogeneous), by **cost**, and by **purpose** (general-purpose or special-purpose, such as an airline reservation system).
+
+</Deeper>
+
+## 3. Where the DBMS runs: centralized, two-tier, three-tier
+
+Toggle between the three architectures and watch where each layer runs.
+
+<DbTiersDiagram />
+
+**Centralized.** All DBMS functionality, application programs and user-interface processing run on **one machine**. Users sat at terminals that only displayed output. This is the mainframe era.
+
+**Two-tier client/server.** Built for networks of PCs and workstations. A **client** is a user machine with user-interface capabilities and local processing. A **server** is a system of hardware and software that provides services to clients. In the two-tier DBMS version, the client runs the interface **and the application programs**, and connects straight to the DBMS on the server through an API such as **ODBC** or **JDBC**. The server is called a query server or transaction server. It is "two-tier" because the software is split over two systems.
+
+**Three-tier.** The Web changed the roles and added a **middle tier**, called the **application server** or **web server**:
+
+- **Presentation layer** (client): displays information and takes input. Usually a browser.
+- **Business logic layer** (middle tier): applies rules and constraints before data goes up to the user or down to the DBMS. Your servlet on Tomcat.
+- **Database services layer** (DB server): the DBMS.
+
+The slide's security point: the **database server is only accessible through the middle tier**. Clients cannot reach it directly, so they never hold database credentials and the rules cannot be bypassed.
+
+<Callout type="exam" title="The slide's version of n-tier">
+Slide 28 says: "If the **bottom layer** is split into two layers (a web server and a database server), then it is a 4-tier architecture." Reproduce it if asked for the lecture's wording. It is backwards against the textbook: the web server is not part of the bottom layer. Elmasri says n-tier (four or five tiers) arises by dividing the layers between the user and the stored data further, **typically the business logic layer**: for example a web server in front of a separate application server, in front of the database server.
+</Callout>
+
+<QuickCheck
+  id="tier-scenario-2"
+  question="A pharmacy's desktop billing app, installed on each of five counter PCs, connects over the shop's LAN straight to a MySQL server in the back office. Which architecture is this?"
+  options={["Two-tier client/server", "Three-tier client/server", "Centralized", "Distributed"]}
+  answer="Two-tier client/server"
+  explanation="The client PCs run both the interface and the application logic and talk to the DBMS directly. There is no middle tier."
+  feedback={{
+    "Three-tier client/server": "Three-tier needs a middle tier between the clients and the DB server. Here the apps connect straight to MySQL.",
+    "Centralized": "Centralized means everything runs on one machine. The five PCs do real processing of their own.",
+    "Distributed": "A distributed DBMS spreads the database itself over several sites. Here there is one database server."
+  }}
+/>
+
+<QuickCheck
+  id="tier-security"
+  question="Which statement is the main security advantage of three-tier over two-tier, as the slide gives it?"
+  options={[
+    "The database server is accessible only through the middle tier, so clients cannot reach it directly",
+    "Data is encrypted on the client machines",
+    "The DBMS runs on the same machine as the user interface",
+    "Clients store a copy of the database for backup"
+  ]}
+  answer="The database server is accessible only through the middle tier, so clients cannot reach it directly"
+  explanation="Slide 26: three-tier enhances security because the database server is only accessible via the middle tier; clients cannot directly access it. The middle tier can also check each request against business rules."
+  feedback={{
+    "Data is encrypted on the client machines": "Encryption can be used with any architecture. The slide's point is about who can reach the database server.",
+    "The DBMS runs on the same machine as the user interface": "That describes the centralized architecture, the opposite of the separation three-tier gives.",
+    "Clients store a copy of the database for backup": "Clients in three-tier hold no database at all; usually they are just browsers."
+  }}
+/>
+
+<QuickCheck
+  id="tier-layer-match"
+  question="In a three-tier university portal, where does the rule 'a student may register for at most 21 credit hours' belong?"
+  options={["Business logic layer (application server)", "Presentation layer (browser)", "Database services layer only", "The operating system"]}
+  answer="Business logic layer (application server)"
+  explanation="The business logic layer handles rules and constraints before data passes up to the user or down to the DBMS. A rule checked only in the browser can be bypassed; the DBMS could also enforce it with a constraint, but the slide places it in the middle tier."
+  feedback={{
+    "Presentation layer (browser)": "The browser can show the limit as a hint, but any check that only runs in the browser can be switched off by the user.",
+    "Database services layer only": "A DB constraint or trigger could enforce it too, and belt-and-braces designs do both. In the lecture's three-tier model, rules like this are the business logic layer's job.",
+    "The operating system": "The OS knows nothing about credit hours."
+  }}
+/>
+
+<Deeper kind="exam" title="Model answer: compare two-tier and three-tier client/server architecture (6 marks)">
+
+**Two-tier.** Software is split over two systems. The **client** runs the user interface and the application programs; the **server** runs the DBMS (a query or transaction server). The client connects directly to the DBMS through ODBC or JDBC. *Example: a desktop billing app on each counter PC connecting to a MySQL server on the LAN.*
+
+**Three-tier.** An intermediate **application server or web server** is added between them. The client handles **presentation**, the middle tier handles **business logic** (rules and constraints on data going up or down), and the database server provides **database services**. *Example: a browser, a Java servlet on Tomcat, and PostgreSQL.*
+
+| | Two-tier | Three-tier |
+|---|---|---|
+| Where application logic runs | Client | Middle tier |
+| Client talks to | DBMS directly | Middle tier only |
+| Security | Every client holds DB credentials | DB server reachable only from the middle tier |
+| Updating the app | Reinstall on every client | Update the server once |
+| Scale | Many DB connections, one per client | Middle tier pools connections |
+
+Draw the three boxes stacked with arrows (slide 27) for the diagram mark, and name the layers presentation, business logic, database services.
+
+</Deeper>
+
+<Further links={[
+  {
+    "href": "https://www.youtube.com/watch?v=VyvTabQHevw",
+    "title": "Gate Smashers: 2-tier and 3-tier architecture with real-life examples",
+    "kind": "video",
+    "why": "The exam-style comparison of the two, drawn on a board with real-life examples. Watch at 1.5×."
+  },
+  {
+    "href": "https://www.postgresql.org/docs/current/planner-optimizer.html",
+    "title": "PostgreSQL: Planner/Optimizer",
+    "kind": "docs",
+    "time": "5 min",
+    "why": "What the query optimizer box in the modules figure really does, in Postgres's words. Then run EXPLAIN on one of your own queries."
+  },
+  {
+    "href": "https://en.wikipedia.org/wiki/Multitier_architecture",
+    "title": "Multitier architecture",
+    "kind": "blog",
+    "why": "Three-tier and n-tier outside databases, with the MVC comparison you will meet in Web Tech."
+  }
+]} />
