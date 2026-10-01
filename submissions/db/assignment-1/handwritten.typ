@@ -18,12 +18,13 @@
   for (r, row) in rows.enumerate() {
     let cx = x
     for (c, cell) in row.enumerate() {
-      at(cx + 6pt + rnd(seed + r * 5 + c) * 3pt, y + r * rh + 2pt, text(size: 18pt, cell))
+      at(cx + 6pt + rnd(seed + r * 5 + c) * 3pt, y + r * rh + 6pt, text(size: 17pt, cell))
       cx += widths.at(c)
     }
   }
 }
-#let tx(x, y, s, size: 18pt) = at(x, y, text(size: size, s))
+// Labels sit 5pt lower than asked: Caveat's ascenders poke above the text box and would touch a box's top line.
+#let tx(x, y, s, size: 18pt) = at(x, y + 5pt, text(size: size, s))
 
 #q(1)
 #l(indent: 10pt, "a) R.No = 2312200 -> A = 00 = 0")
@@ -80,7 +81,7 @@
 
 #block(height: 210pt, width: 100%, breakable: false, {
   // schema
-  wbox(10pt, 10pt, 150pt, 66pt, seed: 81)
+  wbox(10pt, 10pt, 150pt, 74pt, seed: 81)
   tx(20pt, 12pt, "Schema")
   tx(20pt, 40pt, "BOOK(BookID, Title,", size: 15pt)
   tx(20pt, 56pt, "Available)", size: 15pt)

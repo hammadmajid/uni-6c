@@ -18,7 +18,7 @@ Pipeline: typst renders the cover (vector, Times New Roman if `~/Developer/uni/z
 - **Minimal writing.** The owner copies every word by hand. `Q#1:` as the heading, then short answers: fragments, abbreviations (`diff`, `msg`, `ctrl`, `eg`, `+`, `so:`), arrows for "leads to". Hit each mark point once; no padding, no restating the question.
 - **The owner's voice**: lowercase, casual, like their chat messages. No polished prose.
 - **Hierarchy over structure.** `(i)`, `(ii)`, `1.`, `-` bullets, indents. No rigid layout needed.
-- **Diagrams only where they earn marks, and the most basic version possible**: boxes, arrows, a crossed-out line. Drawn with `wl`, `wbox`, `warrow`, `at` inside a `block(height: …, breakable: false)` so a diagram stays with its question.
+- **Diagrams only where they earn marks, and the most basic version possible**: boxes, arrows, a crossed-out line. Drawn with `wl`, `wbox`, `warrow`, `at` inside a `block(height: …, breakable: false)` so a diagram stays with its question. Put labels at least 7pt below a box's top line: Caveat's ascenders stick out above the text box and touch the line otherwise (`db/assignment-1` wraps `at` in a `tx` helper that adds 5pt).
 - **Mistakes, the owner's way.** They notice a misspelling *while* writing, so they stop partway, scribble the half-word out hard until it's almost unreadable, and write the whole word next to it: `~uder~ understood`. Never a finished word with a neat line through it. About one per answer, on ordinary words.
 - **One crossed-out false start per sheet**: `~~less paper to~~ no duplicate…`. A believable wrong phrase, then the right one.
 - **One forgotten word per sheet**, added with a caret: `so schema is ^completely untouched`.
@@ -31,12 +31,12 @@ Pipeline: typst renders the cover (vector, Times New Roman if `~/Developer/uni/z
 - Big writing, about 23pt. Messy and uneven, but readable.
 - Lines run to the right edge of the page (3 mm margin), the way the owner writes.
 - Pure white paper, no ruled lines, no margin line.
-- Blue ballpoint, thin line: every stroke is redrawn from its skeleton at about 0.28 mm (`INK_WIDTH`, in mm), because the raw font strokes (~0.5 mm) printed like a thick pen. Scribbled-out patches keep their full density.
-- One main hand (Caveat). Light mixing: about 1 chunk in 5 in a second hand (Nanum Pen), about 1 word in 7 switches to another font. Heavier mixing looked fake.
+- Blue ballpoint, ink (22, 44, 150): bluer than navy, not bright. Thin line: every stroke is redrawn from its skeleton at about 0.28 mm (`INK_WIDTH`, in mm), because the raw font strokes (~0.5 mm) printed like a thick pen. Scribbled-out patches keep their full density.
+- One main hand (Caveat); about 1 chunk in 5 in a second hand (Nanum Pen). Never switch fonts inside a chunk: two different-looking "a"s on one line give it away.
 - Every letter drawn slightly differently (`letters=1`), lines tilt and sag (`INK_SLOPE=1`), ballpoint skips (`INK_DEFECTS=1`). Skips and pressure fade are kept rare and partial: stronger ones looked faded on a printout.
 - Ink blobs only where the pen lands or lifts (stroke ends found on the skeleton), sparse, each one different. Never in the middle of a stroke.
-- Scribble-outs rotate through four styles (zigzag, coil, back-and-forth, hasty strike lines), never the same twice in a row, each with its own density, overshoot and angle.
-- Automatic rare touches, all deterministic so a rebuild matches the copy already written: about one long lowercase word per two pages of writing gets 2 to 3 letters crammed together (`typst eval 'query(<cramped>).map(it => it.value)' --in <item>/handwritten.typ --root . --font-path _shared/fonts --input letters=1` lists them); a letter gone over twice now and then; about 1 line in 10 that ends at the right edge squeezes its last word; one or two stray pen marks (a dot or a slip-stroke off a word end, never a tick, never on writing).
+- Scribble-outs rotate through three styles (zigzag, back-and-forth, hasty strike lines; no spiral/coil, the owner rejected it), never the same twice in a row, each with its own density, overshoot and angle.
+- Automatic rare touches, all deterministic so a rebuild matches the copy already written: about one long lowercase word per two pages of writing gets 2 to 3 letters crammed together (`typst eval 'query(<cramped>).map(it => it.value)' --in <item>/handwritten.typ --root . --font-path _shared/fonts --input letters=1` lists them); a letter gone over twice now and then; about one line per page (60% chance) has its last word squeezed and still running ~1% off the page, the extra distance spread over that line's word gaps; every line's start drifts a millimetre or so left or right; one or two stray pen marks (a dot or a slip-stroke off a word end, never a tick, never on writing).
 - Diagram lines are about 8% wobblier than text strokes, box corners overshoot or fall short, and about 1 line in 8 is drawn twice (more later in the sheet).
 - Gets messier toward the end, automatically: jitter scales with position in the sheet, and later pages wobble more.
 - Typed zabdoc cover page (`cover.typ`), not handwritten.

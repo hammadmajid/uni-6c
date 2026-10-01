@@ -17,7 +17,7 @@ PAPER = np.array([255, 255, 255], float)
 PEN = os.environ.get("INK_PEN", "blue")          # blue | black | gel | pencil
 SLOPE = float(os.environ.get("INK_SLOPE", "0"))  # 0 = straight lines; 1 = lines tilt and sag like unruled paper
 DEFECTS = os.environ.get("INK_DEFECTS", "0") == "1"  # ballpoint skips and blobs
-INK = {"blue": (24, 36, 112), "black": (28, 28, 34), "gel": (12, 20, 70), "pencil": (52, 52, 60)}[PEN]
+INK = {"blue": (22, 44, 150), "black": (28, 28, 34), "gel": (12, 20, 70), "pencil": (52, 52, 60)}[PEN]
 INK = np.array(INK, float)
 # Ballpoint line width in mm. The fonts draw about 0.5 mm at 23pt, which printed like a thick pen.
 WIDTH = float(os.environ.get("INK_WIDTH", "0.28"))
@@ -39,8 +39,9 @@ def warp(a, sigma, amp):
     return map_coordinates(a, [y + dy, x + dx], order=1, mode="nearest")
 
 
-def squeeze_edges(ink, dpi, rate=0.1):
-    """Running out of room: now and then the last word on a line gets a bit narrower and tighter."""
+def line_touches(ink, dpi, rate=0.6):
+    """Per written line: the start drifts a little left or right (a hand never lines lines up),
+    and now and then the last word runs out of room: squeezed, and still running ~1% off the page."""
     h, w = ink.shape
     rows = (ink > 0.3).sum(axis=1) > 2
     bands, y = [], 0
@@ -52,25 +53,47 @@ def squeeze_edges(ink, dpi, rate=0.1):
             if 0.15 * dpi <= y - y0 <= 0.6 * dpi:   # one line of writing, not a diagram or table
                 bands.append((y0, y))
         y += 1
+
+    def shift(y0, y1, dx):
+        band = ink[y0:y1].copy()
+        ink[y0:y1] = 0
+        if dx >= 0:
+            ink[y0:y1, dx:] = band[:, :w - dx]
+        else:
+            ink[y0:y1, :w + dx] = band[:, -dx:]
+
     for y0, y1 in bands:
-        cols = (ink[y0:y1] > 0.3).any(axis=0)
-        xs = np.flatnonzero(cols)
-        if not len(xs) or xs[-1] < w - 0.38 * dpi or rng.random() > rate:
+        shift(y0, y1, int(rng.uniform(-1, 1) * 0.05 * dpi))
+    # About one line per page (60% chance) that runs out of room, picked among lines that can.
+    chosen = rng.random() < rate
+    for y0, y1 in [bands[i] for i in rng.permutation(len(bands))]:
+        if not chosen:
+            break
+        # Words on the line: runs of inked columns split by gaps wider than a letter gap.
+        cols = np.flatnonzero((ink[y0:y1] > 0.3).any(axis=0))
+        if len(cols) < 2:
             continue
-        # The last word: walk left from the right end until a gap wider than a letter gap.
-        gap, x0 = int(0.06 * dpi), xs[-1]
-        for x in xs[::-1]:
-            if x0 - x > gap:
-                break
-            x0 = x
-        x1 = xs[-1] + 1
+        cuts = np.flatnonzero(np.diff(cols) > 0.06 * dpi)
+        words = list(zip(cols[np.r_[0, cuts + 1]], cols[np.r_[cuts, len(cols) - 1]] + 1))
+        if len(words) < 4:
+            continue
+        x0, x1 = words[-1]
         f = rng.uniform(0.86, 0.92)
-        src = ink[y0:y1, x0:x1].copy()
-        ink[y0:y1, x0:x1] = 0
         n = int((x1 - x0) * f)
-        xx = np.arange(n) / f
-        yy = np.arange(y1 - y0)
-        ink[y0:y1, x0:x0 + n] = map_coordinates(src, np.meshgrid(yy, xx, indexing="ij"), order=1)
+        extra = int(w * 1.01) - (x0 + n)    # how far the squeezed word must move to end ~1% off the page
+        if extra < 0 or extra > (len(words) - 1) * 0.06 * dpi:
+            continue   # the word gaps would have to stretch too much
+        src = ink[y0:y1].copy()
+        ink[y0:y1] = 0
+        last = map_coordinates(src[:, x0:x1], np.meshgrid(np.arange(y1 - y0), np.arange(n) / f, indexing="ij"), order=1)
+        # spread the push over the word gaps, so no single gap gives it away
+        for k, (a, b) in enumerate(words):
+            d = int(extra * k / (len(words) - 1))
+            piece = last if k == len(words) - 1 else src[:, a:b]
+            lo, hi = a + d, min(w, a + d + piece.shape[1])
+            if lo < hi:
+                ink[y0:y1, lo:hi] = np.maximum(ink[y0:y1, lo:hi], piece[:, :hi - lo])
+        break
     return ink
 
 
@@ -116,7 +139,7 @@ def page(path, dpi, mess, marks=0):
     g = np.asarray(Image.open(path).convert("L"), float) / 255
     ink = 1 - g
     h, w = ink.shape
-    ink = squeeze_edges(ink, dpi)
+    ink = line_touches(ink, dpi)
     if SLOPE:
         # Unruled paper: each line drifts up or down across the page and sags a little,
         # and neighbouring lines don't agree on the angle.

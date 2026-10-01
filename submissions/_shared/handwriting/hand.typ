@@ -3,7 +3,7 @@
 //   #import "../../_shared/handwriting/hand.typ": *
 //   #show: sheet
 
-#let ink = rgb("#16266e")
+#let ink = rgb("#152a8c")
 
 // Page setup for a copy sheet: `#show: sheet`. Big writing, lines run to the right edge.
 #let sheet(body) = {
@@ -21,8 +21,9 @@
 #let rnd(i) = calc.fract(calc.abs(calc.sin(i * 12.9898 + 78.233) * 43758.5453))
 
 // Handwriting fonts and a size factor each, so they look about the same height.
-// Caveat carries most of the sheet; the others only slip in now and then.
-#let hands = (("Caveat", 1.0), ("Nanum Pen", 1.08), ("Covered By Your Grace", 0.92), ("Shadows Into", 0.9))
+// Caveat carries most of the sheet; Nanum Pen takes a whole chunk now and then.
+// Never mixed inside a chunk: two different-looking "a"s on one line give it away.
+#let hands = (("Caveat", 1.0), ("Nanum Pen", 1.08))
 
 #let j = counter("jitter")      // one step per heading or chunk: how far into the sheet we are
 #let cand = counter("cramped")  // long words seen so far that could get cramped letters
@@ -71,12 +72,12 @@
 #let up(s) = box(width: 12pt, height: 16pt, baseline: 2pt, warrow((6pt, 16pt), (6.5pt, 1pt), seed: s, diag: false))
 #let dn(s) = box(width: 12pt, height: 16pt, baseline: 2pt, warrow((6pt, 1pt), (6.5pt, 16pt), seed: s, diag: false))
 
-// Scribble-out styles: 0 tight zigzag, 1 coil, 2 fast back-and-forth, 3 hasty strike lines
+// Scribble-out styles: 0 tight zigzag, 2 fast back-and-forth, 3 hasty strike lines
 // (letters still show through). The n-th scribble's style, never the same twice in a row.
 #let scribble-style(n) = {
-  let st = calc.floor(rnd(7.7) * 4)
-  for k in range(n) { st = calc.rem(st + 1 + calc.floor(rnd(k * 3.3 + 1) * 3), 4) }
-  st
+  let st = calc.floor(rnd(7.7) * 3)
+  for k in range(n) { st = calc.rem(st + 1 + calc.floor(rnd(k * 3.3 + 1) * 1.99), 3) }
+  (0, 2, 3).at(st)
 }
 // The scribble itself, over a word or phrase `wd` wide. Density, overshoot, angle and
 // number of passes all change every time.
@@ -91,15 +92,6 @@
         -over / 2 + (wd + over) * q / n + (rnd(s + pz * 50 + q) - 0.5) * 3.5pt,
         pz * 2pt + if calc.rem(q, 2) == 0 { -1pt + rnd(s + q * 3 + pz) * 3pt } else { 0.34em + rnd(s + q * 5 + pz) * 3pt })))
     }
-  } else if style == 1 {
-    let r = 0.19em + rnd(s + 4) * 0.08em
-    let turns = calc.max(3, calc.floor(wd / (3.5pt + rnd(s + 5) * 2.5pt)))
-    let n = turns * 8
-    poly(range(n + 1).map(q => {
-      let th = q / n * turns * 2 * calc.pi
-      (-over / 2 + (wd + over) * q / n + r * calc.cos(th) * 0.8 + (rnd(s + q) - 0.5) * 1.2pt,
-       0.22em + r * calc.sin(th) + (rnd(s + q + 99) - 0.5) * 1.6pt)
-    }))
   } else if style == 2 {
     let n = 5 + calc.floor(rnd(s + 6) * 5)
     poly(range(n + 1).map(q => (
@@ -177,7 +169,7 @@
     while k < toks.len() {
       let w = toks.at(k)
       let s = i * 101 + k * 7
-      let pick = if rnd(s + 3) < 1 - 0.07 * m { main } else { calc.floor(rnd(s + 4) * hands.len()) }
+      let pick = main
       let (font, f) = hands.at(pick)
       let shade = ink.lighten(rnd(s + 5) * 8%)
       let size = base * f * (1 + (rnd(s + 7) - 0.5) * 0.05 * m)
@@ -189,12 +181,12 @@
         let t = draw(phrase.join(" ").replace("~", ""), s, font, size, shade)
         let wd = measure(t).width
         sc += 1
-        box({ t; place(top + left, dy: 0.08em, scribble(wd, s + 30, scribble-style(s0 + sc - 1))) })
+        box({ t; place(top + left, dy: 0.2em, scribble(wd, s + 30, scribble-style(s0 + sc - 1))) })
       } else if w.starts-with("~") {
         let t = draw(w.replace("~", ""), s, font, size, shade)
         let wd = measure(t).width
         sc += 1
-        box({ t; place(top + left, dy: 0.08em, scribble(wd, s + 30, scribble-style(s0 + sc - 1))) })
+        box({ t; place(top + left, dy: 0.2em, scribble(wd, s + 30, scribble-style(s0 + sc - 1))) })
       } else if w.starts-with("^") {
         // Forgotten word: a caret on the line, the word squeezed in small above it.
         let raw = draw(w.slice(1), s, font, size * 0.6, shade)
@@ -224,7 +216,7 @@
         rotate((rnd(s + 2) - 0.5) * 1.4deg * m, reflow: false, body))))
       k += 1
     }
-    let dx = indent + rnd(i) * 6pt * m
+    let dx = indent + rnd(i) * (4pt + 5pt * m)
     block(above: 0.35em + rnd(i + 7) * 0.25em * m, below: 0.45em,
       move(dx: dx, rotate((rnd(i + 1) - 0.5) * 0.8deg * m,
         block(width: 100% - dx,
