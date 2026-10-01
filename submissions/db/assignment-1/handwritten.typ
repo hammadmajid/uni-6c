@@ -53,7 +53,7 @@
   tx(342pt, y + 2pt, "APPOINTMENT")
 })
 
-#l(indent: 10pt, "e) one shared copy -> no duplicate patient data in seperate files that go out of sync (inconsistency)")
+#l(indent: 10pt, "e) one shared copy -> ~~less paper to~~ no duplicate patient data in seperate files that go out of sync (inconsistency)")
 #l(indent: 30pt, "doctor + reception can use it at the same time, access ctrl keeps records private")
 #l(indent: 30pt, "fast search (all appts of a doctor today), backup + recovery, paper gets lost / ~dam~ damaged")
 
@@ -72,10 +72,10 @@
   tx(440pt, 144pt, "<- new")
 })
 
-#l(indent: 10pt, "c) only the state changed. insert adds a row, the columns + their types stay the same so schema is untouched")
+#l(indent: 10pt, "c) only the state changed. insert adds a row, the columns + their types stay the same so schema is ^completely untouched")
 #l(indent: 30pt, "(insert / update / delete change state, schema = intension, state = extension)")
 #l(indent: 10pt, "d) schema has to change -> add a Publisher column (ALTER TABLE BOOK ADD Publisher) = schema evolution")
-#l(indent: 30pt, "existing rows stay but get NULL (or a ~defu~ default) in Publisher untill someone fills it in. so the state changes too")
+#l(indent: 30pt, "existing rows stay but get NULL (or a ~defu~ default) in Publisher untill somone fills it in. so the state changes too")
 #l(indent: 10pt, "e)")
 
 #block(height: 210pt, width: 100%, breakable: false, {
@@ -110,7 +110,7 @@
 #l(indent: 10pt, "a) access path: B+ tree index on RollNo (non unique, a student has many attempts)")
 #l(indent: 30pt, "- lookup = few block reads vs scanning all 300,000 rows")
 #l(indent: 30pt, "- handles exact match + ranges (a whole section's roll nos) + stays sorted as new attempts come in")
-#l(indent: 30pt, "poor choice eg no index / heap file -> full scan on every lookup -> app hangs on result day. index on ExamDate -> useless for roll no ~sear~ searches. fully sorted file -> every new attempt = costly re-sort")
+#l(indent: 30pt, "poor choice eg no index / heap file -> full scan on evrey lookup -> app hangs on result day. index on ExamDate -> useless for roll no ~sear~ searches. fully sorted file -> every new attempt = costly re-sort")
 #l(indent: 10pt, "b) logical = what is stored + how it relates -> table ATTEMPT(RollNo, CourseCode, ExamDate, Marks, Status)")
 #l(indent: 30pt, "physical = how it sits on disk -> file org, blocks, the B+ tree on RollNo. users never see this")
 #l(indent: 10pt, "c) three tier")

@@ -20,7 +20,9 @@ Pipeline: typst renders the cover (vector, Times New Roman if `~/Developer/uni/z
 - **Hierarchy over structure.** `(i)`, `(ii)`, `1.`, `-` bullets, indents. No rigid layout needed.
 - **Diagrams only where they earn marks, and the most basic version possible**: boxes, arrows, a crossed-out line. Drawn with `wl`, `wbox`, `warrow`, `at` inside a `block(height: …, breakable: false)` so a diagram stays with its question.
 - **Mistakes, the owner's way.** They notice a misspelling *while* writing, so they stop partway, scribble the half-word out hard until it's almost unreadable, and write the whole word next to it: `~uder~ understood`. Never a finished word with a neat line through it. About one per answer, on ordinary words.
-- **A couple of misspellings left in**, uncorrected (`recieve`, `reliabilty`). Only on ordinary words, never on a key term the marker is looking for. Tell the owner which ones so they can fix them on paper if they want.
+- **One crossed-out false start per sheet**: `~~less paper to~~ no duplicate…`. A believable wrong phrase, then the right one.
+- **One forgotten word per sheet**, added with a caret: `so schema is ^completely untouched`.
+- **A few misspellings left in** (3 to 4 per sheet), uncorrected (`recieve`, `reliabilty`). Only on ordinary words, never on a key term the marker is looking for. Tell the owner which ones so they can fix them on paper if they want.
 - **No bold, ever.** The owner never presses harder mid-sentence. No emphasis markup at all; headings are plain too.
 - Make sure the answers are correct. Where the brief's wording is off (eg "path loss" meaning packet loss), answer the intended question and hedge in half a line.
 
@@ -33,6 +35,9 @@ Pipeline: typst renders the cover (vector, Times New Roman if `~/Developer/uni/z
 - One main hand (Caveat). Light mixing: about 1 chunk in 5 in a second hand (Nanum Pen), about 1 word in 7 switches to another font. Heavier mixing looked fake.
 - Every letter drawn slightly differently (`letters=1`), lines tilt and sag (`INK_SLOPE=1`), ballpoint skips (`INK_DEFECTS=1`). Skips and pressure fade are kept rare and partial: stronger ones looked faded on a printout.
 - Ink blobs only where the pen lands or lifts (stroke ends found on the skeleton), sparse, each one different. Never in the middle of a stroke.
+- Scribble-outs rotate through four styles (zigzag, coil, back-and-forth, hasty strike lines), never the same twice in a row, each with its own density, overshoot and angle.
+- Automatic rare touches, all deterministic so a rebuild matches the copy already written: about one long lowercase word per two pages of writing gets 2 to 3 letters crammed together (`typst eval 'query(<cramped>).map(it => it.value)' --in <item>/handwritten.typ --root . --font-path _shared/fonts --input letters=1` lists them); a letter gone over twice now and then; about 1 line in 10 that ends at the right edge squeezes its last word; one or two stray pen marks (a dot or a slip-stroke off a word end, never a tick, never on writing).
+- Diagram lines are about 8% wobblier than text strokes, box corners overshoot or fall short, and about 1 line in 8 is drawn twice (more later in the sheet).
 - Gets messier toward the end, automatically: jitter scales with position in the sheet, and later pages wobble more.
 - Typed zabdoc cover page (`cover.typ`), not handwritten.
 
@@ -48,7 +53,7 @@ Pipeline: typst renders the cover (vector, Times New Roman if `~/Developer/uni/z
 ```
 
 - `#q(n)` heading (sticky, never stranded at a page bottom). `#l(indent: …, "…")` one chunk of writing, a plain string.
-- Inside strings: `->` arrow, `^^` / `vv` up / down arrows, `~frag~` scribbled-out half-word. Words are split on spaces, so keep tokens space-separated. No `*` emphasis.
+- Inside strings: `->` arrow, `^^` / `vv` up / down arrows, `~frag~` scribbled-out half-word, `~~a few words~~` scribbled-out phrase, `^word` caret insertion. Words are split on spaces, so keep tokens space-separated. No `*` emphasis.
 - Knobs for experiments: `--input letters=1`, `--input mess=2`; env `INK_PEN=blue|black|gel|pencil`, `INK_SLOPE=1`, `INK_DEFECTS=1`, `INK_WIDTH=0.28`.
 
 ## Before committing

@@ -39,10 +39,84 @@ def warp(a, sigma, amp):
     return map_coordinates(a, [y + dy, x + dx], order=1, mode="nearest")
 
 
-def page(path, dpi, mess):
+def squeeze_edges(ink, dpi, rate=0.1):
+    """Running out of room: now and then the last word on a line gets a bit narrower and tighter."""
+    h, w = ink.shape
+    rows = (ink > 0.3).sum(axis=1) > 2
+    bands, y = [], 0
+    while y < h:
+        if rows[y]:
+            y0 = y
+            while y < h and rows[y]:
+                y += 1
+            if 0.15 * dpi <= y - y0 <= 0.6 * dpi:   # one line of writing, not a diagram or table
+                bands.append((y0, y))
+        y += 1
+    for y0, y1 in bands:
+        cols = (ink[y0:y1] > 0.3).any(axis=0)
+        xs = np.flatnonzero(cols)
+        if not len(xs) or xs[-1] < w - 0.38 * dpi or rng.random() > rate:
+            continue
+        # The last word: walk left from the right end until a gap wider than a letter gap.
+        gap, x0 = int(0.06 * dpi), xs[-1]
+        for x in xs[::-1]:
+            if x0 - x > gap:
+                break
+            x0 = x
+        x1 = xs[-1] + 1
+        f = rng.uniform(0.86, 0.92)
+        src = ink[y0:y1, x0:x1].copy()
+        ink[y0:y1, x0:x1] = 0
+        n = int((x1 - x0) * f)
+        xx = np.arange(n) / f
+        yy = np.arange(y1 - y0)
+        ink[y0:y1, x0:x0 + n] = map_coordinates(src, np.meshgrid(yy, xx, indexing="ij"), order=1)
+    return ink
+
+
+def stray_marks(ink, dpi, n):
+    """A pen dot or a short slip-stroke trailing off a word ending, next to the writing, never on it."""
+    h, w = ink.shape
+    skel = skeletonize(ink > 0.5)
+    nb = convolve(skel.astype(int), np.ones((3, 3), int), mode="constant") - skel
+    ends = np.argwhere(skel & (nb == 1))
+    k = dpi / 200
+    yy, xx = np.mgrid[0:h, 0:w]
+    done = 0
+    for y, x in ends[rng.permutation(len(ends))]:
+        if done >= n:
+            break
+        if rng.random() < 0.5:   # dot where the pen touched down
+            cy, cx = y + rng.uniform(-8, 8) * k, x + rng.uniform(9, 20) * k
+            pts = [(cy, cx, rng.uniform(1.1, 1.7) * k)]
+        else:                    # slip: the pen keeps going a little after the word
+            ang = rng.uniform(0.15, 1.1)
+            L = rng.uniform(12, 26) * k
+            pts = [(y + np.sin(ang) * t * L, x + 3 * k + np.cos(ang) * t * L, (1.2 - 0.8 * t) * k) for t in np.linspace(0.15, 1, 14)]
+        ys = [p[0] for p in pts]; xs = [p[1] for p in pts]
+        y0, y1 = int(min(ys) - 6 * k), int(max(ys) + 6 * k)
+        x0, x1 = int(min(xs) - 6 * k), int(max(xs) + 6 * k)
+        if y0 < 0 or x0 < 0 or y1 >= h or x1 >= w:
+            continue
+        # must land on blank paper (the word end it leaves from aside)
+        clear = ink[y0:y1, x0:x1].copy()
+        clear[max(0, y - y0 - 5):y - y0 + 6, max(0, x - x0 - 5):x - x0 + 6] = 0
+        if clear.max() > 0.15:
+            continue
+        sub_y, sub_x = yy[y0:y1, x0:x1], xx[y0:y1, x0:x1]
+        mark = np.zeros((y1 - y0, x1 - x0))
+        for cy, cx, r in pts:
+            mark = np.maximum(mark, np.clip(r + 0.5 - np.hypot(sub_y - cy, sub_x - cx), 0, 1))
+        ink[y0:y1, x0:x1] = np.maximum(ink[y0:y1, x0:x1], mark)
+        done += 1
+    return ink
+
+
+def page(path, dpi, mess, marks=0):
     g = np.asarray(Image.open(path).convert("L"), float) / 255
     ink = 1 - g
     h, w = ink.shape
+    ink = squeeze_edges(ink, dpi)
     if SLOPE:
         # Unruled paper: each line drifts up or down across the page and sags a little,
         # and neighbouring lines don't agree on the angle.
@@ -81,6 +155,8 @@ def page(path, dpi, mess):
         ink = np.clip(ink * 1.15, 0, 1)
         pressure = noise((h, w), 30 * dpi / 150, 0.9, 1.0)
         grain = 1 - 0.1 * rng.random((h, w)) ** 3
+    if marks:
+        ink = stray_marks(ink, dpi, marks)
     ink *= pressure * grain
     if DEFECTS:
         # Ballpoint skips: short thin gaps where the ball didn't roll.
@@ -124,5 +200,7 @@ if __name__ == "__main__":
     out = sys.argv[2]
     files = sys.argv[3:]
     # later pages wobble more: the hand gets tired
-    pages = [page(p, dpi, 1 + 0.5 * k / max(1, len(files) - 1)) for k, p in enumerate(files)]
+    # one or two stray pen marks across the whole sheet
+    marks = np.bincount(rng.integers(0, len(files), rng.integers(1, 3)), minlength=len(files))
+    pages = [page(p, dpi, 1 + 0.5 * k / max(1, len(files) - 1), marks[k]) for k, p in enumerate(files)]
     pages[0].save(out, save_all=True, append_images=pages[1:], resolution=dpi, quality=88)
