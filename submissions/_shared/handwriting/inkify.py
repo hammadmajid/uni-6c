@@ -6,19 +6,21 @@ then lays the ink on plain white paper. Run through build.sh.
 import sys
 import numpy as np
 from PIL import Image
-from scipy.ndimage import convolve, gaussian_filter, map_coordinates
+from scipy.ndimage import binary_dilation, convolve, distance_transform_edt, gaussian_filter, map_coordinates
 from skimage.morphology import skeletonize
 
 import os
 
 rng = np.random.default_rng(7)
 PAPER = np.array([255, 255, 255], float)
-# Knobs for trying variants (env vars): INK_PEN, INK_SLOPE, INK_DEFECTS.
+# Knobs for trying variants (env vars): INK_PEN, INK_SLOPE, INK_DEFECTS, INK_WIDTH.
 PEN = os.environ.get("INK_PEN", "blue")          # blue | black | gel | pencil
 SLOPE = float(os.environ.get("INK_SLOPE", "0"))  # 0 = straight lines; 1 = lines tilt and sag like unruled paper
 DEFECTS = os.environ.get("INK_DEFECTS", "0") == "1"  # ballpoint skips and blobs
 INK = {"blue": (24, 36, 112), "black": (28, 28, 34), "gel": (12, 20, 70), "pencil": (52, 52, 60)}[PEN]
 INK = np.array(INK, float)
+# Ballpoint line width in mm. The fonts draw about 0.5 mm at 23pt, which printed like a thick pen.
+WIDTH = float(os.environ.get("INK_WIDTH", "0.28"))
 
 
 def noise(shape, sigma, lo, hi):
@@ -65,15 +67,26 @@ def page(path, dpi, mess):
         tooth = noise((h, w), 0.7, 0, 1)             # graphite catches only the paper's high points
         grain = np.clip((tooth - 0.15) * 1.8, 0.4, 1)
     else:
-        ink = gaussian_filter(ink, 0.35 * dpi / 150)   # slight bleed
-        ink = np.clip(ink, 0, 1) ** 1.15               # thin ballpoint line, not marker
-        pressure = noise((h, w), 30 * dpi / 150, 0.78, 1.0)
-        grain = 1 - 0.2 * rng.random((h, w)) ** 3
+        # A ballpoint draws one width whatever the font did: redraw every stroke
+        # (text and diagram lines alike) as a line of WIDTH around its skeleton,
+        # with the width breathing a little along the stroke.
+        skel = skeletonize(ink > 0.5)
+        r = WIDTH / 25.4 * dpi / 2 * noise((h, w), 12 * dpi / 150, 0.85, 1.12)
+        thin = np.clip(r + 0.5 - distance_transform_edt(~skel), 0, 1)
+        # Scribbled-out words are solid patches, not strokes: keep those as dense as drawn.
+        k = dpi / 200
+        solid = binary_dilation(distance_transform_edt(ink > 0.5) >= 3.5 * k, iterations=int(4 * k))
+        ink = np.maximum(thin, ink * solid)
+        ink = gaussian_filter(ink, 0.25 * dpi / 150)   # slight bleed
+        ink = np.clip(ink * 1.15, 0, 1)
+        pressure = noise((h, w), 30 * dpi / 150, 0.9, 1.0)
+        grain = 1 - 0.1 * rng.random((h, w)) ** 3
     ink *= pressure * grain
     if DEFECTS:
         # Ballpoint skips: short thin gaps where the ball didn't roll.
         streak = gaussian_filter(rng.standard_normal((h, w)), (0.8 * dpi / 150, 3.5 * dpi / 150))
-        ink *= np.where(streak > np.quantile(streak, 0.97), 0.15, 1.0)
+        # Rare and partial, or the writing looks faded on paper.
+        ink *= np.where(streak > np.quantile(streak, 0.994), 0.45, 1.0)
         # Blobs: ink pools where the pen lands or lifts, so only at stroke ends,
         # never partway along a stroke. Found as skeleton pixels with one neighbour.
         skel = skeletonize(ink > 0.45)
@@ -85,7 +98,7 @@ def page(path, dpi, mess):
         r = int(6 * dpi / 150)
         for y, x in pick:
             # Every blob a little different: size, strength, and a short smear.
-            sig = rng.uniform(0.8, 2.0) * dpi / 150
+            sig = rng.uniform(0.6, 1.4) * dpi / 150
             amp = rng.uniform(0.35, 1.0)
             ang = rng.uniform(0, 2 * np.pi)
             for step in range(rng.integers(1, 4)):

@@ -29,9 +29,9 @@ Pipeline: typst renders the cover (vector, Times New Roman if `~/Developer/uni/z
 - Big writing, about 23pt. Messy and uneven, but readable.
 - Lines run to the right edge of the page (3 mm margin), the way the owner writes.
 - Pure white paper, no ruled lines, no margin line.
-- Blue ballpoint, thin line (not marker).
+- Blue ballpoint, thin line: every stroke is redrawn from its skeleton at about 0.28 mm (`INK_WIDTH`, in mm), because the raw font strokes (~0.5 mm) printed like a thick pen. Scribbled-out patches keep their full density.
 - One main hand (Caveat). Light mixing: about 1 chunk in 5 in a second hand (Nanum Pen), about 1 word in 7 switches to another font. Heavier mixing looked fake.
-- Every letter drawn slightly differently (`letters=1`), lines tilt and sag (`INK_SLOPE=1`), ballpoint skips (`INK_DEFECTS=1`).
+- Every letter drawn slightly differently (`letters=1`), lines tilt and sag (`INK_SLOPE=1`), ballpoint skips (`INK_DEFECTS=1`). Skips and pressure fade are kept rare and partial: stronger ones looked faded on a printout.
 - Ink blobs only where the pen lands or lifts (stroke ends found on the skeleton), sparse, each one different. Never in the middle of a stroke.
 - Gets messier toward the end, automatically: jitter scales with position in the sheet, and later pages wobble more.
 - Typed zabdoc cover page (`cover.typ`), not handwritten.
@@ -49,7 +49,7 @@ Pipeline: typst renders the cover (vector, Times New Roman if `~/Developer/uni/z
 
 - `#q(n)` heading (sticky, never stranded at a page bottom). `#l(indent: …, "…")` one chunk of writing, a plain string.
 - Inside strings: `->` arrow, `^^` / `vv` up / down arrows, `~frag~` scribbled-out half-word. Words are split on spaces, so keep tokens space-separated. No `*` emphasis.
-- Knobs for experiments: `--input letters=1`, `--input mess=2`; env `INK_PEN=blue|black|gel|pencil`, `INK_SLOPE=1`, `INK_DEFECTS=1`.
+- Knobs for experiments: `--input letters=1`, `--input mess=2`; env `INK_PEN=blue|black|gel|pencil`, `INK_SLOPE=1`, `INK_DEFECTS=1`, `INK_WIDTH=0.28`.
 
 ## Before committing
 
