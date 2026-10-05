@@ -89,6 +89,13 @@
           "minutes": 35,
           "kind": "checkpoint",
           "objective": "drill lectures 01 to 03 in quiz format before quiz 1 on Friday 2 October: definitions, schema levels, attribute and key types, and an ERD from a scenario."
+        },
+        {
+          "slug": "assignment-2-erd-practice",
+          "title": "Assignment 2 practice: ERD from an unseen case",
+          "minutes": 50,
+          "kind": "checkpoint",
+          "objective": "draw a complete Chen ER diagram from an unseen case study in 20 minutes, ready for the in-class assignment 2 on Friday 16 October."
         }
       ]
     }

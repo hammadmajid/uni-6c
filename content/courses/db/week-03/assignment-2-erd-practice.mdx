@@ -1,0 +1,206 @@
+<Callout type="exam" title="Assignment 2 is written in class on Friday 16 October">
+Scope, relayed by the owner: an ER diagram. The instructor hands out a case study in class and you draw the diagram for it on the spot. Attendance is required. Bring blank white pages and the printed front page (`submissions/db/assignment-2/2312200.pdf`). The notation is Chen, as on the lecture 03 slides: rectangles, ovals, diamonds, 1 / N / M labels.
+</Callout>
+
+The case will be one you have not seen, so this page drills the procedure on two fresh cases under a clock. The car-sales lab and the library and clinic cases in the quiz 1 revision are the warm-up; do those first if you have not. Work on blank paper with a pen, the way you will on Friday.
+
+## Before you draw: the decisions that cost marks
+
+<OrderCheck
+  id="a2-procedure"
+  prompt="Put the five passes over a case study in order."
+  items={[
+    "Underline nouns: entity, attribute, synonym, value or not stored",
+    "Find each entity's unique attribute and underline it as the key",
+    "Turn linking verbs into relationship diamonds",
+    "Read the wording for 1 or N and for total or partial participation",
+    "Draw: rectangles, ovals, diamonds and lines, then the labels"
+  ]}
+  explanation="Nouns, keys, verbs, numbers, draw. On a blank page, also decide the layout before the first rectangle: the entity with the most relationships goes in the middle."
+  topLabel="First pass"
+  bottomLabel="Last pass"
+/>
+
+<QuickCheck
+  id="a2-entity-test"
+  question="A case says: 'Each order has a unique order number and a date. The order's status is kept as pending, dispatched or delivered.' What is status?"
+  options={[
+    "A simple attribute of ORDER",
+    "An entity STATUS related to ORDER",
+    "Three attributes: Pending, Dispatched, Delivered",
+    "A multivalued attribute of ORDER"
+  ]}
+  answer="A simple attribute of ORDER"
+  explanation="Status has no identifier and no attributes of its own, and an order has one status at a time. Pending, dispatched and delivered are values of that one attribute."
+  feedback={{
+    "An entity STATUS related to ORDER": "Nothing in the text gives a status its own identifier or its own attributes. A noun with neither is an attribute.",
+    "Three attributes: Pending, Dispatched, Delivered": "Those are values, which means data, not structure. Adding a fourth status should not change the diagram.",
+    "A multivalued attribute of ORDER": "Multivalued means several values at the same time, like several phone numbers. An order is in one status at a time."
+  }}
+/>
+
+<QuickCheck
+  id="a2-rel-attribute"
+  question="Students enrol in many courses and a course has many students. The grade a student earns in a course belongs where?"
+  options={[
+    "On the ENROLS relationship, as an oval attached to the diamond",
+    "On STUDENT",
+    "On COURSE",
+    "In a new strong entity GRADE with its own key"
+  ]}
+  answer="On the ENROLS relationship, as an oval attached to the diamond"
+  explanation="The grade depends on the pair (this student, this course). In an M:N relationship an attribute like that cannot move to either side, so it hangs off the diamond."
+  feedback={{
+    "On STUDENT": "A student has a different grade in every course. On STUDENT there is room for only one.",
+    "On COURSE": "A course gives a different grade to every student. On COURSE there is room for only one.",
+    "In a new strong entity GRADE with its own key": "The text gives a grade no identifier. It is one value per enrolment, which is an attribute of the relationship."
+  }}
+/>
+
+<QuickCheck
+  id="a2-weak-test"
+  question="'An order contains several order lines. Lines are numbered 1, 2, 3 within each order, and each line has a quantity.' How is ORDER_LINE drawn?"
+  options={[
+    "Double rectangle, LineNo with a dashed underline, joined to ORDER by a double diamond with a double line on ORDER_LINE's side",
+    "Ordinary rectangle with LineNo underlined as the key",
+    "As a multivalued attribute LineNo on ORDER",
+    "Double rectangle, but joined to ORDER by an ordinary diamond and a single line"
+  ]}
+  answer="Double rectangle, LineNo with a dashed underline, joined to ORDER by a double diamond with a double line on ORDER_LINE's side"
+  explanation="'Numbered within each order' is the signal for a weak entity: line 1 exists in every order, so LineNo is only a partial key. The weak entity gets a double rectangle, its identifying relationship a double diamond, and its participation is always total."
+  feedback={{
+    "Ordinary rectangle with LineNo underlined as the key": "LineNo repeats across orders, so it does not identify a line on its own. A solid underline claims it does.",
+    "As a multivalued attribute LineNo on ORDER": "A line has its own attribute (quantity) and its own relationship to a product, so it is more than a repeated value.",
+    "Double rectangle, but joined to ORDER by an ordinary diamond and a single line": "The identifying relationship is the double diamond, and a weak entity cannot exist without its owner, so its line is double."
+  }}
+/>
+
+<QuickCheck
+  id="a2-wording"
+  question="Which sentence forces a double line (total participation) on EMPLOYEE's side of WORKS_IN?"
+  options={[
+    "Every employee must be assigned to a department",
+    "An employee may be assigned to a department",
+    "A department can have many employees",
+    "A department may have no employees"
+  ]}
+  answer="Every employee must be assigned to a department"
+  explanation="'Every … must' is total participation for that entity. 'May' is partial. 'Many' is cardinality, which is the 1 or N label and says nothing about whether taking part is compulsory."
+  feedback={{
+    "An employee may be assigned to a department": "'May' means some employees are unassigned: partial participation, a single line.",
+    "A department can have many employees": "That sets the N label. It does not say whether an employee must have a department.",
+    "A department may have no employees": "That makes DEPARTMENT's side partial. It says nothing about EMPLOYEE's side."
+  }}
+/>
+
+## Case 1: course registration (20 minutes)
+
+<HintLadder
+  id="a2-case1-hints"
+  hints={[
+    "Four nouns are given a unique identifier. Those are the four entities. 'Semester' and 'grade' are given none.",
+    "Count the relationships by the verbs: enrols, is taught by, belongs to, is headed by. Two of them join the same pair of entities (TEACHER and DEPARTMENT); draw two separate diamonds.",
+    "ENROLS is the only M:N. Semester and Grade hang off its diamond. HEADS is the only 1:1.",
+    "Double lines: COURSE into TEACHES, TEACHER into BELONGS_TO, DEPARTMENT into BELONGS_TO, DEPARTMENT into HEADS. Everything else is a single line."
+  ]}
+/>
+
+<Predict
+  id="a2-case1"
+  prompt="A university keeps students, each with a unique registration number, a name made of first and last name, a date of birth, an age, and one or more phone numbers. A course has a unique course code, a title and credit hours. A teacher has a unique teacher ID, a name and a designation. A department has a unique department code and a name. A student enrols in many courses and a course has many students; for each enrolment the semester and the grade are recorded. A student may be enrolled in no course, and a course may have no students yet. Every course is taught by exactly one teacher; a teacher may teach several courses or none. Every teacher belongs to exactly one department, and every department has at least one teacher. Every department is headed by exactly one teacher, and a teacher heads at most one department. Draw the complete Chen ER diagram on paper, then write the entity and relationship lists."
+  answer="Four entities: STUDENT, COURSE, TEACHER, DEPARTMENT. ENROLS M:N with Semester and Grade on the diamond, both partial. TEACHES 1:N, COURSE total. BELONGS_TO N:1, both total. HEADS 1:1, DEPARTMENT total, TEACHER partial."
+>
+
+**Model answer (Chen).**
+
+| Entity | Attributes |
+|---|---|
+| STUDENT | **RegNo** (key, underlined), Name (composite: FirstName, LastName as sub-ovals), DOB, Age (derived, dashed oval), Phone (multivalued, double oval) |
+| COURSE | **CourseCode** (key), Title, CreditHours |
+| TEACHER | **TeacherID** (key), Name, Designation |
+| DEPARTMENT | **DeptCode** (key), Name |
+
+| Relationship | Between | Ratio | Participation | The words that decide it |
+|---|---|---|---|---|
+| ENROLS | STUDENT and COURSE | M:N | both partial | "many courses", "many students"; "may be enrolled in no course", "no students yet" |
+| TEACHES | TEACHER and COURSE | 1:N (1 by TEACHER) | COURSE total, TEACHER partial | "exactly one teacher"; "several courses or none" |
+| BELONGS_TO | TEACHER and DEPARTMENT | N:1 (1 by DEPARTMENT) | both total | "every teacher … exactly one department"; "at least one teacher" |
+| HEADS | TEACHER and DEPARTMENT | 1:1 | DEPARTMENT total, TEACHER partial | "every department … exactly one teacher"; "at most one department" |
+
+Semester and Grade are ovals attached to the ENROLS diamond.
+
+**Mark yourself, one mark each:** four entities and no extras (no SEMESTER, no GRADE, no UNIVERSITY); every key underlined; Name composite, Age dashed, Phone double oval; Semester and Grade on the diamond; four relationships including two separate diamonds between TEACHER and DEPARTMENT; correct 1, N and M labels; the four double lines.
+
+**Layout that avoids crossing lines:** STUDENT, COURSE, TEACHER, DEPARTMENT left to right in one row, with ENROLS and TEACHES between neighbours, BELONGS_TO above the last pair and HEADS below it.
+
+</Predict>
+
+## Case 2: food delivery (20 minutes)
+
+<HintLadder
+  id="a2-case2-hints"
+  hints={[
+    "Five nouns get a unique identifier. A sixth thing, the order line, is only numbered within its order.",
+    "ORDER_LINE is a weak entity owned by ORDER. Its line number is a partial key. Quantity sits on ORDER_LINE.",
+    "ORDER is the hub: it touches CUSTOMER, RIDER and ORDER_LINE. MENU_ITEM connects to ORDER_LINE and to RESTAURANT, not to ORDER directly.",
+    "Total is calculated, so it is derived. The delivery address is composite. 'Until one is assigned' makes ORDER partial in the rider relationship."
+  ]}
+/>
+
+<Predict
+  id="a2-case2"
+  prompt="A food delivery company registers customers, each with a unique customer ID, a name, a phone number and a delivery address made of house, street and city. A restaurant has a unique restaurant ID, a name and a city. Each restaurant offers many menu items; a menu item has a unique item code, a name and a price, and belongs to exactly one restaurant. A customer places orders; an order has a unique order number, an order date, a status and a total that is calculated from its lines. Every order is placed by exactly one customer, and a customer may not have ordered yet. An order contains one or more order lines; lines are numbered 1, 2, 3 within each order, and each line records a quantity and refers to exactly one menu item. A menu item may appear on many order lines or on none. Riders have a unique rider ID, a name and a phone number. An order is delivered by at most one rider and has no rider until one is assigned; a rider delivers many orders. Draw the complete Chen ER diagram on paper, then write the entity and relationship lists."
+  answer="CUSTOMER, RESTAURANT, MENU_ITEM, ORDER, RIDER strong; ORDER_LINE weak under ORDER (LineNo partial key, Quantity). PLACES 1:N, ORDER total. CONTAINS identifying 1:N, both total. REFERS_TO N:1, ORDER_LINE total. OFFERS 1:N, MENU_ITEM total. DELIVERS 1:N, both partial."
+>
+
+**Model answer (Chen).**
+
+| Entity | Attributes |
+|---|---|
+| CUSTOMER | **CustomerID** (key), Name, Phone, Address (composite: House, Street, City) |
+| RESTAURANT | **RestaurantID** (key), Name, City |
+| MENU_ITEM | **ItemCode** (key), Name, Price |
+| ORDER | **OrderNo** (key), OrderDate, Status, Total (derived, dashed oval) |
+| ORDER_LINE (weak, double rectangle) | LineNo (partial key, dashed underline), Quantity |
+| RIDER | **RiderID** (key), Name, Phone |
+
+| Relationship | Between | Ratio | Participation | The words that decide it |
+|---|---|---|---|---|
+| PLACES | CUSTOMER and ORDER | 1:N (1 by CUSTOMER) | ORDER total, CUSTOMER partial | "exactly one customer"; "may not have ordered yet" |
+| CONTAINS (identifying, double diamond) | ORDER and ORDER_LINE | 1:N (1 by ORDER) | both total | "one or more order lines"; a weak entity is always total |
+| REFERS_TO | ORDER_LINE and MENU_ITEM | N:1 (1 by MENU_ITEM) | ORDER_LINE total, MENU_ITEM partial | "exactly one menu item"; "or on none" |
+| OFFERS | RESTAURANT and MENU_ITEM | 1:N (1 by RESTAURANT) | MENU_ITEM total, RESTAURANT partial | "belongs to exactly one restaurant" |
+| DELIVERS | RIDER and ORDER | 1:N (1 by RIDER) | both partial | "at most one rider", "no rider until one is assigned" |
+
+**Assumptions to write beside the diagram:** a restaurant can be registered before it lists any item (RESTAURANT partial in OFFERS); a rider may not have delivered anything yet; Phone is single-valued because the text says "a phone number".
+
+**Also acceptable:** no ORDER_LINE entity, and instead an M:N relationship CONTAINS between ORDER and MENU_ITEM with Quantity on the diamond. It stores the same facts as long as an item appears once per order. Because the text numbers the lines, the weak entity is the closer reading; if you choose the M:N version, say why in one line.
+
+**Mark yourself, one mark each:** six entities with the weak one in a double rectangle; keys underlined and LineNo dashed; Address composite and Total dashed; five relationships with CONTAINS as a double diamond; Quantity on ORDER_LINE; correct 1 and N labels; double lines on ORDER into PLACES, both sides of CONTAINS, ORDER_LINE into REFERS_TO and MENU_ITEM into OFFERS.
+
+</Predict>
+
+## On the day
+
+<Predict
+  id="a2-checklist"
+  prompt="From memory, write the checks you will run over your finished diagram in the last two minutes. Aim for at least six."
+  answer="Every entity has an underlined key; every relationship has a label on both ends; participation shown; special attributes drawn with the right oval; no value or owner drawn as an entity; assumptions written; name and registration number on every page."
+>
+
+**The last-two-minutes checklist.**
+
+| Check | What a miss looks like |
+|---|---|
+| Every rectangle has exactly one underlined key (dashed for a weak entity) | An entity with ovals but nothing underlined |
+| Every diamond has a 1, N or M on both of its lines | A bare line, which the marker cannot read as any ratio |
+| Double lines where the text says "every", "must" or "exactly one" | All single lines, so participation was skipped |
+| Composite, multivalued and derived attributes use their own shapes | "One or more phone numbers" drawn as a plain oval |
+| Nothing drawn for the organisation that owns the database, or for values | A COMPANY rectangle, or one entity per option |
+| Attributes that depend on a pair sit on the diamond | Grade on STUDENT, quantity on PRODUCT |
+| Assumptions written in one or two lines under the diagram | An ambiguous sentence resolved silently |
+| Name and registration number on every loose page, behind the front page | Unstapled white pages with no name |
+
+Draw in pen, large, with the hub entity in the middle of the page. If a first attempt gets tangled, redraw it on a fresh page; that is what the spare white pages are for.
+
+</Predict>
