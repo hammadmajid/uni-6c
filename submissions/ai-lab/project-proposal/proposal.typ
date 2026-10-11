@@ -24,14 +24,14 @@
 )
 
 #body-page-setup(course-code, class, body-pad: 6mm, box-inset: box-inset)[
-  #set text(size: 12pt)
+  #set text(size: 11.5pt)
   #show heading: it => block(above: 0.9em, below: 0.35em, it)
 
   = Smarter Load Balancing with an AI Agent (Prequal in Simulation)
 
   *Paper.* Wydrowski, B., Kleinberg, R., Rumble, S. M., & Archer, A. (2024).
   _Load is not what you should balance: Introducing Prequal._ USENIX NSDI '24,
-  pp. 1285–1299. Problem statement submitted in CNDC Lab, Semester Project 1.
+  pp. 1285–1299. Same paper as our CNDC Lab problem statement.
 
   == Problem
 
@@ -78,8 +78,7 @@
 
   Prequal should make the slowest 1% of requests much faster than the
   lowest-CPU rule while the typical request stays about the same, which is
-  what the paper reports. We also expect the simple RIF-only rule to beat
-  lowest-CPU, and the full hot/cold rule to beat RIF-only.
+  what the paper reports, and the full hot/cold rule to beat a RIF-only rule.
 
   == The four agents we will compare
 
@@ -95,14 +94,12 @@
     [Prequal], [RIF and latency], [Probe pool plus the hot/cold rule],
   )
 
-  == Plan
+  == Conclusion
 
-  #table(
-    columns: (auto, 1fr),
-    inset: (x: 6pt, y: 3pt),
-    stroke: 0.5pt + gray,
-    align: left,
-    [Week 5], [Simulator in Python 3 with `simpy`, the three baseline agents, experiment runner with fixed seeds],
-    [Week 6], [Prequal agent, runs at five traffic levels, `matplotlib` plots, report, demo],
-  )
+  The paper's message is that a load balancer should act on what servers
+  are doing now, not on an average of what they did. We will test it by
+  building the Prequal client as an agent in a Python simulation and
+  comparing it with three simpler agents under the same traffic. A match
+  with the paper's result would show that an agent sensing its environment
+  and ranking its choices with a heuristic can solve a real YouTube-scale problem.
 ]
