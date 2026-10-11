@@ -23,7 +23,7 @@
   box-inset: box-inset,
 )
 
-#body-page-setup(course-code, class, body-pad: 0mm, box-inset: box-inset)[
+#body-page-setup(course-code, class, body-pad: 6mm, box-inset: box-inset)[
   #set text(size: 12pt)
   #show heading: it => block(above: 0.9em, below: 0.35em, it)
 
