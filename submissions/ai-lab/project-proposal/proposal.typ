@@ -21,8 +21,8 @@
   single-column: true,
 )
 
-#body-page-setup(course-code, class)[
-  #set text(size: 11pt)
+#body-page-setup(course-code, class, body-pad: 0mm)[
+  #set text(size: 12pt)
   #show heading: it => block(above: 0.9em, below: 0.35em, it)
 
   = Smarter Load Balancing with an AI Agent (Prequal in Simulation)

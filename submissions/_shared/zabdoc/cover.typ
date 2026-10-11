@@ -224,7 +224,7 @@
 // is guaranteed to apply to it: a `set page`/`set text` left dangling at the
 // end of a function body only styles what follows *inside that same call*;
 // it does not leak out to content the caller writes after the call returns.
-#let body-page-setup(course-code, class, body) = {
+#let body-page-setup(course-code, class, body, body-pad: body-pad) = {
   set page(
     width: page-w,
     height: page-h,
