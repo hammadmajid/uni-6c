@@ -3,11 +3,21 @@
 #let course-code = "CSCL 4101"
 #let class = "BsCS-6C"
 #let box-inset = 2mm
+// Built twice by build.sh: `--input group=true` gives the group version.
+#let group = sys.inputs.at("group", default: "false") == "true"
+#let I = if group [we] else [I]
+#let We = if group [We] else [I]
+#let my = if group [our] else [my]
 
 #cover(
-  students: (
+  students: if group {(
     (Name: "Hammad Majid", RegNo: "2312200"),
-  ),
+    (Name: "Haris Qaiser Lodhi", RegNo: "2312458"),
+    (Name: "Syed Muhammad Ahsan", RegNo: "2312421"),
+    (Name: "Taha Mustafa", RegNo: "2312412"),
+  )} else {(
+    (Name: "Hammad Majid", RegNo: "2312200"),
+  )},
   class: class,
   course: "AI Lab",
   course-code: course-code,
@@ -17,6 +27,7 @@
   date: "12 Oct 2026",
   marks: "",
   box-inset: box-inset,
+  single-column: true,
 )
 
 #body-page-setup(course-code, class, body-pad: 6mm, box-inset: box-inset)[
@@ -29,7 +40,7 @@
 
   *Paper.* Wydrowski, B., Kleinberg, R., Rumble, S. M., & Archer, A. (2024).
   _Load is not what you should balance: Introducing Prequal._ USENIX NSDI '24,
-  pp. 1285–1299. Same paper as my CNDC Lab problem statement.
+  pp. 1285–1299. Same paper as #my CNDC Lab problem statement.
 
   == Problem
 
@@ -57,9 +68,9 @@
   with the lowest recent latency wins. If every server is hot, it picks the
   one with the lowest RIF. If the pool is empty, it picks at random.
 
-  == What I will build
+  == What #I will build
 
-  I will build this load balancer as an *intelligent agent* in the sense
+  #We will build this load balancer as an *intelligent agent* in the sense
   used in the AI course (sensors, actuators, environment, performance
   measure). Its environment is a set of simulated servers with
   requests of varying size and a background load that goes up and down
@@ -72,13 +83,13 @@
   with traffic rising from light to very heavy and the same random seeds,
   and every request's latency is logged.
 
-  == What I expect to find
+  == What #I expect to find
 
   Prequal should make the slowest 1% of requests much faster than the
   lowest-CPU rule while the typical request stays about the same, which is
   what the paper reports, and the full hot/cold rule to beat a RIF-only rule.
 
-  == The four agents I will compare
+  == The four agents #I will compare
 
   #table(
     columns: (auto, auto, 1fr),
@@ -95,7 +106,7 @@
   == Conclusion
 
   The paper's message is that a load balancer should act on what servers
-  are doing now, not on an average of what they did. I will test it by
+  are doing now, not on an average of what they did. #We will test it by
   building the Prequal client as an agent in a Python simulation and
   comparing it with three simpler agents under the same traffic. A match
   with the paper's result would show that an agent sensing its environment
