@@ -200,7 +200,9 @@
 // (`shrink`) and in the same frame, so every page looks like the cover.
 // The cover lays out a 210mm box and scales it by `shrink` to fit inside
 // `page-margin`; these constants are that geometry, in page units.
-#let frame = page-margin + (5mm + px) * shrink   // border edge to box content
+#let box-inset = 5mm                              // border to header/footer (the cover's box padding)
+#let frame-of(inset) = page-margin + (inset + px) * shrink   // border edge to box content
+#let frame = frame-of(box-inset)
 #let below-box = page-h - page-margin - box-h * shrink  // the scaled box is shorter than the page
 #let header-h = 60pt * shrink                    // logo height sets the row
 #let header-gap = 18pt * shrink                  // the cover's v(18pt)
@@ -217,23 +219,24 @@
   body
 }
 
-#let at-cover-scale(body) = scale(x: shrink * 100%, y: shrink * 100%, origin: top + left, reflow: true,
-  block(width: (page-w - 2 * frame) / shrink, cover-style(body)))
+#let at-cover-scale(body, inset: box-inset) = scale(x: shrink * 100%, y: shrink * 100%, origin: top + left, reflow: true,
+  block(width: (page-w - 2 * frame-of(inset)) / shrink, cover-style(body)))
 
 // Takes the body as a parameter (not a bare `set`-and-return) so the styling
 // is guaranteed to apply to it: a `set page`/`set text` left dangling at the
 // end of a function body only styles what follows *inside that same call*;
 // it does not leak out to content the caller writes after the call returns.
-#let body-page-setup(course-code, class, body, body-pad: body-pad) = {
+#let body-page-setup(course-code, class, body, body-pad: body-pad, box-inset: box-inset) = {
+  let frame = frame-of(box-inset)
   set page(
     width: page-w,
     height: page-h,
     fill: white,
-    margin: (top: frame + header-h + header-gap, bottom: below-box + (5mm + px) * shrink + footer-h + header-gap, x: frame),
+    margin: (top: frame + header-h + header-gap, bottom: below-box + (box-inset + px) * shrink + footer-h + header-gap, x: frame),
     header-ascent: header-gap,
     footer-descent: header-gap,
-    header: at-cover-scale(header),
-    footer: at-cover-scale(footer(course-code, class)),
+    header: at-cover-scale(header, inset: box-inset),
+    footer: at-cover-scale(footer(course-code, class), inset: box-inset),
     // Same as the cover's frame: a px stroke drawn inside the scaled box edge.
     background: place(top + left, dx: page-margin + px * shrink / 2, dy: page-margin + px * shrink / 2,
       rect(width: (box-w - px) * shrink, height: (box-h - px) * shrink, stroke: px * shrink + black)),
@@ -263,6 +266,7 @@
   date: "",
   marks: "",
   single-column: false,   // force the one-column student table even for 4+ students
+  box-inset: box-inset,   // border to header/footer; pass the same value to body-page-setup
 ) = {
   let students = students.map(s => (Name: s.at("Name", default: ""), RegNo: s.at("RegNo", default: "")))
   let multi = students.len() >= 2
@@ -301,12 +305,12 @@
     }
   }
 
-  let inner-w = box-w - 2 * (5mm + px)
-  let inner-h = box-h - 2 * (5mm + px)
+  let inner-w = box-w - 2 * (box-inset + px)
+  let inner-h = box-h - 2 * (box-inset + px)
   let head = { header; v(18pt) }
   let foot = footer(course-code, class)
 
-  let body = block(width: 100%, inset: 5mm + px, context {
+  let body = block(width: 100%, inset: box-inset + px, context {
     let avail = inner-h - measure(width: inner-w, head).height - measure(width: inner-w, foot).height
     head
     if measure(width: inner-w, content).height < avail {

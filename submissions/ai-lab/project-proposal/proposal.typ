@@ -2,6 +2,7 @@
 
 #let course-code = "CSCL 4101"
 #let class = "BsCS-6C"
+#let box-inset = 2mm
 
 #cover(
   students: (
@@ -19,9 +20,10 @@
   date: "12 Oct 2026",
   marks: "",
   single-column: true,
+  box-inset: box-inset,
 )
 
-#body-page-setup(course-code, class, body-pad: 0mm)[
+#body-page-setup(course-code, class, body-pad: 0mm, box-inset: box-inset)[
   #set text(size: 12pt)
   #show heading: it => block(above: 0.9em, below: 0.35em, it)
 
