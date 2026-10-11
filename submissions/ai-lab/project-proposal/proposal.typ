@@ -25,8 +25,8 @@
 
 #body-page-setup(course-code, class, body-pad: 6mm, box-inset: box-inset)[
   #set text(size: 11.5pt)
-  #set par(leading: 0.85em)
-  #show heading: it => block(above: 0.9em, below: 0.35em, it)
+  #set par(leading: 0.77em)
+  #show heading: it => block(above: 0.9em, below: 0.6em, it)
   #show heading.where(level: 1): set align(center)
 
   = Smarter Load Balancing with an AI Agent (Prequal in Simulation)
