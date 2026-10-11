@@ -262,6 +262,7 @@
   number: "",
   date: "",
   marks: "",
+  single-column: false,   // force the one-column student table even for 4+ students
 ) = {
   let students = students.map(s => (Name: s.at("Name", default: ""), RegNo: s.at("RegNo", default: "")))
   let multi = students.len() >= 2
@@ -289,7 +290,7 @@
     v(if multi { 6 * vh } else { 88pt })
     if multi {
       info-table((("Submitted to:", instructor), ("Class/Section:", class)))
-      if students.len() >= 4 { student-table-grid(students) } else { student-table-simple(students) }
+      if students.len() >= 4 and not single-column { student-table-grid(students) } else { student-table-simple(students) }
     } else {
       info-table((
         ("Submitted to:", instructor),
