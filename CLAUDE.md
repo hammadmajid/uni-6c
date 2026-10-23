@@ -107,6 +107,17 @@ SZABIST slides do not always teach the correct or standard thing. Example: the W
 ## Assessments
 
 - Each course: 4 quizzes and 4 assignments, 2 of each before the midterm (week 8) and 2 after. No fixed dates; the instructor announces them. CNDC quiz 1 is 2026-09-29 (week 3); owner expects quiz 2 around weeks 5 to 6. Web Tech quiz 1 is 2026-09-28.
+- Midterms (source: `courses/midterm-date-sheet-fall-2026.pdf`, the BSCS date sheet). The owner's main section is BS(CS)-6C; DB is taken from the 4A row and SE from the 5D row. All six are in the first midterm week. The second week (9 to 15 Nov) is sports week, no papers. Times on the sheet are bare (2:00, 4:00, 6:00); the owner confirmed they are PM. The labs (cndc-lab, ai-lab) have no paper on the sheet; lab exams come after sports week, dates not announced yet. Calendar import file: `content/midterms.ics`. Each paper is 1.5 hours. No reminders (VALARM) in .ics files.
+
+  | Date | Time | Course | Row |
+  |------|------|--------|-----|
+  | Mon 2026-11-02 | 4:00 PM | Software Engineering (Awais Mahmood) | 5D |
+  | Tue 2026-11-03 | 2:00 PM | Database Systems (Saira Shaheen) | 4A |
+  | Tue 2026-11-03 | 6:00 PM | Artificial Intelligence (Awais Nawaz) | 6C |
+  | Wed 2026-11-04 | 6:00 PM | CNDC (Dr. Maria Zuraiz) | 6C |
+  | Thu 2026-11-05 | 6:00 PM | Web Technologies I (Zubair Ahmed Chatta) | 6C |
+  | Fri 2026-11-06 | 6:00 PM | Technical and Business Writing (Sana Jaffery) | 6C |
+
 - The owner drops quiz and assignment briefs into `courses/<slug>/quizzes/` and `courses/<slug>/assignments/` and says when a date is announced. When a quiz is announced, add a short revision lesson (`kind: "checkpoint"`) covering exactly the lectures the quiz spans, before the quiz date.
 - Assignments get their own lesson only if the assignment teaches something the outline does not; otherwise just link the brief from the week's checkpoint.
 - The machine this runs on is ephemeral. Everything that matters lives in this repo; progress lives in Postgres when `DATABASE_URL` is set.
