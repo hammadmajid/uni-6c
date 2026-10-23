@@ -1,4 +1,4 @@
-#import "../../_shared/zabkit/cover/cover.typ": cover, body-page-setup
+#import "@zabkit/cover:1.0.0": cover, body-page-setup
 
 #let course-code = "CSCL 3205"
 #let class = "BsCS-6C"

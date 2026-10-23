@@ -1,7 +1,7 @@
 // Handwritten-style copy sheet for CNDC assignment 1 (brief: courses/cndc/assignments/assignment-1-layers-switching-performance.pdf).
-// Build (from submissions/): _shared/zabkit/bin/zabkit hand cndc/assignment-1 2312200.pdf
-#import "../../_shared/zabkit/hand/hand.typ": *
-#show: sheet.with(profile: "hammad")
+// Build (from submissions/): zabkit sheet build cndc/assignment-1
+#import "@zabkit/hand:1.0.0": *
+#show: sheet
 
 #q(1)
 #l(indent: 10pt, "(i) offices use diff devices, OS, vendors. protocols = agreed rules (msg format, order, what to do on send/recieve) so a msg from ISB is ~uder~ understood in NY + Tokyo.")

@@ -1,10 +1,15 @@
-#import "../../_shared/zabkit/cover/cover.typ": cover, body-page-setup
+#import "@zabkit/cover:1.0.0": cover, body-page-setup
 
 #let course-code = "CSCL 4101"
 #let class = "BsCS-6C"
 #let box-inset = 2mm
-// Built twice by build.sh: `--input group=true` gives the group version.
-#let group = sys.inputs.at("group", default: "false") == "true"
+// Two versions from one source (build.sh). `zabkit sheet build` gives the group version:
+// zabkit.toml lists the four members. `zabkit compile` without item data gives the individual one.
+#let group = if "zabkit" in sys.inputs {
+  json(bytes(sys.inputs.zabkit)).Students.len() > 1
+} else {
+  sys.inputs.at("group", default: "false") == "true"
+}
 #let I = if group [we] else [I]
 #let We = if group [We] else [I]
 #let my = if group [our] else [my]

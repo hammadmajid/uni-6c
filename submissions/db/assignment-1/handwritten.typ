@@ -1,8 +1,8 @@
 // Handwritten-style copy sheet for DB assignment 1 (brief: courses/db/assignments/assignment-1-dbms-basics-schema-architecture.docx).
 // R.No. 2312200 -> A = 00, E = 0 (DOCTOR), new BookID 500, last digit 0 (Roll Number).
-// Build (from submissions/): _shared/zabkit/bin/zabkit hand db/assignment-1 2312200.pdf
-#import "../../_shared/zabkit/hand/hand.typ": *
-#show: sheet.with(profile: "hammad")
+// Build (from submissions/): zabkit sheet build db/assignment-1
+#import "@zabkit/hand:1.0.0": *
+#show: sheet
 
 // Hand-drawn table: column widths, rows of cells, top-left at (x, y).
 #let wtable(x, y, widths, rows, seed: 0, rh: 24pt) = {

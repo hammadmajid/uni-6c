@@ -1,0 +1,8 @@
+kind = "typed"
+course = "db"
+type = "Assignment"
+number = 2
+date = 2026-10-16
+total-marks = 3
+main = "cover.typ"
+members = ["2312200"]

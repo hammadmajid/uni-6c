@@ -1,0 +1,8 @@
+kind = "typed"
+course = "ai-lab"
+type = "Class Task"
+number = 2
+date = 2026-10-05
+total-marks = 10
+main = "class-task-2.typ"
+members = ["2312200"]

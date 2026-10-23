@@ -1,0 +1,7 @@
+kind = "typed"
+course = "ai-lab"
+type = "Project Proposal"
+number = 1
+date = 2026-10-12
+main = "proposal.typ"
+members = ["2312200", "2312458", "2312421", "2312412"]

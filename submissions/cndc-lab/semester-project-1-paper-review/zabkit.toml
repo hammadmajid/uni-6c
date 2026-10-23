@@ -1,0 +1,7 @@
+kind = "typed"
+course = "cndc-lab"
+type = "Paper Review Proposal"
+number = 1
+date = 2026-09-28
+main = "proposal.typ"
+members = ["2312200", "2312458", "2312421"]

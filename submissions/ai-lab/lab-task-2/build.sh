@@ -17,4 +17,4 @@ END
         -bordercolor '#282c34' -border 24 task$n.png
 done
 rm out.pango
-typst compile --root ../.. lab-task-2.typ 2312200.pdf
+zabkit sheet build .
