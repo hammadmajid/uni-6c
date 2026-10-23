@@ -1,8 +1,8 @@
 # Course directory — Fall 2026, BSCS semester 6, section C
 
 Course codes, names, instructors and the section to put on each cover live in
-`_shared/paper/data/courses.csv` (the `cndc` to `se` rows), with the roster in
-`students.csv` next to it. That CSV is the source of truth; `paper cover` reads it,
+`_shared/zabkit/data/courses.csv` (the `cndc` to `se` rows), with the roster in
+`students.csv` next to it. That CSV is the source of truth; `zabkit cover` reads it,
 and typed `cover.typ` files copy from it. Notes it can't hold:
 
 - Own section is **BsCS-6C**. `db` and `se` are physically taken with a different

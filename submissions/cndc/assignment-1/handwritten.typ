@@ -1,6 +1,6 @@
 // Handwritten-style copy sheet for CNDC assignment 1 (brief: courses/cndc/assignments/assignment-1-layers-switching-performance.pdf).
-// Build (from submissions/): _shared/paper/bin/paper hand cndc/assignment-1 2312200.pdf
-#import "../../_shared/paper/hand/hand.typ": *
+// Build (from submissions/): _shared/zabkit/bin/zabkit hand cndc/assignment-1 2312200.pdf
+#import "../../_shared/zabkit/hand/hand.typ": *
 #show: sheet.with(profile: "hammad")
 
 #q(1)

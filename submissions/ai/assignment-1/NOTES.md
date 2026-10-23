@@ -14,5 +14,5 @@
 
 ## To recompile after edits
 ```
-submissions/_shared/paper/bin/paper typst compile --root /home/bine/Developer/uni/6c --no-pdf-tags submissions/ai/assignment-1/assignment-1.typ submissions/ai/assignment-1/2312200.pdf
+submissions/_shared/zabkit/bin/zabkit typst compile --root /home/bine/Developer/uni/6c --no-pdf-tags submissions/ai/assignment-1/assignment-1.typ submissions/ai/assignment-1/2312200.pdf
 ```

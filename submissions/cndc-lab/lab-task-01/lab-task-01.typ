@@ -1,4 +1,4 @@
-#import "../../_shared/paper/cover/cover.typ": cover
+#import "../../_shared/zabkit/cover/cover.typ": cover
 
 #cover(
   students: ((Name: "Hammad Majid", RegNo: "2312200"),),

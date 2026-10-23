@@ -1,6 +1,6 @@
 # CNDC Lab — Semester Project 1: Research Paper Review (Proposal)
 
-> **Status:** Typeset as `2312200-2312458-2312421.pdf` from `proposal.typ` (zabdoc cover, same as SE assignment 1). This .md is the source draft. Reword it in your own words, then edit `proposal.typ` to match. Recompile: `submissions/_shared/paper/bin/paper typst compile --root /home/bine/Developer/uni/6c --no-pdf-tags submissions/cndc-lab/semester-project-1-paper-review/proposal.typ submissions/cndc-lab/semester-project-1-paper-review/2312200-2312458-2312421.pdf`
+> **Status:** Typeset as `2312200-2312458-2312421.pdf` from `proposal.typ` (zabdoc cover, same as SE assignment 1). This .md is the source draft. Reword it in your own words, then edit `proposal.typ` to match. Recompile: `submissions/_shared/zabkit/bin/zabkit typst compile --root /home/bine/Developer/uni/6c --no-pdf-tags submissions/cndc-lab/semester-project-1-paper-review/proposal.typ submissions/cndc-lab/semester-project-1-paper-review/2312200-2312458-2312421.pdf`
 > **Next steps:** (1) put the problem statement in your own words; (2) fill in name / reg no / group; (3) read the full paper PDF; (4) later, expand into the full review (methodology, findings, critique).
 > **Due:** 28 September 2026 · **To:** Mr. Adeel Ahmed · **Marks:** 7.5
 > **Brief:** `courses/cndc-lab/assignments/semester-project-01-proposal-paper-review.pdf`
