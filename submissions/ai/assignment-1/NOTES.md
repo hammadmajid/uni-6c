@@ -14,5 +14,6 @@
 
 ## To recompile after edits
 ```
-submissions/_shared/zabkit/bin/zabkit typst compile --root /home/bine/Developer/uni/6c --no-pdf-tags submissions/ai/assignment-1/assignment-1.typ submissions/ai/assignment-1/2312200.pdf
+zabkit sheet build submissions/ai/assignment-1
 ```
+Writes `2312200.pdf` in the item folder (name from `members` in `zabkit.toml`).
