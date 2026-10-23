@@ -1,7 +1,7 @@
 // Handwritten-style copy sheet for CNDC assignment 1 (brief: courses/cndc/assignments/assignment-1-layers-switching-performance.pdf).
-// Build: ../../_shared/handwriting/build.sh cndc/assignment-1 2312200.pdf
-#import "../../_shared/handwriting/hand.typ": *
-#show: sheet
+// Build (from submissions/): _shared/paper/bin/paper hand cndc/assignment-1 2312200.pdf
+#import "../../_shared/paper/hand/hand.typ": *
+#show: sheet.with(profile: "hammad")
 
 #q(1)
 #l(indent: 10pt, "(i) offices use diff devices, OS, vendors. protocols = agreed rules (msg format, order, what to do on send/recieve) so a msg from ISB is ~uder~ understood in NY + Tokyo.")

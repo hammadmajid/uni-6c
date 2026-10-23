@@ -5,7 +5,7 @@
 > **Submitted to:** Awais Mahmood · **Marks:** 3.5 · Individual, section BsCS-5D.
 > **Brief:** `courses/se/assignments/assignment-01-requirements-engineering-project.pdf`
 
-Cover page uses the zabdoc convention (`submissions/_shared/zabdoc/cover.typ`, ported from `/home/bine/Developer/uni/zabdocs/tmpl.typ`) with your real reg no. (2312200) and course code (CSC 3109) — see `submissions/_shared/course-directory.md` for the canonical course-code/instructor/section table.
+Cover page uses the zabdoc convention (`submissions/_shared/paper/cover/cover.typ`, from the paper repo) with your real reg no. (2312200) and course code (CSC 3109) — see `submissions/_shared/course-directory.md` for the canonical course-code/instructor/section table.
 
 ## The black bar above the header (content pages)
 GNOME Papers, Chrome's PDF viewer and Adobe Acrobat all showed a solid black bar above the repeating header on every page after the cover. I could not reproduce it with poppler (`pdftoppm`, `pdftocairo`) or Ghostscript, and byte-level inspection of the PDF found no black-filled shape, no colorspace mismatch, and correct stroke/fill operators throughout — so the file is spec-valid PDF as far as I can check.
@@ -16,7 +16,7 @@ The one real structural difference I found between the cover (always fine) and t
 
 ## To recompile after edits
 ```
-typst compile --root /home/bine/Developer/uni/6c --font-path /home/bine/Developer/uni/zabdocs --no-pdf-tags submissions/se/assignment-1/assignment-1.typ submissions/se/assignment-1/2312200.pdf
+submissions/_shared/paper/bin/paper typst compile --root /home/bine/Developer/uni/6c --no-pdf-tags submissions/se/assignment-1/assignment-1.typ submissions/se/assignment-1/2312200.pdf
 ```
 `--no-pdf-tags` matters — don't drop it, it's the black-bar mitigation above. Drop `--font-path` and it still compiles, just with Liberation Serif standing in for Times New Roman (close, not pixel-identical).
 

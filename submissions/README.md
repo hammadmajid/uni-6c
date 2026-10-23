@@ -28,4 +28,5 @@ submissions/
 
 - Each item's main file starts with a short **status / next steps** block so you can pick it back up later.
 - Reference the original brief by its path under `courses/<slug>/…` rather than copying it.
-- **Handwritten assignments**: the owner wants a solved copy sheet that looks handwritten, to copy onto paper by hand. Rules, look and build: `_shared/handwriting/README.md`.
+- **Handwritten assignments**: the owner wants a solved copy sheet that looks handwritten, to copy onto paper by hand. Build, syntax and engine: `_shared/paper/README.md` (a git submodule, the `paper` repo); the owner's voice and content rules: `_shared/paper/profiles/hammad/voice.md`. Build from `submissions/` with `_shared/paper/bin/paper hand <course>/<item> <regno>.pdf` (needs Docker).
+- **Cover pages** come from `_shared/paper/cover/cover.typ`. Compile typed items with `_shared/paper/bin/paper typst compile --root .. --no-pdf-tags …`, which brings Times New Roman.

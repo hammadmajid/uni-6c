@@ -1,8 +1,8 @@
 // Handwritten-style copy sheet for DB assignment 1 (brief: courses/db/assignments/assignment-1-dbms-basics-schema-architecture.docx).
 // R.No. 2312200 -> A = 00, E = 0 (DOCTOR), new BookID 500, last digit 0 (Roll Number).
-// Build: ../../_shared/handwriting/build.sh db/assignment-1 2312200.pdf
-#import "../../_shared/handwriting/hand.typ": *
-#show: sheet
+// Build (from submissions/): _shared/paper/bin/paper hand db/assignment-1 2312200.pdf
+#import "../../_shared/paper/hand/hand.typ": *
+#show: sheet.with(profile: "hammad")
 
 // Hand-drawn table: column widths, rows of cells, top-left at (x, y).
 #let wtable(x, y, widths, rows, seed: 0, rh: 24pt) = {

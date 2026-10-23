@@ -1,5 +1,5 @@
 // Typed zabdoc cover, prepended to the handwritten sheet by inkify.sh.
-#import "../../_shared/zabdoc/cover.typ": cover
+#import "../../_shared/paper/cover/cover.typ": cover
 
 #cover(
   students: ((Name: "Hammad Majid", RegNo: "2312200"),),
