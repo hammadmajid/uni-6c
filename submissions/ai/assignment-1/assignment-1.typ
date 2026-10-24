@@ -1,19 +1,6 @@
-#import "@zabkit/cover:1.0.0": cover, body-page-setup
+#import "@zabkit/cover:1.0.0": *
 
-#let course-code = "CSC 4101"
-#let class = "BsCS-6C"
-
-#cover(
-  students: ((Name: "Hammad Majid", RegNo: "2312200"),),
-  class: class,
-  course: "Artificial Intelligence",
-  course-code: course-code,
-  instructor: "Awais Nawaz",
-  doc-type: "Assignment",
-  number: "1",
-  date: "7 Oct 2026",
-  marks: "3",
-)
+#item-cover()
 
 #let peas(p, e, a, s) = table(
   columns: (1.7fr, 4fr),
@@ -33,7 +20,7 @@
   ..rows.pos().flatten(),
 )
 
-#body-page-setup(course-code, class)[
+#show: item-body
 
 #show table: set par(justify: false)
 #show table: set text(hyphenate: false)
@@ -165,5 +152,3 @@ I chose goal-based over utility-based because the case describes one desired out
 == Agent type: simple reflex agent
 
 The arm applies one condition-action rule to the current percept: if the barcode shows flight X, push the bag onto the chute for flight X. It acts only on the bag in front of it, does not track the bags it has already sorted (no internal state, so not model-based) and does not plan for bags that have not arrived (no goal reasoning or look-ahead, so not goal-based or utility-based). A simple reflex agent is enough, and fully rational here, because the environment is episodic and the current percept contains everything the correct action depends on.
-
-]

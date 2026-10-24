@@ -1,8 +1,13 @@
 kind = "typed"
 course = "ai-lab"
 type = "Class Task"
-number = 2
+number = "02"
 date = 2026-10-05
+date-format = "short"
 total-marks = 10
 main = "class-task-2.typ"
 members = ["2312200"]
+
+[cover]
+instructor = "Mr. Muhammad Ishfaq"
+course = "AI Lab"

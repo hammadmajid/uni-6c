@@ -3,6 +3,7 @@ course = "ai"
 type = "Assignment"
 number = 1
 date = 2026-10-07
+date-format = "short"
 total-marks = 3
 main = "assignment-1.typ"
 members = ["2312200"]

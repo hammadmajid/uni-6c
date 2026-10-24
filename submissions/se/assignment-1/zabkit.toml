@@ -3,5 +3,7 @@ course = "se"
 type = "Assignment"
 number = 1
 date = 2026-09-27
+date-format = "short"
+total-marks = 3.5
 main = "assignment-1.typ"
 members = ["2312200"]

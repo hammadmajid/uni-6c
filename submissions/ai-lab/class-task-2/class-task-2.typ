@@ -1,16 +1,6 @@
-#import "@zabkit/cover:1.0.0": cover
+#import "@zabkit/cover:1.0.0": *
 
-#cover(
-  students: ((Name: "Hammad Majid", RegNo: "2312200"),),
-  class: "BsCS-6C",
-  course: "AI Lab",
-  course-code: "CSCL 4101",
-  instructor: "Mr. Muhammad Ishfaq",
-  doc-type: "Class Task",
-  number: "02",
-  date: "5 Oct 2026",
-  marks: "10",
-)
+#item-cover()
 
 #set page(paper: "a4", margin: 18mm, header: none, footer: none, background: none)
 #set text(font: "Liberation Serif", size: 12pt)

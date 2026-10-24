@@ -1,21 +1,8 @@
-#import "@zabkit/cover:1.0.0": cover, body-page-setup
+#import "@zabkit/cover:1.0.0": *
 
-#let course-code = "CSC 3109"
-#let class = "BsCS-5D"
+#item-cover()
 
-#cover(
-  students: ((Name: "Hammad Majid", RegNo: "2312200"),),
-  class: class,
-  course: "Software Engineering",
-  course-code: course-code,
-  instructor: "Awais Mahmood",
-  doc-type: "Assignment",
-  number: "1",
-  date: "27 Sep 2026",
-  marks: "3.5",
-)
-
-#body-page-setup(course-code, class)[
+#show: item-body
 
 = LatencyRoute: a latency-aware request router.
 
@@ -54,5 +41,3 @@ The requirements are not fully settled: the real tuning (how many workers to pro
 *Trade-off I am accepting:* less upfront documentation than waterfall, and the usual incremental risk of the code getting messier iteration over iteration if I do not clean it up. I am budgeting time for that at the start of iterations 3 and 4.
 
 #bibliography("refs.bib", title: "References", style: "ieee")
-
-]

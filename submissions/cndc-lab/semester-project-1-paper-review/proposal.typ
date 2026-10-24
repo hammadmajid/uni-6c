@@ -1,25 +1,8 @@
-#import "@zabkit/cover:1.0.0": cover, body-page-setup
+#import "@zabkit/cover:1.0.0": *
 
-#let course-code = "CSCL 3205"
-#let class = "BsCS-6C"
+#item-cover()
 
-#cover(
-  students: (
-    (Name: "Hammad Majid", RegNo: "2312200"),
-    (Name: "Haris Qaiser Lodhi", RegNo: "2312458"),
-    (Name: "Syed Muhammad Ahsan", RegNo: "2312421"),
-  ),
-  class: class,
-  course: "CNDC Lab",
-  course-code: course-code,
-  instructor: "Mr. Adeel Ahmed",
-  doc-type: "Paper Review Proposal",
-  number: "",
-  date: "28 Sep 2026",
-  marks: "7.5",
-)
-
-#body-page-setup(course-code, class)[
+#show: item-body
 
 = 1. Title of the Paper
 
@@ -55,5 +38,3 @@ Wydrowski, B., Kleinberg, R., Rumble, S. M., & Archer, A. (2024). Load is not wh
 
 #show bibliography: none
 #bibliography("refs.bib", style: "apa")
-
-]

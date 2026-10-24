@@ -5,7 +5,7 @@
 > **Submitted to:** Awais Mahmood · **Marks:** 3.5 · Individual, section BsCS-5D.
 > **Brief:** `courses/se/assignments/assignment-01-requirements-engineering-project.pdf`
 
-Cover page uses the zabdoc cover (`#cover(...)` from the `@zabkit/cover:1.0.0` package) with your real reg no. (2312200) and course code (CSC 3109) — see `submissions/_shared/course-directory.md` for the canonical course-code/instructor/section table.
+Cover page is `#item-cover()` from the `@zabkit/cover:1.0.0` package, filled from `zabkit.toml` (3.5 marks, short date "27 Sep 2026") and the course's row in `~/.config/zabkit/courses.csv` (CSC 3109, Awais Mahmood, BsCS-5D).
 
 ## The black bar above the header (content pages)
 GNOME Papers, Chrome's PDF viewer and Adobe Acrobat all showed a solid black bar above the repeating header on every page after the cover. I could not reproduce it with poppler (`pdftoppm`, `pdftocairo`) or Ghostscript, and byte-level inspection of the PDF found no black-filled shape, no colorspace mismatch, and correct stroke/fill operators throughout — so the file is spec-valid PDF as far as I can check.

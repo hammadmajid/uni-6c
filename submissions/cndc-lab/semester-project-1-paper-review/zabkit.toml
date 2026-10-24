@@ -1,7 +1,15 @@
 kind = "typed"
 course = "cndc-lab"
 type = "Paper Review Proposal"
-number = 1
 date = 2026-09-28
+date-format = "short"
+total-marks = 7.5
 main = "proposal.typ"
 members = ["2312200", "2312458", "2312421"]
+
+[cover]
+instructor = "Mr. Adeel Ahmed"
+course = "CNDC Lab"
+
+[cover.names]
+2312458 = "Haris Qaiser Lodhi"
