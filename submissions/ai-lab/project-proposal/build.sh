@@ -1,5 +1,4 @@
 #!/bin/sh
-# Builds both versions: group (members from zabkit.toml, reg. nos. joined) and individual (2312200.pdf).
+# Builds both versions: the group (zabkit.toml's members) and its individual variant (2312200.pdf).
 cd "$(dirname "$0")"
 zabkit sheet build .
-zabkit compile proposal.typ 2312200.pdf

@@ -1,7 +1,18 @@
 kind = "typed"
 course = "ai-lab"
 type = "Project Proposal"
-number = 1
+number = "01"
 date = 2026-10-12
+date-format = "short"
 main = "proposal.typ"
 members = ["2312200", "2312458", "2312421", "2312412"]
+
+[cover]
+instructor = "Mr. Muhammad Ishfaq"
+course = "AI Lab"
+
+[cover.names]
+2312458 = "Haris Qaiser Lodhi"
+
+[[variants]]
+members = ["2312200"]
