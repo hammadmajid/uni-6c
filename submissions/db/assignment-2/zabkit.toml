@@ -1,8 +1,11 @@
-kind = "typed"
+kind = "cover"
 course = "db"
 type = "Assignment"
 number = 2
 date = 2026-10-16
+date-format = "short"
 total-marks = 3
-main = "cover.typ"
 members = ["2312200"]
+
+[cover]
+instructor = "Ms. Saira Shaheen"
