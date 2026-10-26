@@ -1,0 +1,15 @@
+kind = "typed"
+course = "cndc-lab"
+type = "Research Paper Review Report"
+date = 2026-10-30
+date-format = "short"
+total-marks = 45
+main = "report.typ"
+members = ["2312200", "2312458", "2312421", "2312412"]
+
+[cover]
+instructor = "Mr. Adeel Ahmed"
+course = "CNDC Lab"
+
+[cover.names]
+2312458 = "Haris Qaiser Lodhi"
