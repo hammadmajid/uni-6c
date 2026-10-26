@@ -1,0 +1,18 @@
+kind = "typed"
+course = "ai-lab"
+type = "Project Report"
+number = "01"
+date = 2026-10-26
+date-format = "short"
+main = "report.typ"
+members = ["2312200", "2312458", "2312421", "2312412"]
+
+[cover]
+instructor = "Mr. Muhammad Ishfaq"
+course = "AI Lab"
+
+[cover.names]
+2312458 = "Haris Qaiser Lodhi"
+
+[[variants]]
+members = ["2312200"]
